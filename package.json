@@ -1,0 +1,71 @@
+{
+  "name": "christian-kit",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "build:check": "tsc && vite build",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint . --ext ts,tsx --fix",
+    "preview": "vite preview",
+    "test": "vitest",
+    "test:ui": "vitest --ui",
+    "test:run": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "prepare": "husky install",
+    "deploy:staging": "npm run build && wrangler pages deploy dist --project-name christian-kit --branch staging",
+    "deploy:production": "npm run build && wrangler pages deploy dist --project-name christian-kit --branch main",
+    "deploy:staging:win": "./scripts/deploy.bat staging",
+    "deploy:production:win": "./scripts/deploy.bat production",
+    "db:init": "wrangler d1 execute christian-kit-db --file=./database/schema.sql",
+    "db:test": "wrangler d1 execute christian-kit-db --command=\"SELECT name FROM sqlite_master WHERE type='table';\"",
+    "kv:list": "wrangler kv:key list --binding=CHRISTIAN_KIT_KV",
+    "pages:deploy": "npm run build && wrangler pages deploy dist --project-name christian-kit"
+  },
+  "dependencies": {
+    "@auth0/auth0-react": "^2.4.0",
+    "@stripe/stripe-js": "^7.8.0",
+    "firebase": "^12.1.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.1.5",
+    "@testing-library/react": "^14.1.2",
+    "@testing-library/user-event": "^14.5.1",
+    "@types/react": "^18.2.43",
+    "@types/react-dom": "^18.2.17",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "@vitest/ui": "^1.0.4",
+    "autoprefixer": "^10.4.16",
+    "eslint": "^8.55.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "husky": "^8.0.0",
+    "jsdom": "^23.0.1",
+    "lint-staged": "^15.2.0",
+    "postcss": "^8.4.32",
+    "prettier": "^3.1.1",
+    "tailwindcss": "^3.3.6",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "vitest": "^1.0.4",
+    "wrangler": "^3.0.0"
+  },
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
+  }
+}

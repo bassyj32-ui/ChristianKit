@@ -1,0 +1,89 @@
+name = "christian-kit"
+main = "src/main.tsx"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "christian-kit-prod"
+
+[env.staging]
+name = "christian-kit-staging"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "christian-kit-db"
+database_id = "your-database-id-here"
+
+# KV Namespace for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+preview_id = "your-preview-kv-namespace-id-here"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+# Build configuration
+[build]
+command = "npm run build"
+cwd = "."
+
+# Pages configuration
+[pages]
+directory = "dist"
+
+
+
+
+main = "src/main.tsx"
+compatibility_date = "2024-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+[env.production]
+name = "christian-kit-prod"
+
+[env.staging]
+name = "christian-kit-staging"
+
+# D1 Database
+[[d1_databases]]
+binding = "DB"
+database_name = "christian-kit-db"
+database_id = "your-database-id-here"
+
+# KV Namespace for caching
+[[kv_namespaces]]
+binding = "CACHE"
+id = "your-kv-namespace-id-here"
+preview_id = "your-preview-kv-namespace-id-here"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+[env.production.vars]
+ENVIRONMENT = "production"
+
+[env.staging.vars]
+ENVIRONMENT = "staging"
+
+# Build configuration
+[build]
+command = "npm run build"
+cwd = "."
+
+# Pages configuration
+[pages]
+directory = "dist"
+
+
+
+

@@ -1,0 +1,63 @@
+{
+  "build": {
+    "command": "npm run build",
+    "output": "dist",
+    "environment": {
+      "NODE_VERSION": "18"
+    }
+  },
+  "deploy": {
+    "production": {
+      "branch": "main",
+      "environment": "production"
+    },
+    "staging": {
+      "branch": "develop",
+      "environment": "staging"
+    }
+  },
+  "functions": {
+    "directory": "functions"
+  },
+  "redirects": [
+    {
+      "source": "/api/*",
+      "destination": "/functions/api/*"
+    }
+  ]
+}
+
+
+
+
+  "build": {
+    "command": "npm run build",
+    "output": "dist",
+    "environment": {
+      "NODE_VERSION": "18"
+    }
+  },
+  "deploy": {
+    "production": {
+      "branch": "main",
+      "environment": "production"
+    },
+    "staging": {
+      "branch": "develop",
+      "environment": "staging"
+    }
+  },
+  "functions": {
+    "directory": "functions"
+  },
+  "redirects": [
+    {
+      "source": "/api/*",
+      "destination": "/functions/api/*"
+    }
+  ]
+}
+
+
+
+
