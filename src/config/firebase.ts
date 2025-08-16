@@ -1,30 +1,29 @@
+/// <reference types="vite/client" />
+
 // Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getAnalytics } from "firebase/analytics";
+import { initializeApp } from 'firebase/app'
+import { getAuth } from 'firebase/auth'
+import { getFirestore } from 'firebase/firestore'
+import { getMessaging } from 'firebase/messaging'
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-  apiKey: "AIzaSyBpm2yAmOLjVVaXy9j6OSip7LPs-k_-sWw",
-  authDomain: "christiankit-28485.firebaseapp.com",
-  projectId: "christiankit-28485",
-  storageBucket: "christiankit-28485.firebasestorage.app",
-  messagingSenderId: "597586617802",
-  appId: "1:597586617802:web:0488b4eca4c2f4e3b61b33",
-  measurementId: "G-G623WR1SK6"
-};
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'your-api-key',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'your-auth-domain',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'your-project-id',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'your-storage-bucket',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || 'your-messaging-sender-id',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || 'your-app-id'
+}
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+const app = initializeApp(firebaseConfig)
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+export const auth = getAuth(app)
+export const db = getFirestore(app)
+export const messaging = getMessaging(app)
 
-// Initialize Analytics (optional)
-export const analytics = getAnalytics(app);
-
-export default app;
+export default app
 
 // Stripe configuration
 export const stripeConfig = {

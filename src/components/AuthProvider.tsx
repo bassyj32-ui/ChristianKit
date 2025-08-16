@@ -7,6 +7,7 @@ import {
   User 
 } from 'firebase/auth';
 import { auth } from '../config/firebase';
+import { cloudDataService } from '../services/cloudDataService';
 
 interface AuthContextType {
   user: User | null;
@@ -32,20 +33,63 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isProUser, setIsProUser] = useState(false);
+  const [cloudUnsubscribers, setCloudUnsubscribers] = useState<(() => void)[]>([]);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+      setUser(user)
+      setLoading(false)
       
-      // Mock pro user check - replace with actual logic later
       if (user) {
-        setIsProUser(false); // For now, all users are free
+        try {
+          // Initialize user in cloud
+          await cloudDataService.initializeUser(user)
+          
+          // Perform initial sync
+          await cloudDataService.syncLocalDataToCloud(user)
+          
+          // Set up real-time listeners
+          const unsubscribePrayer = cloudDataService.subscribeToPrayerSessions(user, (sessions) => {
+            // Update local storage with cloud data
+            localStorage.setItem('prayerSessions', JSON.stringify(sessions))
+          })
+          
+          const unsubscribeBible = cloudDataService.subscribeToBibleReadings(user, (readings) => {
+            // Update local storage with cloud data
+            localStorage.setItem('bibleReadings', JSON.stringify(readings))
+          })
+          
+          const unsubscribeCommunity = cloudDataService.subscribeToCommunityPosts((posts) => {
+            // Update local storage with cloud data
+            localStorage.setItem('communityPosts', JSON.stringify(posts))
+          })
+          
+          // Store unsubscribe functions for cleanup
+          setCloudUnsubscribers([unsubscribePrayer, unsubscribeBible, unsubscribeCommunity])
+          
+          console.log('Cloud sync initialized for user:', user.email)
+        } catch (error) {
+          console.error('Error initializing cloud sync:', error)
+        }
+      } else {
+        // Clean up cloud listeners when user signs out
+        if (cloudUnsubscribers.length > 0) {
+          cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
+          setCloudUnsubscribers([])
+        }
+        cloudDataService.unsubscribeAll()
       }
-    });
+    })
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      unsubscribe()
+      // Clean up cloud listeners
+      if (cloudUnsubscribers.length > 0) {
+        cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
+      }
+      cloudDataService.unsubscribeAll()
+    }
+  }, [])
 
   const signInWithGoogle = async () => {
     try {
@@ -63,10 +107,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      // Sync data to cloud before logout
+      if (user) {
+        await cloudDataService.syncLocalDataToCloud(user)
+      }
+      
+      // Clean up cloud listeners
+      if (cloudUnsubscribers.length > 0) {
+        cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
+        setCloudUnsubscribers([])
+      }
+      cloudDataService.unsubscribeAll()
+      
+      await signOut(auth)
     } catch (error) {
-      console.error('Logout error:', error);
-      setError('Failed to sign out. Please try again.');
+      console.error('Error during logout:', error)
+      // Still sign out even if sync fails
+      await signOut(auth)
     }
   };
 

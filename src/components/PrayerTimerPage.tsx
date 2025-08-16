@@ -109,17 +109,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     }, 30000);
   }
 
-  const stopPrayer = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    if (reminderIntervalRef.current) {
-      clearInterval(reminderIntervalRef.current);
-    }
-    setIsPraying(false);
-    setPrayerCompleted(false);
-    setShowReminder(false);
-  }
+
 
   const completePrayer = () => {
     if (intervalRef.current) {
@@ -821,12 +811,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
                 🏠 Homepage
               </button>
               
-              <button 
-                onClick={stopPrayer}
-                className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-8 py-3 rounded-2xl font-bold text-lg hover:from-red-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-xl"
-              >
-                ⏹️ Stop
-              </button>
+
               
               <button 
                 onClick={() => {

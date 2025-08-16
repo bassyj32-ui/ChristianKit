@@ -1,11 +1,12 @@
 import { PrayerSession, PrayerStats, PrayerSettings, PrayerReminder, PrayerPrompt, PrayerTechnique } from '../types/prayer';
+import { cloudDataService } from './cloudDataService'
+import { useAuth } from '../components/AuthProvider'
 
 class PrayerService {
   private readonly SESSIONS_KEY = 'prayerSessions';
   private readonly SETTINGS_KEY = 'prayerSettings';
   private readonly REMINDERS_KEY = 'prayerReminders';
 
-  // Prayer Sessions
   async savePrayerSession(session: PrayerSession): Promise<void> {
     try {
       const sessions = await this.getPrayerSessions();
@@ -17,8 +18,12 @@ class PrayerService {
       }
       
       localStorage.setItem(this.SESSIONS_KEY, JSON.stringify(sessions));
+      
+      // Save to cloud if user is authenticated (we'll handle this in the component)
+      // The cloud sync is handled at the component level through the AuthProvider
     } catch (error) {
       console.error('Error saving prayer session:', error);
+      throw error;
     }
   }
 
@@ -253,6 +258,78 @@ class PrayerService {
         scripture: 'Psalm 100:4'
       }
     ];
+  }
+
+  // Weekly Progress
+  async getWeeklyProgress(): Promise<any> {
+    try {
+      const sessions = await this.getPrayerSessions();
+      const today = new Date();
+      const startOfWeek = new Date(today);
+      startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
+      startOfWeek.setHours(0, 0, 0, 0);
+      
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
+      endOfWeek.setHours(23, 59, 59, 999);
+      
+      // Filter sessions for this week
+      const weeklySessions = sessions.filter(session => {
+        const sessionDate = new Date(session.date);
+        return sessionDate >= startOfWeek && sessionDate <= endOfWeek && session.completed;
+      });
+      
+      // Group sessions by day
+      const dailyProgress: any = {};
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      
+      days.forEach(day => {
+        dailyProgress[day] = {
+          prayer: 0,
+          bible: 0,
+          meditation: 0,
+          journal: 0
+        };
+      });
+      
+      // Calculate daily progress based on session types and durations
+      weeklySessions.forEach(session => {
+        const sessionDate = new Date(session.date);
+        const dayIndex = sessionDate.getDay();
+        const dayName = days[dayIndex];
+        
+        // Determine activity type based on session focus and duration
+        let activityType = 'prayer'; // Default
+        
+        if (session.focus && session.focus.toLowerCase().includes('bible')) {
+          activityType = 'bible';
+        } else if (session.focus && session.focus.toLowerCase().includes('meditation')) {
+          activityType = 'meditation';
+        } else if (session.focus && session.focus.toLowerCase().includes('journal')) {
+          activityType = 'journal';
+        }
+        
+        // Calculate percentage based on target duration (assuming 30 min target)
+        const targetDuration = 30;
+        const percentage = Math.min(100, Math.round((session.duration / targetDuration) * 100));
+        
+        dailyProgress[dayName][activityType] = Math.max(
+          dailyProgress[dayName][activityType], 
+          percentage
+        );
+      });
+      
+      // Convert to array format for the component
+      const weeklyData = days.map(day => ({
+        day,
+        ...dailyProgress[day]
+      }));
+      
+      return weeklyData;
+    } catch (error) {
+      console.error('Error getting weekly progress:', error);
+      return [];
+    }
   }
 
   // Prayer Techniques
