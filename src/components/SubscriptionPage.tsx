@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import { useAuth } from './AuthProvider';
+import { PayooerPaymentForm } from './PayooerPaymentForm';
+import { PayooerSubscriptionManager } from './PayooerSubscriptionManager';
 
 export const SubscriptionPage: React.FC = () => {
   const { user, isProUser } = useAuth();
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'yearly'>('monthly');
   const [showFreeApplication, setShowFreeApplication] = useState(false);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [showSubscriptionManager, setShowSubscriptionManager] = useState(false);
   const [freeApplication, setFreeApplication] = useState({
     reason: '',
     monthlyIncome: '',
@@ -31,23 +35,22 @@ export const SubscriptionPage: React.FC = () => {
       return;
     }
     
-    setLoading(true);
-    try {
-      // Here you would integrate with your chosen payment provider
-      console.log('Processing subscription for:', user.email);
-      console.log('Selected plan:', selectedPlan);
-      console.log('Price:', plans[selectedPlan].price);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert(`Subscription successful! You will receive payment instructions via email. (This is a demo)`);
-    } catch (error) {
-      console.error('Subscription error:', error);
-      alert('Subscription failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentSuccess = (subscriptionId: string) => {
+    setShowPaymentForm(false);
+    alert(`Subscription successful! Your subscription ID is: ${subscriptionId}`);
+    // You can redirect to subscription manager or dashboard
+    setShowSubscriptionManager(true);
+  };
+
+  const handlePaymentError = (error: string) => {
+    alert(`Payment failed: ${error}`);
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentForm(false);
   };
 
   const handleFreeApplication = async () => {
@@ -283,6 +286,53 @@ export const SubscriptionPage: React.FC = () => {
             We'll integrate with your preferred payment platform once you decide
           </p>
         </div>
+
+        {/* Payooer Payment Form Modal */}
+        {showPaymentForm && (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPaymentForm(false)}
+          >
+            <div 
+              className="max-w-2xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PayooerPaymentForm
+                plan={{
+                  id: selectedPlan,
+                  name: `ChristianKit Pro ${selectedPlan === 'monthly' ? 'Monthly' : 'Yearly'}`,
+                  price: plans[selectedPlan].price,
+                  currency: 'USD',
+                  interval: selectedPlan === 'monthly' ? 'month' : 'year',
+                  features: [
+                    'Unlimited prayer sessions',
+                    'Advanced analytics',
+                    'Priority support',
+                    'Exclusive content'
+                  ]
+                }}
+                onSuccess={handlePaymentSuccess}
+                onError={handlePaymentError}
+                onCancel={handlePaymentCancel}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Payooer Subscription Manager Modal */}
+        {showSubscriptionManager && (
+          <div 
+            className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowSubscriptionManager(false)}
+          >
+            <div 
+              className="max-w-4xl w-full"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <PayooerSubscriptionManager />
+            </div>
+          </div>
+        )}
 
         {/* Free Plan Application Modal */}
         {showFreeApplication && (
