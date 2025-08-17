@@ -14,8 +14,10 @@ import { SettingsPage } from './components/SettingsPage'
 import { PrayerHistory } from './components/PrayerHistory'
 import { PrayerSettings } from './components/PrayerSettings'
 import { BibleTracker } from './components/BibleTracker'
+import { WeeklyProgressBot } from './components/WeeklyProgressBot'
 import { reminderService } from './services/reminderService'
 import { SyncStatus } from './components/SyncStatus'
+import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 
 interface UserPlan {
   prayerTime: number;
@@ -46,11 +48,19 @@ const AppContent: React.FC = () => {
     const savedPlan = localStorage.getItem('userPlan')
     const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire')
     
+    console.log('Initial load - localStorage state:', {
+      savedPlan,
+      hasCompletedQuestionnaire,
+      user: !!user
+    })
+    
     if (savedPlan && hasCompletedQuestionnaire) {
       setIsFirstTimeUser(false)
       setUserPlan(JSON.parse(savedPlan))
+      console.log('User plan loaded from localStorage:', JSON.parse(savedPlan))
     } else {
       setIsFirstTimeUser(true)
+      console.log('No saved plan found, user is first-time')
     }
 
     // Initialize cloud sync if user is authenticated
@@ -78,6 +88,15 @@ const AppContent: React.FC = () => {
         })
     }
   }, [user])
+
+  // Debug useEffect to track userPlan state changes
+  useEffect(() => {
+    console.log('userPlan state changed:', {
+      userPlan,
+      isFirstTimeUser,
+      showQuestionnaire
+    })
+  }, [userPlan, isFirstTimeUser, showQuestionnaire])
 
   // Close mobile menu when questionnaire is shown
   useEffect(() => {
@@ -109,6 +128,12 @@ const AppContent: React.FC = () => {
   }, [showMobileMenu, showProfileMenu, showNotifications, showSyncStatus])
 
   const handleQuestionnaireComplete = (plan: UserPlan) => {
+    console.log('Questionnaire completed with plan:', plan)
+    console.log('Before saving - localStorage state:', {
+      userPlan: localStorage.getItem('userPlan'),
+      hasCompletedQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+    })
+    
     setUserPlan(plan)
     setShowQuestionnaire(false)
     setIsFirstTimeUser(false)
@@ -128,6 +153,10 @@ const AppContent: React.FC = () => {
     localStorage.setItem('userPlan', JSON.stringify(plan))
     localStorage.setItem('hasCompletedQuestionnaire', 'true') // Mark as completed
     
+    console.log('After saving - localStorage state:', {
+      userPlan: localStorage.getItem('userPlan'),
+      hasCompletedQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+    })
     console.log('Questionnaire completed, user plan saved:', plan)
     console.log('User experience level:', plan.experienceLevel)
   }
@@ -138,9 +167,23 @@ const AppContent: React.FC = () => {
 
   // Helper function to check if user should be considered first-time
   const shouldShowQuestionnaire = () => {
-    const hasPlan = !!userPlan
+    // Check localStorage directly instead of relying on state
+    const localStorageUserPlan = localStorage.getItem('userPlan')
+    const hasPlan = !!localStorageUserPlan
     const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire') === 'true'
-    return !hasPlan || !hasCompletedQuestionnaire
+    const result = !hasPlan || !hasCompletedQuestionnaire
+    
+    // Debug logging
+    console.log('shouldShowQuestionnaire check:', {
+      hasPlan,
+      hasCompletedQuestionnaire,
+      result,
+      userPlan,
+      localStorageUserPlan: localStorage.getItem('userPlan'),
+      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+    })
+    
+    return result
   }
 
   const handleNavigate = (page: string, duration?: number) => {
@@ -160,7 +203,15 @@ const AppContent: React.FC = () => {
 
   const handleTimerComplete = () => {
     // Users who need questionnaire go to questionnaire after timer completion
-    if (shouldShowQuestionnaire()) {
+    const needsQuestionnaire = shouldShowQuestionnaire()
+    console.log('Timer completed:', { 
+      needsQuestionnaire, 
+      userPlan, 
+      localStorageUserPlan: localStorage.getItem('userPlan'),
+      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+    })
+    
+    if (needsQuestionnaire) {
       console.log('Timer completed for user who needs questionnaire, showing questionnaire')
       setShowQuestionnaire(true)
     } else {
@@ -336,9 +387,20 @@ const AppContent: React.FC = () => {
                 <button
                   onClick={() => {
                     const needsQuestionnaire = shouldShowQuestionnaire()
+                    console.log('Desktop Homepage button clicked:', { 
+                      isFirstTimeUser, 
+                      showQuestionnaire, 
+                      hasUserPlan: !!userPlan, 
+                      needsQuestionnaire,
+                      userPlan,
+                      localStorageUserPlan: localStorage.getItem('userPlan'),
+                      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+                    })
                     if (needsQuestionnaire) {
+                      console.log('Desktop: Showing questionnaire - user needs to complete setup')
                       setShowQuestionnaire(true)
                     } else {
+                      console.log('Desktop: Going directly to dashboard - user has completed setup')
                       setActiveTab('dashboard')
                     }
                   }}
@@ -712,7 +774,15 @@ const AppContent: React.FC = () => {
             <button
               onClick={() => {
                 const needsQuestionnaire = shouldShowQuestionnaire()
-                console.log('Mobile Homepage button clicked:', { isFirstTimeUser, showQuestionnaire, hasUserPlan: !!userPlan, needsQuestionnaire })
+                console.log('Mobile Homepage button clicked:', { 
+                  isFirstTimeUser, 
+                  showQuestionnaire, 
+                  hasUserPlan: !!userPlan, 
+                  needsQuestionnaire,
+                  userPlan,
+                  localStorageUserPlan: localStorage.getItem('userPlan'),
+                  localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
+                })
                 if (needsQuestionnaire) {
                   console.log('Mobile: Showing questionnaire - user needs to complete setup')
                   setShowQuestionnaire(true)
@@ -871,6 +941,17 @@ const AppContent: React.FC = () => {
 
       {/* Main Content */}
         {renderContent()}
+
+      {/* Weekly Progress Bot - Floating Reminder */}
+      {user && !showQuestionnaire && activeTab !== 'prayer' && (
+        <WeeklyProgressBot 
+          position="bottom-right"
+          showProgress={true}
+        />
+      )}
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
 
       {/* Feedback Form Modal */}
       {showFeedback && (

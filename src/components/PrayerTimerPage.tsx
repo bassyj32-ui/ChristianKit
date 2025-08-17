@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useAuth } from './AuthProvider'
+import { DailyProgressReminder } from './DailyProgressReminder'
 
 interface PrayerSession {
   id: string
@@ -32,14 +33,14 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   const [isPraying, setIsPraying] = useState(true) // Start directly in prayer mode
   const [prayerCompleted, setPrayerCompleted] = useState(false)
   const [prayerMessage, setPrayerMessage] = useState("Lord Jesus, I'm here with You now to talk about...")
-  const [prayerFocus, setPrayerFocus] = useState(userPlan?.prayerFocus?.join(', ') || '')
-  const [prayerMood, setPrayerMood] = useState('peaceful')
-  const [showHistory, setShowHistory] = useState(false)
-  const [showAdvanced, setShowAdvanced] = useState(false)
-  const [prayerSessions, setPrayerSessions] = useState<PrayerSession[]>([])
-  const [focusReminders, setFocusReminders] = useState<string[]>([])
+  const [prayerFocus, setPrayerFocus] = useState("")
+  const [prayerMood, setPrayerMood] = useState("")
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0)
   const [showReminder, setShowReminder] = useState(false)
+  const [prayerSessions, setPrayerSessions] = useState<PrayerSession[]>([])
+  const [focusReminders, setFocusReminders] = useState<string[]>([])
+  const [showHistory, setShowHistory] = useState(false)
+  const [showAdvanced, setShowAdvanced] = useState(false)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const reminderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
@@ -56,8 +57,8 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     localStorage.setItem('prayerSessions', JSON.stringify(prayerSessions))
   }, [prayerSessions])
 
+  // Update timer when prop changes
   useEffect(() => {
-    // Update timer when prop changes
     if (propSelectedMinutes && propSelectedMinutes > 0) {
       console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
       setSelectedMinutes(propSelectedMinutes);
@@ -71,6 +72,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     // Timer is already initialized with 10 minutes in state
   }, []); // Empty dependency array - runs only once
 
+  // Timer effect
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
     
@@ -108,8 +110,6 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
       setCurrentReminderIndex(prev => (prev + 1) % focusReminders.length);
     }, 30000);
   }
-
-
 
   const completePrayer = () => {
     if (intervalRef.current) {
@@ -210,6 +210,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             >
               ← Back to Prayer
             </button>
+          </div>
+
+          {/* Daily Progress Reminder */}
+          <div className="mb-8">
+            <DailyProgressReminder 
+              variant="detailed" 
+              showActions={true}
+              className="mx-auto max-w-lg"
+            />
           </div>
 
           {/* Prayer Sessions */}
@@ -315,6 +324,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             >
               ← Back to Prayer
             </button>
+          </div>
+
+          {/* Daily Progress Reminder */}
+          <div className="mb-8">
+            <DailyProgressReminder 
+              variant="detailed" 
+              showActions={true}
+              className="mx-auto max-w-lg"
+            />
           </div>
 
           {/* Advanced Features Grid */}
@@ -602,6 +620,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
                 <li>• There's no right or wrong way to pray</li>
               </ul>
             </div>
+
+            {/* Daily Progress Reminder */}
+            <div className="mt-6">
+              <DailyProgressReminder 
+                variant="compact" 
+                showActions={false}
+                className="mx-auto max-w-md"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -681,6 +708,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
           >
             🙏 Back to Prayer
           </button>
+
+          {/* Daily Progress Reminder */}
+          <div className="mt-8">
+            <DailyProgressReminder 
+              variant="compact" 
+              showActions={false}
+              className="mx-auto max-w-md"
+            />
+          </div>
         </div>
       </div>
     )
@@ -798,12 +834,21 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             <div className="flex justify-center gap-4">
               <button
                 onClick={() => {
-                  // For first-time users, this should trigger questionnaire
-                  // For returning users, go to dashboard
-                  if (onStartQuestionnaire) {
-                    onStartQuestionnaire()
+                  // Check if user has already completed questionnaire
+                  const hasPlan = localStorage.getItem('userPlan')
+                  const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire')
+                  const needsQuestionnaire = !hasPlan || !hasCompletedQuestionnaire
+                  
+                  if (needsQuestionnaire) {
+                    // User needs to complete questionnaire first
+                    if (onStartQuestionnaire) {
+                      onStartQuestionnaire()
+                    }
                   } else {
-                    onNavigate?.('dashboard')
+                    // User has completed setup, go to dashboard
+                    if (onNavigate) {
+                      onNavigate('dashboard')
+                    }
                   }
                 }}
                 className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"

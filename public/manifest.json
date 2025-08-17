@@ -1,63 +1,50 @@
 {
-  "name": "ChristianKit - Spiritual Growth Platform",
+  "name": "ChristianKit - Your Spiritual Growth Companion",
   "short_name": "ChristianKit",
-  "description": "A comprehensive spiritual growth platform with prayer tracking, Bible study, community, and more",
+  "description": "Prayer timer, Bible tracking, community, and spiritual progress all in one app",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f0f",
-  "theme_color": "#10b981",
+  "background_color": "#000000",
+  "theme_color": "#4F46E5",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["lifestyle", "productivity", "education", "spiritual"],
+  "categories": ["lifestyle", "spiritual", "productivity"],
   "icons": [
     {
-      "src": "/favicon.ico",
-      "sizes": "16x16 32x32 48x48",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "/favicon.ico",
+      "src": "/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/favicon.ico",
+      "src": "/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [
-    {
-      "src": "/favicon.ico",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
   "shortcuts": [
     {
       "name": "Start Prayer",
-      "short_name": "Prayer",
-      "description": "Begin a new prayer session",
+      "short_name": "Pray",
+      "description": "Begin a prayer session",
       "url": "/?tab=prayer",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "/prayer-icon.png",
           "sizes": "96x96"
         }
       ]
     },
     {
-      "name": "Bible Study",
+      "name": "Bible Tracker",
       "short_name": "Bible",
       "description": "Track your Bible reading progress",
       "url": "/?tab=bible",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "/bible-icon.png",
           "sizes": "96x96"
         }
       ]
@@ -69,25 +56,24 @@
       "url": "/?tab=community",
       "icons": [
         {
-          "src": "/favicon.ico",
+          "src": "/community-icon.png",
           "sizes": "96x96"
         }
       ]
     }
   ],
-  "related_applications": [],
-  "prefer_related_applications": false,
-  "edge_side_panel": {
-    "preferred_width": 400
-  },
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
-  "handle_links": "preferred",
-  "protocol_handlers": [
+  "screenshots": [
     {
-      "protocol": "web+christiankit",
-      "url": "/?action=%s"
+      "src": "/screenshot-wide.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
     }
   ]
 }

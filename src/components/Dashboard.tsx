@@ -3,6 +3,7 @@ import { HabitGrid } from './HabitGrid'
 import { WeeklyProgress } from './WeeklyProgress'
 import { DailyVerse } from './DailyVerse'
 import { CommunitySection } from './CommunitySection'
+import { DailyProgressReminder } from './DailyProgressReminder'
 import { prayerService } from '../services/prayerService'
 
 interface DashboardProps {
@@ -222,6 +223,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         >
           <div className="transform transition-all duration-300 hover:scale-[1.01]">
             <CommunitySection />
+          </div>
+        </div>
+
+        {/* Daily Progress Reminder */}
+        <div 
+          className="mb-8 sm:mb-10 transition-all duration-500 ease-out"
+          onMouseEnter={() => setActiveSection('daily-progress-reminder')}
+        >
+          <div className="transform transition-all duration-300 hover:scale-[1.01]">
+            <DailyProgressReminder />
           </div>
         </div>
 

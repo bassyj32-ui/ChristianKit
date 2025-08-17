@@ -1,128 +1,106 @@
 // Service Worker for ChristianKit Push Notifications
-const CACHE_NAME = 'christiankit-v1'
-const NOTIFICATION_TAG = 'christiankit-notification'
+const CACHE_NAME = 'christiankit-v1.0.0';
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/manifest.json',
+  '/favicon.ico'
+];
 
-// Install event - cache essential resources
+// Install event - cache resources
 self.addEventListener('install', (event) => {
-  console.log('Service Worker installing...')
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll([
-        '/',
-        '/index.html',
-        '/manifest.json'
-      ])
-    })
-  )
-  self.skipWaiting()
-})
+    caches.open(CACHE_NAME)
+      .then((cache) => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
+});
+
+// Fetch event - serve from cache when offline
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Return cached version or fetch from network
+        return response || fetch(event.request);
+      })
+  );
+});
 
 // Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker activating...')
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName)
-            return caches.delete(cacheName)
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
           }
         })
-      )
+      );
     })
-  )
-  self.clients.claim()
-})
+  );
+});
 
-// Push event - handle incoming push notifications
+// Push notification event
 self.addEventListener('push', (event) => {
-  console.log('Push notification received:', event)
-  
-  if (event.data) {
-    const data = event.data.json()
-    const options = {
-      body: data.body || 'You have a new notification from ChristianKit',
-      icon: '/favicon.ico',
-      badge: '/favicon.ico',
-      tag: NOTIFICATION_TAG,
-      data: data,
-      actions: [
-        {
-          action: 'open',
-          title: 'Open App',
-          icon: '/favicon.ico'
-        },
-        {
-          action: 'dismiss',
-          title: 'Dismiss',
-          icon: '/favicon.ico'
-        }
-      ],
-      requireInteraction: true,
-      silent: false
-    }
+  const options = {
+    body: event.data ? event.data.text() : 'Time for your spiritual practice!',
+    icon: '/icon-192x192.png',
+    badge: '/icon-192x192.png',
+    vibrate: [100, 50, 100],
+    data: {
+      dateOfArrival: Date.now(),
+      primaryKey: 1
+    },
+    actions: [
+      {
+        action: 'explore',
+        title: 'Open App',
+        icon: '/icon-192x192.png'
+      },
+      {
+        action: 'close',
+        title: 'Close',
+        icon: '/icon-192x192.png'
+      }
+    ]
+  };
 
-    event.waitUntil(
-      self.registration.showNotification(data.title || 'ChristianKit', options)
-    )
-  }
-})
+  event.waitUntil(
+    self.registration.showNotification('ChristianKit', options)
+  );
+});
 
-// Notification click event - handle user interaction
+// Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event)
-  
-  event.notification.close()
+  event.notification.close();
 
-  if (event.action === 'open' || event.action === undefined) {
+  if (event.action === 'explore') {
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-        // Check if app is already open
-        for (const client of clientList) {
-          if (client.url.includes(self.location.origin) && 'focus' in client) {
-            return client.focus()
-          }
-        }
-        
-        // If app is not open, open it
-        if (clients.openWindow) {
-          return clients.openWindow('/')
-        }
-      })
-    )
+      clients.openWindow('/')
+    );
   }
-})
+});
 
-// Background sync event - handle offline actions
+// Background sync for offline data
 self.addEventListener('sync', (event) => {
-  console.log('Background sync event:', event)
-  
-  if (event.tag === 'prayer-reminder') {
+  if (event.tag === 'background-sync') {
     event.waitUntil(
-      // Handle prayer reminder sync
-      console.log('Syncing prayer reminder...')
-    )
+      // Sync offline data when connection is restored
+      console.log('Background sync triggered')
+    );
   }
-})
+});
 
-// Message event - handle messages from main app
+// Message event for communication with main app
 self.addEventListener('message', (event) => {
-  console.log('Message received in service worker:', event)
-  
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting()
+    self.skipWaiting();
   }
-})
-
-// Fetch event - handle network requests
-self.addEventListener('fetch', (event) => {
-  // Handle offline functionality
-  if (event.request.mode === 'navigate') {
-    event.respondWith(
-      fetch(event.request).catch(() => {
-        return caches.match('/index.html')
-      })
-    )
-  }
-})
+});
