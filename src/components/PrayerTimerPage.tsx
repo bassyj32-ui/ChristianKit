@@ -639,29 +639,29 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   if (prayerCompleted) {
     return (
       <div className="fixed inset-0 bg-black z-50 flex items-center justify-center">
-        <div className="text-center text-gray-100 max-w-4xl px-8">
+        <div className="text-center text-gray-100 max-w-4xl px-4 sm:px-8">
           
           {/* Status Header */}
-          <h1 className="text-5xl font-bold mb-6 text-gray-100">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6 text-gray-100 px-4">
             Prayer Complete
           </h1>
           
-          <p className="text-2xl mb-12 text-gray-400 leading-relaxed">
+          <p className="text-lg sm:text-xl md:text-2xl mb-8 sm:mb-12 text-gray-400 leading-relaxed px-4">
             What would you like to do next?
           </p>
 
           {/* Login Prompt for Unauthenticated Users */}
           {!user && (
-            <div className="max-w-md mx-auto mb-8">
-              <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-6 shadow-2xl border-2 border-blue-400/30 text-center">
-                <div className="text-3xl mb-3">🔐</div>
-                <h3 className="text-xl font-bold text-white mb-2">Save Your Progress</h3>
-                <p className="text-blue-100 mb-4 text-sm">Sign in to save this prayer session and track your spiritual journey</p>
+            <div className="max-w-md mx-auto mb-6 sm:mb-8 px-4">
+              <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-2xl border-2 border-blue-400/30 text-center">
+                <div className="text-2xl sm:text-3xl mb-2 sm:mb-3">🔐</div>
+                <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Save Your Progress</h3>
+                <p className="text-blue-100 mb-3 sm:mb-4 text-xs sm:text-sm">Sign in to save this prayer session and track your spiritual journey</p>
                 <button
                   onClick={signInWithGoogle}
-                  className="bg-white text-gray-800 px-8 py-3 rounded-xl font-bold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-3 w-full mx-auto"
+                  className="bg-white text-gray-800 px-6 sm:px-8 py-2 sm:py-3 rounded-lg sm:rounded-xl font-bold text-sm hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 sm:gap-3 w-full mx-auto"
                 >
-                  <svg className="w-5 h-5" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
                     <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                     <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                     <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -674,12 +674,12 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
           )}
 
           {/* Simple Options */}
-          <div className="flex justify-center gap-6 max-w-3xl mx-auto mb-8">
+          <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-6 max-w-3xl mx-auto mb-6 sm:mb-8 px-4">
             
             {/* Start Another Prayer */}
             <button 
               onClick={restartPrayer}
-              className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-8 rounded-3xl font-bold text-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl font-bold text-base sm:text-lg md:text-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
             >
               ⏰ Another Prayer
             </button>
@@ -687,7 +687,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             {/* Create Personalized Plan */}
             <button 
               onClick={() => onStartQuestionnaire?.()}
-              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-8 rounded-3xl font-bold text-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              className="bg-gradient-to-r from-purple-500 to-pink-500 text-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl font-bold text-base sm:text-lg md:text-xl hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
             >
               ✨ Create Plan
             </button>
@@ -695,7 +695,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             {/* View History */}
             <button 
               onClick={() => setShowHistory(true)}
-              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-8 rounded-3xl font-bold text-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
+              className="bg-gradient-to-r from-blue-500 to-indigo-500 text-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl font-bold text-base sm:text-lg md:text-xl hover:from-blue-600 hover:to-indigo-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
             >
               📊 History
             </button>
@@ -704,7 +704,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
           {/* Back to Prayer */}
           <button 
             onClick={restartPrayer}
-            className="bg-neutral-900/80 backdrop-blur-sm border-4 border-neutral-700 text-gray-100 px-8 py-4 rounded-2xl font-bold text-xl hover:bg-neutral-800 transition-all duration-300"
+            className="bg-neutral-900/80 backdrop-blur-sm border-2 sm:border-4 border-neutral-700 text-gray-100 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-xl hover:bg-neutral-800 transition-all duration-300 mx-4 sm:mx-auto"
           >
             🙏 Back to Prayer
           </button>
@@ -729,14 +729,14 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
         
         {/* Focus Reminder Overlay */}
         {showReminder && focusReminders.length > 0 && (
-          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50">
-            <div className="bg-neutral-900/95 backdrop-blur-sm rounded-3xl p-8 max-w-2xl mx-4 text-center shadow-2xl border-4 border-neutral-800">
-              <div className="text-6xl mb-4">🎯</div>
-              <h3 className="text-2xl font-bold text-gray-100 mb-4">Focus Reminder</h3>
-              <p className="text-xl text-gray-300 mb-6">{focusReminders[currentReminderIndex]}</p>
+          <div className="absolute inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-neutral-900/95 backdrop-blur-sm rounded-2xl sm:rounded-3xl p-4 sm:p-8 max-w-2xl mx-2 sm:mx-4 text-center shadow-2xl border-2 sm:border-4 border-neutral-800">
+              <div className="text-4xl sm:text-6xl mb-3 sm:mb-4">🎯</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-100 mb-3 sm:mb-4">Focus Reminder</h3>
+              <p className="text-base sm:text-xl text-gray-300 mb-4 sm:mb-6">{focusReminders[currentReminderIndex]}</p>
               <button
                 onClick={() => setShowReminder(false)}
-                className="bg-green-500 text-white px-8 py-3 rounded-2xl font-bold hover:bg-green-600 transition-all duration-300"
+                className="bg-green-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-base hover:bg-green-600 transition-all duration-300"
               >
                 Continue Prayer
               </button>
@@ -746,17 +746,17 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
         
         {/* Login Prompt for Unauthenticated Users */}
         {!user && (
-          <div className="absolute top-4 right-4 z-40">
-            <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl p-4 shadow-2xl border-2 border-blue-400/30">
-              <div className="text-center mb-3">
-                <div className="text-2xl mb-2">🔐</div>
-                <p className="text-white text-sm font-medium">Save your progress</p>
+          <div className="absolute top-2 sm:top-4 right-2 sm:right-4 z-40">
+            <div className="bg-gradient-to-r from-blue-500 to-purple-500 rounded-xl sm:rounded-2xl p-3 sm:p-4 shadow-2xl border-2 border-blue-400/30">
+              <div className="text-center mb-2 sm:mb-3">
+                <div className="text-xl sm:text-2xl mb-1 sm:mb-2">🔐</div>
+                <p className="text-white text-xs sm:text-sm font-medium">Save your progress</p>
               </div>
               <button
                 onClick={signInWithGoogle}
-                className="bg-white text-gray-800 px-6 py-2 rounded-xl font-bold hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-2 w-full"
+                className="bg-white text-gray-800 px-4 sm:px-6 py-1.5 sm:py-2 rounded-lg sm:rounded-xl font-bold text-xs sm:text-sm hover:bg-gray-100 transition-all duration-200 flex items-center justify-center gap-1 sm:gap-2 w-full"
               >
-                <svg className="w-5 h-5" viewBox="0 0 24 24">
+                <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
                   <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
                   <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
                   <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
@@ -769,10 +769,10 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
         )}
         
         {/* Massive Rectangle Timer */}
-        <div className="flex-1 flex items-center justify-center px-4 pb-2">
+        <div className="flex-1 flex items-center justify-center px-2 sm:px-4 pb-2">
           <div className="relative w-full max-w-5xl">
             {/* Timer Container */}
-            <div className="w-full h-[75vh] bg-neutral-900/90 backdrop-blur-sm rounded-3xl border-4 border-neutral-800 shadow-2xl overflow-hidden relative">
+            <div className="w-full h-[60vh] sm:h-[70vh] md:h-[75vh] bg-neutral-900/90 backdrop-blur-sm rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-neutral-800 shadow-2xl overflow-hidden relative">
               {/* Fulfillment Animation */}
               <div 
                 className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-green-400 to-emerald-500 transition-all duration-1000 ease-out"
@@ -783,15 +783,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
               ></div>
               
               {/* Timer Display */}
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <div className="text-[20vw] font-black text-gray-100 drop-shadow-2xl">
+              <div className="absolute inset-0 flex flex-col items-center justify-center px-2">
+                <div className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl xl:text-[10vw] font-black text-gray-100 drop-shadow-2xl leading-none text-center">
                   {formatTime(timeRemaining)}
                 </div>
               </div>
               
               {/* Prayer Message */}
-              <div className="absolute bottom-8 left-0 right-0 text-center">
-                <div className="text-xl font-medium text-gray-400 max-w-4xl mx-auto px-4">
+              <div className="absolute bottom-4 sm:bottom-8 left-0 right-0 text-center px-2">
+                <div className="text-base sm:text-lg md:text-xl font-medium text-gray-400 max-w-4xl mx-auto px-2 sm:px-4">
                   {prayerMessage}
                 </div>
               </div>
@@ -810,16 +810,16 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
         </div>
 
         {/* Bottom Controls */}
-        <div className="p-4 bg-black/60 backdrop-blur-sm border-t border-neutral-800">
+        <div className="p-2 sm:p-4 bg-black/60 backdrop-blur-sm border-t border-neutral-800">
           <div className="max-w-4xl mx-auto">
             
             {/* Minute Adjustment */}
-            <div className="flex justify-center gap-3 mb-4">
+            <div className="flex justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
               {[10, 20, 30].map((minutes) => (
                 <button
                   key={minutes}
                   onClick={() => handleMinuteChange(minutes)}
-                  className={`px-6 py-2 rounded-xl font-bold text-base transition-all duration-300 hover:scale-105 border-2 ${
+                  className={`px-3 sm:px-6 py-2 rounded-xl font-bold text-sm sm:text-base transition-all duration-300 hover:scale-105 border-2 ${
                     selectedMinutes === minutes
                       ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white border-green-300 shadow-lg'
                       : 'bg-neutral-800 text-gray-300 hover:bg-neutral-700 border-neutral-700'
@@ -831,7 +831,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             </div>
 
             {/* Action Buttons */}
-            <div className="flex justify-center gap-4">
+            <div className="flex flex-col sm:flex-row justify-center gap-2 sm:gap-4">
               <button
                 onClick={() => {
                   // Check if user has already completed questionnaire
@@ -851,12 +851,10 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
                     }
                   }
                 }}
-                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-bold text-sm sm:text-base hover:from-blue-600 hover:to-purple-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🏠 Homepage
               </button>
-              
-
               
               <button 
                 onClick={() => {
@@ -864,14 +862,14 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
                   setTimeRemaining(selectedMinutes * 60)
                   setIsPraying(true)
                 }}
-                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-8 py-3 rounded-2xl font-bold text-lg hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-xl"
+                className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-lg hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-xl"
               >
                 🔄 Restart
               </button>
 
               <button 
                 onClick={() => onNavigate?.('community')}
-                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-2xl font-bold text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 sm:px-8 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold text-sm sm:text-lg hover:from-purple-600 hover:to-pink-600 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 🌟 Share
               </button>
