@@ -56,6 +56,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
+      console.log('Starting sign in process...');
       setLoading(true);
       setError(null);
       
@@ -67,16 +68,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: 'https://via.placeholder.com/150'
       };
       
+      console.log('Creating mock user:', mockUser);
+      
       // Save to localStorage
       localStorage.setItem('user', JSON.stringify(mockUser));
+      console.log('User saved to localStorage');
+      
       setUser(mockUser);
       setIsProUser(true);
       
-      console.log('Demo user signed in:', mockUser);
+      console.log('Demo user signed in successfully:', mockUser);
     } catch (error) {
       console.error('Sign in error:', error);
       setError('Failed to sign in. Please try again.');
     } finally {
+      console.log('Setting loading to false');
       setLoading(false);
     }
   };

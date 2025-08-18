@@ -42,6 +42,7 @@ const AppContent: React.FC = () => {
   const [showProfileEdit, setShowProfileEdit] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSyncStatus, setShowSyncStatus] = useState(false);
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
 
   useEffect(() => {
     // Check if user has completed questionnaire
@@ -88,6 +89,20 @@ const AppContent: React.FC = () => {
         })
     }
   }, [user])
+
+  // Add timeout for loading state to prevent freezing
+  useEffect(() => {
+    if (loading) {
+      const timeout = setTimeout(() => {
+        console.log('Loading timeout reached, forcing loading to false');
+        setLoadingTimeout(true);
+      }, 5000); // 5 second timeout
+      
+      return () => clearTimeout(timeout);
+    } else {
+      setLoadingTimeout(false);
+    }
+  }, [loading]);
 
   // Debug useEffect to track userPlan state changes
   useEffect(() => {
@@ -231,7 +246,7 @@ const AppContent: React.FC = () => {
   }
 
   // Show loading screen
-  if (loading) {
+  if (loading && !loadingTimeout) {
     return (
       <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
         <div className="text-center">
@@ -239,6 +254,28 @@ const AppContent: React.FC = () => {
             <SimpleLogo size="lg" />
           </div>
           <p className="text-gray-400">Loading ChristianKit...</p>
+          <p className="text-gray-500 text-sm mt-2">Please wait while we sign you in...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show timeout message if loading takes too long
+  if (loading && loadingTimeout) {
+    return (
+      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="mb-4">
+            <SimpleLogo size="lg" />
+          </div>
+          <p className="text-gray-400 mb-4">Sign in is taking longer than expected</p>
+          <p className="text-gray-500 text-sm mb-6">Please try again or refresh the page</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+          >
+            Refresh Page
+          </button>
         </div>
       </div>
     );

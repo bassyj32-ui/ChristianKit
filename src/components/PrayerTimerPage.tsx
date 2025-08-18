@@ -66,57 +66,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     }
   }, [propSelectedMinutes]);
 
-  useEffect(() => {
-    // Start timer immediately when component mounts
-    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
-    // Start the timer immediately since isPraying is now true by default
-    setTimeRemaining(selectedMinutes * 60);
-  }, []); // Empty dependency array - runs only once
-
-  // Timer effect
-  useEffect(() => {
-    console.log('Timer effect triggered - isPraying:', isPraying, 'timeRemaining:', timeRemaining);
-    
-    if (isPraying && timeRemaining > 0) {
-      console.log('Starting timer interval');
-      intervalRef.current = setInterval(() => {
-        setTimeRemaining(prev => {
-          console.log('Timer tick - prev:', prev);
-          if (prev <= 1) {
-            console.log('Timer complete');
-            setIsPraying(false);
-            completePrayer();
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-
-    return () => {
-      if (intervalRef.current) {
-        console.log('Clearing timer interval');
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
-      }
-    };
-  }, [isPraying, timeRemaining]);
-
-  const startPrayer = () => {
-    setIsPraying(true);
-    setPrayerCompleted(false);
-    setTimeRemaining(selectedMinutes * 60);
-    setCurrentReminderIndex(0);
-    setShowReminder(false);
-    
-    // Start focus reminders every 30 seconds
-    reminderIntervalRef.current = setInterval(() => {
-      setShowReminder(true);
-      setTimeout(() => setShowReminder(false), 3000);
-      setCurrentReminderIndex(prev => (prev + 1) % focusReminders.length);
-    }, 30000);
-  }
-
+  // Define completePrayer function before using it in useEffect
   const completePrayer = () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -143,6 +93,56 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     
     // Call timer completion handler
     onTimerComplete?.();
+  };
+
+  useEffect(() => {
+    // Start timer immediately when component mounts
+    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
+    setTimeRemaining(selectedMinutes * 60);
+  }, []); // Empty dependency array - runs only once
+
+  // Timer effect
+  useEffect(() => {
+    console.log('Timer effect triggered - isPraying:', isPraying);
+    
+    if (isPraying) {
+      console.log('Starting timer interval');
+      intervalRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          console.log('Timer tick - prev:', prev);
+          if (prev <= 1) {
+            console.log('Timer complete');
+            setIsPraying(false);
+            completePrayer();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+
+    return () => {
+      if (intervalRef.current) {
+        console.log('Clearing timer interval');
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+    };
+  }, [isPraying]);
+
+  const startPrayer = () => {
+    setIsPraying(true);
+    setPrayerCompleted(false);
+    setTimeRemaining(selectedMinutes * 60);
+    setCurrentReminderIndex(0);
+    setShowReminder(false);
+    
+    // Start focus reminders every 30 seconds
+    reminderIntervalRef.current = setInterval(() => {
+      setShowReminder(true);
+      setTimeout(() => setShowReminder(false), 3000);
+      setCurrentReminderIndex(prev => (prev + 1) % focusReminders.length);
+    }, 30000);
   }
 
   const formatTime = (seconds: number) => {
