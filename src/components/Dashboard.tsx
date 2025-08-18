@@ -90,7 +90,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
           
           {/* Main 3 Habits - Tab Style */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-6">
             {/* Prayer Tab */}
             <div 
               onClick={() => {
@@ -98,21 +98,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 const prayerTime = userPlan?.prayerTime || 10;
                 onNavigate?.('prayer', prayerTime);
               }}
-              className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-green-500/30 hover:shadow-green-500/20"
+              className="bg-neutral-900/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-green-500/30 hover:shadow-green-500/20"
             >
               <div className="text-center">
-                <div className="text-3xl sm:text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">🙏</div>
-                <h3 className="text-base sm:text-lg font-bold mb-2 text-gray-100">Prayer</h3>
-                <div className="text-xl sm:text-2xl font-bold mb-2 text-green-400">{userPlan?.prayerTime || 10} min</div>
-                <div className="text-xs text-gray-400 mb-3">Focus: {userPlan?.prayerFocus?.slice(0, 2).join(', ') || 'Daily prayer'}</div>
+                <div className="text-2xl sm:text-4xl mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">🙏</div>
+                <h3 className="text-xs sm:text-lg font-bold mb-1 sm:mb-2 text-gray-100">Prayer</h3>
+                <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2 text-green-400">{userPlan?.prayerTime || 10} min</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-3">Focus: {userPlan?.prayerFocus?.slice(0, 2).join(', ') || 'Daily prayer'}</div>
                 
-                <div className="w-full bg-neutral-700 rounded-full h-2 mb-2">
-                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.prayer}%` }}></div>
+                <div className="w-full bg-neutral-700 rounded-full h-1 sm:h-2 mb-1 sm:mb-2">
+                  <div className="bg-gradient-to-r from-green-500 to-emerald-500 h-1 sm:h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.prayer}%` }}></div>
                 </div>
-                <div className="text-xs text-gray-400 mb-4">{todayProgress.prayer}% complete today</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-4">{todayProgress.prayer}% complete today</div>
                 
-                <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl p-3 shadow-lg group-hover:shadow-green-500/30">
-                  <div className="text-sm font-bold group-hover:scale-105 transition-transform">
+                <div className="bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-lg group-hover:shadow-green-500/30">
+                  <div className="text-xs sm:text-sm font-bold group-hover:scale-105 transition-transform">
                     Start Prayer →
                   </div>
                 </div>
@@ -126,21 +126,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 const bibleTime = userPlan?.bibleTime || 20;
                 onNavigate?.('prayer', bibleTime);
               }}
-              className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-blue-500/30 hover:shadow-blue-500/20"
+              className="bg-neutral-900/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-blue-500/30 hover:shadow-blue-500/20"
             >
               <div className="text-center">
-                <div className="text-3xl sm:text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">📖</div>
-                <h3 className="text-base sm:text-lg font-bold mb-2 text-gray-100">Bible Reading</h3>
-                <div className="text-xl sm:text-2xl font-bold mb-2 text-blue-400">{userPlan?.bibleTime || 20} min</div>
-                <div className="text-xs text-gray-400 mb-3">Topics: {userPlan?.bibleTopics?.slice(0, 2).join(', ') || 'Scripture study'}</div>
+                <div className="text-2xl sm:text-4xl mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">📖</div>
+                <h3 className="text-xs sm:text-lg font-bold mb-1 sm:mb-2 text-gray-100">Bible Reading</h3>
+                <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2 text-blue-400">{userPlan?.bibleTime || 20} min</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-3">Topics: {userPlan?.bibleTopics?.slice(0, 2).join(', ') || 'Scripture study'}</div>
                 
-                <div className="w-full bg-neutral-700 rounded-full h-2 mb-2">
-                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.bible}%` }}></div>
+                <div className="w-full bg-neutral-700 rounded-full h-1 sm:h-2 mb-1 sm:mb-2">
+                  <div className="bg-gradient-to-r from-blue-500 to-cyan-500 h-1 sm:h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.bible}%` }}></div>
                 </div>
-                <div className="text-xs text-gray-400 mb-4">{todayProgress.bible}% complete today</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-4">{todayProgress.bible}% complete today</div>
                 
-                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-xl p-3 shadow-lg group-hover:shadow-blue-500/30">
-                  <div className="text-sm font-bold group-hover:scale-105 transition-transform">
+                <div className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-lg group-hover:shadow-blue-500/30">
+                  <div className="text-xs sm:text-sm font-bold group-hover:scale-105 transition-transform">
                     Start Reading →
                   </div>
                 </div>
@@ -154,24 +154,75 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 const prayerTime = userPlan?.prayerTime || 10;
                 onNavigate?.('prayer', prayerTime);
               }}
-              className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-emerald-500/30 hover:shadow-emerald-500/20"
+              className="bg-neutral-900/90 backdrop-blur-sm rounded-xl sm:rounded-2xl p-2 sm:p-6 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 cursor-pointer group border border-neutral-800 hover:border-emerald-500/30 hover:shadow-emerald-500/20"
             >
               <div className="text-center">
-                <div className="text-3xl sm:text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">🧘‍♀️</div>
-                <div className="text-base sm:text-lg font-bold mb-2 text-gray-100">Meditation</div>
-                <div className="text-xl sm:text-2xl font-bold mb-2 text-emerald-400">{userPlan?.prayerTime || 10} min</div>
-                <div className="text-xs text-gray-400 mb-3">Style: {userPlan?.prayerStyle?.replace('_', ' ') || 'Contemplative'}</div>
+                <div className="text-2xl sm:text-4xl mb-2 sm:mb-3 group-hover:scale-110 transition-transform duration-300">🧘‍♀️</div>
+                <div className="text-xs sm:text-lg font-bold mb-1 sm:mb-2 text-gray-100">Meditation</div>
+                <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2 text-emerald-400">{userPlan?.prayerTime || 10} min</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-3">Style: {userPlan?.prayerStyle?.replace('_', ' ') || 'Contemplative'}</div>
                 
-                <div className="w-full bg-neutral-700 rounded-full h-2 mb-2">
-                  <div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.meditation}%` }}></div>
+                <div className="w-full bg-neutral-700 rounded-full h-1 sm:h-2 mb-1 sm:mb-2">
+                  <div className="bg-gradient-to-r from-emerald-500 to-teal-500 h-1 sm:h-2 rounded-full transition-all duration-1000" style={{ width: `${todayProgress.meditation}%` }}></div>
                 </div>
-                <div className="text-xs text-gray-400 mb-4">{todayProgress.meditation}% complete today</div>
+                <div className="text-xs text-gray-400 mb-2 sm:mb-4">{todayProgress.meditation}% complete today</div>
                 
-                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl p-3 shadow-lg group-hover:shadow-emerald-500/30">
-                  <div className="text-sm font-bold group-hover:scale-105 transition-transform">
+                <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg sm:rounded-xl p-2 sm:p-3 shadow-lg group-hover:shadow-emerald-500/30">
+                  <div className="text-xs sm:text-sm font-bold group-hover:scale-105 transition-transform">
                     Start Meditation →
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Pro Feature Promotion - Mobile Optimized */}
+        <div className="mb-6 sm:mb-8">
+          <div className="bg-gradient-to-r from-purple-900/80 via-pink-900/80 to-indigo-900/80 backdrop-blur-sm border-2 border-purple-500/30 rounded-2xl p-4 sm:p-6 shadow-2xl">
+            <div className="text-center">
+              <div className="text-3xl sm:text-4xl mb-3">⭐</div>
+              <h3 className="text-lg sm:text-xl font-bold text-white mb-2">Unlock Your Full Spiritual Potential</h3>
+              <p className="text-purple-200 text-sm sm:text-base mb-4">
+                Get unlimited prayer sessions, advanced analytics, and premium support
+              </p>
+              
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                <div className="bg-white/10 rounded-xl p-3">
+                  <div className="text-2xl mb-1">♾️</div>
+                  <div className="text-xs sm:text-sm font-semibold text-white">Unlimited Sessions</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3">
+                  <div className="text-2xl mb-1">📊</div>
+                  <div className="text-xs sm:text-sm font-semibold text-white">Advanced Analytics</div>
+                </div>
+                <div className="bg-white/10 rounded-xl p-3">
+                  <div className="text-2xl mb-1">☁️</div>
+                  <div className="text-xs sm:text-sm font-semibold text-white">Cloud Sync</div>
+                </div>
+              </div>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-white">$2.50</div>
+                  <div className="text-xs sm:text-sm text-purple-200">per month</div>
+                </div>
+                <div className="text-purple-200 text-xs sm:text-sm">or</div>
+                <div className="text-center">
+                  <div className="text-2xl sm:text-3xl font-bold text-white">$30</div>
+                  <div className="text-xs sm:text-sm text-purple-200">per year (save 50%)</div>
+                </div>
+              </div>
+              
+              <button
+                onClick={() => onNavigate?.('subscription')}
+                className="w-full mt-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all duration-200 transform hover:scale-105 shadow-lg"
+              >
+                🚀 Upgrade to Pro
+              </button>
+              
+              <div className="mt-3 text-xs text-purple-200">
+                30-day money-back guarantee • Cancel anytime
               </div>
             </div>
           </div>
