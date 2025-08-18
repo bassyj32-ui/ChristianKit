@@ -99,6 +99,14 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     // Start timer immediately when component mounts
     console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
     setTimeRemaining(selectedMinutes * 60);
+    
+    // Ensure timer starts after a brief delay
+    const timer = setTimeout(() => {
+      console.log('Ensuring timer is started');
+      setIsPraying(true);
+    }, 100);
+    
+    return () => clearTimeout(timer);
   }, []); // Empty dependency array - runs only once
 
   // Timer effect
