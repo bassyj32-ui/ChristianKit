@@ -140,18 +140,10 @@ const AppContent: React.FC = () => {
     setShowQuestionnaire(false)
     setIsFirstTimeUser(false)
     
-    // Adjust main screen tabs based on questionnaire results
-    if (plan.experienceLevel === 'beginner') {
-      // Beginners see simplified tabs
-      setActiveTab('dashboard')
-    } else if (plan.experienceLevel === 'intermediate') {
-      // Intermediate users see all tabs
-      setActiveTab('dashboard')
-    } else if (plan.experienceLevel === 'advanced') {
-      // Advanced users see all tabs plus advanced features
-      setActiveTab('dashboard')
-    }
+    // Always go to dashboard after questionnaire completion
+    setActiveTab('dashboard')
     
+    // Save the plan and mark questionnaire as completed
     localStorage.setItem('userPlan', JSON.stringify(plan))
     localStorage.setItem('hasCompletedQuestionnaire', 'true') // Mark as completed
     
@@ -203,7 +195,7 @@ const AppContent: React.FC = () => {
 
   const handleLogout = async () => {
     await logout();
-    setActiveTab('prayer');
+    setActiveTab('dashboard');
     setUserPlan(null);
     setShowQuestionnaire(false);
     setIsFirstTimeUser(true);
@@ -252,7 +244,11 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show questionnaire for first-time users (regardless of authentication)
+  // Show login page if not authenticated
+  console.log('App render - user:', user, 'loading:', loading, 'error:', error);
+  // Remove login check - timer should always be visible
+
+  // Show questionnaire for first-time users
   if (showQuestionnaire) {
     return (
       <UserQuestionnaire 
@@ -325,35 +321,35 @@ const AppContent: React.FC = () => {
 
             {/* Right Side - Navigation Tabs + User Menu */}
             <div className="flex items-center gap-4">
-              {/* Main Navigation Tabs */}
-              <div className="hidden md:flex items-center gap-2">
-                <button
-                  onClick={() => setActiveTab('prayer')}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                    activeTab === 'prayer'
-                      ? 'bg-neutral-800 text-green-400'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-900/50 hover:border-neutral-700/50'
-                  }`}
-                >
-                  ✨ Heal Now
-                </button>
-                <button
-                  onClick={() => {
-                    const needsQuestionnaire = shouldShowQuestionnaire()
-                    if (needsQuestionnaire) {
-                      setShowQuestionnaire(true)
-                    } else {
-                      setActiveTab('dashboard')
-                    }
-                  }}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
-                    activeTab === 'dashboard'
-                      ? 'bg-neutral-800 text-green-400'
-                      : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-900/50 hover:border-neutral-700/50'
-                  }`}
-                >
-                  🏠 Homepage
-                </button>
+                             {/* Main Navigation Tabs */}
+               <div className="hidden md:flex items-center gap-2">
+                 <button
+                   onClick={() => {
+                     const needsQuestionnaire = shouldShowQuestionnaire()
+                     if (needsQuestionnaire) {
+                       setShowQuestionnaire(true)
+                     } else {
+                       setActiveTab('dashboard')
+                     }
+                   }}
+                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                     activeTab === 'dashboard'
+                       ? 'bg-neutral-800 text-green-400'
+                       : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-900/50 hover:border-neutral-700/50'
+                   }`}
+                 >
+                   🏠 Homepage
+                 </button>
+                 <button
+                   onClick={() => setActiveTab('prayer')}
+                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                     activeTab === 'prayer'
+                       ? 'bg-neutral-800 text-green-400'
+                       : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-900/50 hover:border-neutral-700/50'
+                   }`}
+                 >
+                   ✨ Heal Now
+                 </button>
                 <button
                   onClick={() => setActiveTab('community')}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
@@ -377,18 +373,19 @@ const AppContent: React.FC = () => {
               </div>
 
               {/* User Avatar and Actions */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowProfileMenu(!showProfileMenu)}
-                  className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center hover:scale-105 transition-all duration-200 cursor-pointer"
-                >
-                  <span className="text-white text-sm font-bold">
-                    {user?.email?.charAt(0).toUpperCase() || 'G'}
-                  </span>
-                </button>
-                
-                {/* Profile Dropdown Menu */}
-                {showProfileMenu && (
+              {user ? (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowProfileMenu(!showProfileMenu)}
+                    className="w-8 h-8 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center hover:scale-105 transition-all duration-200 cursor-pointer"
+                  >
+                    <span className="text-white text-sm font-bold">
+                      {user?.email?.charAt(0).toUpperCase() || 'G'}
+                    </span>
+                  </button>
+                  
+                  {/* Profile Dropdown Menu - Only show when user is authenticated */}
+                  {showProfileMenu && (
                   <div className="absolute right-0 mt-2 w-80 bg-neutral-900/95 backdrop-blur-xl border border-neutral-700 rounded-xl shadow-2xl z-50 profile-menu">
                     <div className="py-2">
                       <div className="px-4 py-3 border-b border-neutral-700">
@@ -400,33 +397,43 @@ const AppContent: React.FC = () => {
                       <div className="px-2 py-2">
                         <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2 px-2">Navigation</div>
                         
-                        {/* Core Navigation for Mobile */}
-                        <button
-                          onClick={() => {
-                            const needsQuestionnaire = shouldShowQuestionnaire()
-                            if (needsQuestionnaire) {
-                              setShowQuestionnaire(true)
-                              setShowProfileMenu(false)
-                            } else {
-                              setActiveTab('dashboard')
-                              setShowProfileMenu(false)
-                            }
-                          }}
-                          className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-neutral-800 transition-colors duration-200 flex items-center gap-3 rounded-lg"
-                        >
-                          <span>🏠</span>
-                          Homepage
-                        </button>
-                        <button
-                          onClick={() => {
-                            setActiveTab('community')
-                            setShowProfileMenu(false)
-                          }}
-                          className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-neutral-800 transition-colors duration-200 flex items-center gap-3 rounded-lg"
-                        >
-                          <span>👥</span>
-                          Community
-                        </button>
+                                                 {/* Core Navigation for Mobile */}
+                         <button
+                           onClick={() => {
+                             const needsQuestionnaire = shouldShowQuestionnaire()
+                             if (needsQuestionnaire) {
+                               setShowQuestionnaire(true)
+                               setShowProfileMenu(false)
+                             } else {
+                               setActiveTab('dashboard')
+                               setShowProfileMenu(false)
+                             }
+                           }}
+                           className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-neutral-800 transition-colors duration-200 flex items-center gap-3 rounded-lg"
+                         >
+                           <span>🏠</span>
+                           Homepage
+                         </button>
+                         <button
+                           onClick={() => {
+                             setActiveTab('prayer')
+                             setShowProfileMenu(false)
+                           }}
+                           className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-neutral-800 transition-colors duration-200 flex items-center gap-3 rounded-lg"
+                         >
+                           <span>✨</span>
+                           Heal Now
+                         </button>
+                         <button
+                           onClick={() => {
+                             setActiveTab('community')
+                             setShowProfileMenu(false)
+                           }}
+                           className="w-full px-4 py-3 text-left text-sm text-gray-300 hover:text-white hover:bg-neutral-800 transition-colors duration-200 flex items-center gap-3 rounded-lg"
+                         >
+                           <span>👥</span>
+                           Community
+                         </button>
                         
                         <div className="border-t border-neutral-700 my-2"></div>
                         
@@ -541,69 +548,79 @@ const AppContent: React.FC = () => {
                   </div>
                 )}
               </div>
+            ) : (
+              <button
+                onClick={signInWithGoogle}
+                className="px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-lg font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+              >
+                Sign In
+              </button>
+            )}
 
-              {/* Notification Bell */}
-              <div className="relative">
-                <button
-                  onClick={() => setShowNotifications(!showNotifications)}
-                  className="w-8 h-8 bg-neutral-800 rounded-full flex items-center justify-center hover:bg-neutral-700 transition-colors relative"
-                >
-                  <span className="text-gray-300 text-lg">🔔</span>
-                  {reminderService.getUnreadCount() > 0 && (
-                    <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      {reminderService.getUnreadCount() > 9 ? '9+' : reminderService.getUnreadCount()}
-                    </span>
-                  )}
-                </button>
-                
-                {/* Notifications Dropdown */}
-                {showNotifications && (
-                  <div className="absolute right-0 mt-2 w-80 bg-neutral-900/95 backdrop-blur-xl border border-neutral-700 rounded-xl shadow-2xl z-50 notifications-dropdown">
-                    <div className="p-4 border-b border-neutral-700">
-                      <div className="flex justify-between items-center">
-                        <h3 className="text-lg font-bold text-gray-100">Notifications</h3>
-                        <button
-                          onClick={() => reminderService.markAllNotificationsAsRead()}
-                          className="text-sm text-blue-400 hover:text-blue-300"
-                        >
-                          Mark all read
-                        </button>
+              {/* Notification Bell - Only show when user is authenticated */}
+              {user && (
+                <div className="relative">
+                  <button
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="w-8 h-8 bg-neutral-800 rounded-full flex items-center justify-center hover:bg-neutral-700 transition-colors relative"
+                  >
+                    <span className="text-gray-300 text-lg">🔔</span>
+                    {reminderService.getUnreadCount() > 0 && (
+                      <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {reminderService.getUnreadCount() > 9 ? '9+' : reminderService.getUnreadCount()}
+                      </span>
+                    )}
+                  </button>
+                  
+                  {/* Notifications Dropdown */}
+                  {showNotifications && (
+                    <div className="absolute right-0 mt-2 w-80 bg-neutral-900/95 backdrop-blur-xl border border-neutral-700 rounded-xl shadow-2xl z-50 notifications-dropdown">
+                      <div className="p-4 border-b border-neutral-700">
+                        <div className="flex justify-between items-center">
+                          <h3 className="text-lg font-bold text-gray-100">Notifications</h3>
+                          <button
+                            onClick={() => reminderService.markAllNotificationsAsRead()}
+                            className="text-sm text-blue-400 hover:text-blue-300"
+                          >
+                            Mark all read
+                          </button>
+                        </div>
+                      </div>
+                      <div className="max-h-96 overflow-y-auto">
+                        {reminderService.getNotifications().slice(0, 10).map((notification) => (
+                          <div
+                            key={notification.id}
+                            className={`p-4 border-b border-neutral-700 hover:bg-neutral-800 transition-colors ${
+                              !notification.read ? 'bg-blue-500/10' : ''
+                            }`}
+                          >
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1">
+                                <h4 className="font-medium text-gray-100">{notification.title}</h4>
+                                <p className="text-sm text-gray-400 mt-1">{notification.body}</p>
+                                <p className="text-xs text-gray-500 mt-2">
+                                  {new Date(notification.timestamp).toLocaleString()}
+                                </p>
+                              </div>
+                              <button
+                                onClick={() => reminderService.deleteNotification(notification.id)}
+                                className="text-gray-500 hover:text-red-400 transition-colors ml-2"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                        {reminderService.getNotifications().length === 0 && (
+                          <div className="p-8 text-center text-gray-400">
+                            No notifications yet
+                          </div>
+                        )}
                       </div>
                     </div>
-                    <div className="max-h-96 overflow-y-auto">
-                      {reminderService.getNotifications().slice(0, 10).map((notification) => (
-                        <div
-                          key={notification.id}
-                          className={`p-4 border-b border-neutral-700 hover:bg-neutral-800 transition-colors ${
-                            !notification.read ? 'bg-blue-500/10' : ''
-                          }`}
-                        >
-                          <div className="flex justify-between items-start">
-                            <div className="flex-1">
-                              <h4 className="font-medium text-gray-100">{notification.title}</h4>
-                              <p className="text-sm text-gray-400 mt-1">{notification.body}</p>
-                              <p className="text-xs text-gray-500 mt-2">
-                                {new Date(notification.timestamp).toLocaleString()}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => reminderService.deleteNotification(notification.id)}
-                              className="text-gray-500 hover:text-red-400 transition-colors ml-2"
-                            >
-                              ×
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                      {reminderService.getNotifications().length === 0 && (
-                        <div className="p-8 text-center text-gray-400">
-                          No notifications yet
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Cloud Sync Status */}
               {user && (

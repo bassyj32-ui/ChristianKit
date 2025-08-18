@@ -34,15 +34,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check for existing user in localStorage on mount
   useEffect(() => {
+    console.log('AuthProvider: Checking for saved user...');
+    
     const savedUser = localStorage.getItem('user');
+    console.log('AuthProvider: Saved user:', savedUser);
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
         setIsProUser(true); // For demo purposes, treat all users as Pro
+        console.log('AuthProvider: User loaded from localStorage');
       } catch (error) {
         console.error('Error parsing saved user:', error);
+        localStorage.removeItem('user'); // Clear corrupted data
       }
+    } else {
+      console.log('AuthProvider: No saved user found');
     }
+    setLoading(false); // Ensure loading is set to false
+    console.log('AuthProvider: Loading set to false');
   }, []);
 
   const signInWithGoogle = async () => {

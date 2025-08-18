@@ -30,7 +30,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Always start with 10
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Always start with 10 minutes
-  const [isPraying, setIsPraying] = useState(true) // Start directly in prayer (timer) mode
+  const [isPraying, setIsPraying] = useState(true) // Start in full-screen timer mode
   const [prayerCompleted, setPrayerCompleted] = useState(false)
   const [prayerMessage, setPrayerMessage] = useState("Lord Jesus, I'm here with You now to talk about...")
   const [prayerFocus, setPrayerFocus] = useState("")
@@ -69,17 +69,17 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   useEffect(() => {
     // Start timer immediately when component mounts
     console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
-    // Timer is already initialized with 10 minutes in state
+    // Start the timer immediately since isPraying is now true by default
+    setTimeRemaining(selectedMinutes * 60);
   }, []); // Empty dependency array - runs only once
 
   // Timer effect
   useEffect(() => {
     console.log('Timer effect triggered - isPraying:', isPraying, 'timeRemaining:', timeRemaining);
-    let interval: ReturnType<typeof setInterval>;
     
     if (isPraying && timeRemaining > 0) {
       console.log('Starting timer interval');
-      interval = setInterval(() => {
+      intervalRef.current = setInterval(() => {
         setTimeRemaining(prev => {
           console.log('Timer tick - prev:', prev);
           if (prev <= 1) {
@@ -94,9 +94,10 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
     }
 
     return () => {
-      if (interval) {
+      if (intervalRef.current) {
         console.log('Clearing timer interval');
-        clearInterval(interval);
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, [isPraying, timeRemaining]);
@@ -168,6 +169,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   const restartPrayer = () => {
     setPrayerCompleted(false)
     setTimeRemaining(selectedMinutes * 60)
+    setIsPraying(true) // Ensure we go back to full-screen timer mode
   }
 
   const progressPercentage = ((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100
@@ -684,7 +686,11 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
             
             {/* Start Another Prayer */}
             <button 
-              onClick={restartPrayer}
+              onClick={() => {
+                setPrayerCompleted(false)
+                setTimeRemaining(selectedMinutes * 60)
+                setIsPraying(true) // Go back to full-screen timer mode
+              }}
               className="bg-gradient-to-r from-green-500 to-emerald-500 text-white p-4 sm:p-6 md:p-8 rounded-2xl sm:rounded-3xl font-bold text-base sm:text-lg md:text-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
             >
               ⏰ Another Prayer
@@ -709,7 +715,11 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
 
           {/* Back to Prayer */}
           <button 
-            onClick={restartPrayer}
+            onClick={() => {
+              setPrayerCompleted(false)
+              setTimeRemaining(selectedMinutes * 60)
+              setIsPraying(true) // Go back to full-screen timer mode
+            }}
             className="bg-neutral-900/80 backdrop-blur-sm border-2 sm:border-4 border-neutral-700 text-gray-100 px-6 sm:px-8 py-3 sm:py-4 rounded-xl sm:rounded-2xl font-bold text-base sm:text-xl hover:bg-neutral-800 transition-all duration-300 mx-4 sm:mx-auto"
           >
             🙏 Back to Prayer

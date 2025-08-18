@@ -1,0 +1,6 @@
+warning: in the working copy of 'src/App.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/AuthProvider.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'src/components/PrayerTimerPage.tsx', LF will be replaced by CRLF the next time Git touches it
+src/App.tsx
+src/components/AuthProvider.tsx
+src/components/PrayerTimerPage.tsx
