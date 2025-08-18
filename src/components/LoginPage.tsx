@@ -61,9 +61,9 @@ export const LoginPage: React.FC = () => {
           {/* Terms */}
           <p className="text-xs text-gray-500 text-center mt-6">
             By signing in, you agree to our{' '}
-            <a href="#" className="text-green-400 hover:underline">Terms of Service</a>
+            <a href="/terms.html" className="text-green-400 hover:underline">Terms of Service</a>
             {' '}and{' '}
-            <a href="#" className="text-green-400 hover:underline">Privacy Policy</a>
+            <a href="/privacy.html" className="text-green-400 hover:underline">Privacy Policy</a>
           </p>
         </div>
       </div>

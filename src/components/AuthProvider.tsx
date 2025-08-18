@@ -1,13 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { 
-  signInWithPopup, 
-  GoogleAuthProvider, 
-  signOut, 
-  onAuthStateChanged,
-  User 
-} from 'firebase/auth';
-import { auth } from '../config/firebase';
-import { cloudDataService } from '../services/cloudDataService';
+
+interface User {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+}
 
 interface AuthContextType {
   user: User | null;
@@ -30,76 +28,45 @@ export const useAuth = () => {
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProUser, setIsProUser] = useState(false);
-  const [cloudUnsubscribers, setCloudUnsubscribers] = useState<(() => void)[]>([]);
 
+  // Check for existing user in localStorage on mount
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setUser(user)
-      setLoading(false)
-      
-      if (user) {
-        try {
-          // Initialize user in cloud
-          await cloudDataService.initializeUser(user)
-          
-          // Perform initial sync
-          await cloudDataService.syncLocalDataToCloud(user)
-          
-          // Set up real-time listeners
-          const unsubscribePrayer = cloudDataService.subscribeToPrayerSessions(user, (sessions) => {
-            // Update local storage with cloud data
-            localStorage.setItem('prayerSessions', JSON.stringify(sessions))
-          })
-          
-          const unsubscribeBible = cloudDataService.subscribeToBibleReadings(user, (readings) => {
-            // Update local storage with cloud data
-            localStorage.setItem('bibleReadings', JSON.stringify(readings))
-          })
-          
-          const unsubscribeCommunity = cloudDataService.subscribeToCommunityPosts((posts) => {
-            // Update local storage with cloud data
-            localStorage.setItem('communityPosts', JSON.stringify(posts))
-          })
-          
-          // Store unsubscribe functions for cleanup
-          setCloudUnsubscribers([unsubscribePrayer, unsubscribeBible, unsubscribeCommunity])
-          
-          console.log('Cloud sync initialized for user:', user.email)
-        } catch (error) {
-          console.error('Error initializing cloud sync:', error)
-        }
-      } else {
-        // Clean up cloud listeners when user signs out
-        if (cloudUnsubscribers.length > 0) {
-          cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
-          setCloudUnsubscribers([])
-        }
-        cloudDataService.unsubscribeAll()
+    const savedUser = localStorage.getItem('user');
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+        setIsProUser(true); // For demo purposes, treat all users as Pro
+      } catch (error) {
+        console.error('Error parsing saved user:', error);
       }
-    })
-
-    return () => {
-      unsubscribe()
-      // Clean up cloud listeners
-      if (cloudUnsubscribers.length > 0) {
-        cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
-      }
-      cloudDataService.unsubscribeAll()
     }
-  }, [])
+  }, []);
 
   const signInWithGoogle = async () => {
     try {
       setLoading(true);
       setError(null);
-      const provider = new GoogleAuthProvider();
-      await signInWithPopup(auth, provider);
+      
+      // Simulate Google sign-in for development
+      const mockUser: User = {
+        uid: 'demo-user-' + Date.now(),
+        email: 'demo@christiankit.app',
+        displayName: 'Demo User',
+        photoURL: 'https://via.placeholder.com/150'
+      };
+      
+      // Save to localStorage
+      localStorage.setItem('user', JSON.stringify(mockUser));
+      setUser(mockUser);
+      setIsProUser(true);
+      
+      console.log('Demo user signed in:', mockUser);
     } catch (error) {
-      console.error('Google sign-in error:', error);
-      setError('Failed to sign in with Google. Please try again.');
+      console.error('Sign in error:', error);
+      setError('Failed to sign in. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -107,27 +74,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = async () => {
     try {
-      // Sync data to cloud before logout
-      if (user) {
-        await cloudDataService.syncLocalDataToCloud(user)
-      }
-      
-      // Clean up cloud listeners
-      if (cloudUnsubscribers.length > 0) {
-        cloudUnsubscribers.forEach(unsubscribe => unsubscribe())
-        setCloudUnsubscribers([])
-      }
-      cloudDataService.unsubscribeAll()
-      
-      await signOut(auth)
+      setLoading(true);
+      localStorage.removeItem('user');
+      setUser(null);
+      setIsProUser(false);
+      console.log('User signed out');
     } catch (error) {
-      console.error('Error during logout:', error)
-      // Still sign out even if sync fails
-      await signOut(auth)
+      console.error('Logout error:', error);
+      setError('Failed to sign out. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     error,

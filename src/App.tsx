@@ -18,6 +18,7 @@ import { WeeklyProgressBot } from './components/WeeklyProgressBot'
 import { reminderService } from './services/reminderService'
 import { SyncStatus } from './components/SyncStatus'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
+import { Footer } from './components/Footer'
 
 interface UserPlan {
   prayerTime: number;
@@ -192,33 +193,12 @@ const AppContent: React.FC = () => {
       // Set the selected minutes for the timer
       setSelectedMinutes(duration);
     }
-    
-    // For users who need questionnaire, certain pages should trigger questionnaire first
-    if (shouldShowQuestionnaire() && (page === 'dashboard' || page === 'community')) {
-      console.log('User needs questionnaire and trying to navigate to', page, '- showing questionnaire instead')
-      setShowQuestionnaire(true)
-    } else {
-      setActiveTab(page);
-    }
+    setActiveTab(page);
   };
 
   const handleTimerComplete = () => {
-    // Users who need questionnaire go to questionnaire after timer completion
-    const needsQuestionnaire = shouldShowQuestionnaire()
-    console.log('Timer completed:', { 
-      needsQuestionnaire, 
-      userPlan, 
-      localStorageUserPlan: localStorage.getItem('userPlan'),
-      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
-    })
-    
-    if (needsQuestionnaire) {
-      console.log('Timer completed for user who needs questionnaire, showing questionnaire')
-      setShowQuestionnaire(true)
-    } else {
-      console.log('Timer completed for user with completed setup, going to dashboard')
-      setActiveTab('dashboard')
-    }
+    console.log('Timer completed, going to dashboard')
+    setActiveTab('dashboard')
   }
 
   const handleLogout = async () => {
@@ -235,26 +215,17 @@ const AppContent: React.FC = () => {
 
   // Show error screen
   if (error) {
-  return (
+    return (
       <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
         <div className="max-w-md w-full mx-auto px-6 text-center">
           <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-neutral-800">
             <div className="text-6xl mb-4">⚠️</div>
             <h1 className="text-2xl font-bold text-gray-100 mb-4">
-              Configuration Required
-          </h1>
+              Something went wrong
+            </h1>
             <p className="text-gray-400 mb-6">
               {error}
             </p>
-            <div className="bg-neutral-800 rounded-xl p-4 text-left text-sm">
-              <p className="text-gray-300 mb-2">To fix this:</p>
-              <ol className="text-gray-400 space-y-1">
-                <li>1. Create a Firebase project</li>
-                <li>2. Enable Google Authentication</li>
-                <li>3. Add your config to .env file</li>
-                <li>4. Restart the development server</li>
-              </ol>
-            </div>
             <button
               onClick={() => window.location.reload()}
               className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
@@ -265,7 +236,7 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
-}
+  }
 
   // Show loading screen
   if (loading) {
@@ -291,19 +262,6 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // For users who need questionnaire, always show the timer first
-  if (shouldShowQuestionnaire() && !showQuestionnaire) {
-    return (
-      <PrayerTimerPage 
-        onNavigate={handleNavigate}
-        onStartQuestionnaire={() => setShowQuestionnaire(true)}
-        onTimerComplete={handleTimerComplete}
-        userPlan={userPlan}
-        selectedMinutes={selectedMinutes}
-      />
-    )
-  }
-
 
 
   const renderContent = () => {
@@ -321,13 +279,7 @@ const AppContent: React.FC = () => {
       case 'dashboard':
         return (
           <Dashboard 
-            onNavigate={(page) => {
-              if (page === 'dashboard' && shouldShowQuestionnaire()) {
-                setShowQuestionnaire(true)
-              } else {
-                setActiveTab(page)
-              }
-            }}
+            onNavigate={(page) => setActiveTab(page)}
             userPlan={userPlan}
           />
         )
@@ -388,20 +340,9 @@ const AppContent: React.FC = () => {
                 <button
                   onClick={() => {
                     const needsQuestionnaire = shouldShowQuestionnaire()
-                    console.log('Desktop Homepage button clicked:', { 
-                      isFirstTimeUser, 
-                      showQuestionnaire, 
-                      hasUserPlan: !!userPlan, 
-                      needsQuestionnaire,
-                      userPlan,
-                      localStorageUserPlan: localStorage.getItem('userPlan'),
-                      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
-                    })
                     if (needsQuestionnaire) {
-                      console.log('Desktop: Showing questionnaire - user needs to complete setup')
                       setShowQuestionnaire(true)
                     } else {
-                      console.log('Desktop: Going directly to dashboard - user has completed setup')
                       setActiveTab('dashboard')
                     }
                   }}
@@ -411,7 +352,7 @@ const AppContent: React.FC = () => {
                       : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-900/50 hover:border-neutral-700/50'
                   }`}
                 >
-                  🏠 Homepage {user && isFirstTimeUser && <span className="ml-2 text-xs bg-green-500 text-white px-2 py-1 rounded-full">New</span>}
+                  🏠 Homepage
                 </button>
                 <button
                   onClick={() => setActiveTab('community')}
@@ -797,6 +738,9 @@ const AppContent: React.FC = () => {
       {showFeedback && (
         <FeedbackForm onClose={() => setShowFeedback(false)} />
       )}
+
+      {/* Footer */}
+      <Footer />
     </div>
   )
 }

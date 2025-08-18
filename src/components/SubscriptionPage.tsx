@@ -67,13 +67,14 @@ export const SubscriptionPage: React.FC = () => {
                 <div className="text-purple-200 text-lg font-semibold">
                   Billed annually at <span className="text-white font-bold">$30/year</span>
                 </div>
-                <div className="text-purple-100 text-sm mt-2">
-                  Non-refundable
-                </div>
               </div>
 
               {/* Features List */}
               <div className="space-y-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <span className="text-green-400 text-xl">✓</span>
+                  <span>Everything in Free</span>
+                </div>
                 <div className="flex items-center gap-3">
                   <span className="text-green-400 text-xl">✓</span>
                   <span>Unlimited prayer sessions</span>
@@ -97,10 +98,6 @@ export const SubscriptionPage: React.FC = () => {
                 <div className="flex items-center gap-3">
                   <span className="text-green-400 text-xl">✓</span>
                   <span>Premium support</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>Exclusive content & resources</span>
                 </div>
               </div>
 
@@ -132,15 +129,23 @@ export const SubscriptionPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Features List */}
+                        {/* Features List */}
             <div className="space-y-4 mb-8">
               <div className="flex items-center gap-3">
                 <span className="text-green-500 text-xl">✓</span>
-                <span className="text-gray-700">Community access (2 weeks)</span>
+                <span className="text-gray-700">Basic habit tracking</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-green-500 text-xl">✓</span>
-                <span className="text-gray-700">Weekly progress (2 weeks)</span>
+                <span className="text-gray-700">Prayer timer (limited)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-green-500 text-xl">✓</span>
+                <span className="text-gray-700">Bible reading progress</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-green-500 text-xl">✓</span>
+                <span className="text-gray-700">Community access (2 weeks)</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-red-500 text-xl">✗</span>
@@ -148,15 +153,13 @@ export const SubscriptionPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-red-500 text-xl">✗</span>
-                <span className="text-gray-500">Advanced Bible tracking</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-red-500 text-xl">✗</span>
-                <span className="text-gray-500">Cloud sync & premium features</span>
+                <span className="text-gray-500">Advanced analytics</span>
               </div>
             </div>
 
-            {/* Free Plan Request */}
+            
+
+        {/* Free Plan Request */}
             <div className="text-center">
               <button
                 onClick={() => setShowFreeRequest(true)}

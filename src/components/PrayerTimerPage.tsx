@@ -30,7 +30,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Always start with 10
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Always start with 10 minutes
-  const [isPraying, setIsPraying] = useState(true) // Start directly in prayer mode
+  const [isPraying, setIsPraying] = useState(true) // Start directly in prayer (timer) mode
   const [prayerCompleted, setPrayerCompleted] = useState(false)
   const [prayerMessage, setPrayerMessage] = useState("Lord Jesus, I'm here with You now to talk about...")
   const [prayerFocus, setPrayerFocus] = useState("")
@@ -74,12 +74,16 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
 
   // Timer effect
   useEffect(() => {
+    console.log('Timer effect triggered - isPraying:', isPraying, 'timeRemaining:', timeRemaining);
     let interval: ReturnType<typeof setInterval>;
     
     if (isPraying && timeRemaining > 0) {
+      console.log('Starting timer interval');
       interval = setInterval(() => {
         setTimeRemaining(prev => {
+          console.log('Timer tick - prev:', prev);
           if (prev <= 1) {
+            console.log('Timer complete');
             setIsPraying(false);
             completePrayer();
             return 0;
@@ -91,6 +95,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
 
     return () => {
       if (interval) {
+        console.log('Clearing timer interval');
         clearInterval(interval);
       }
     };
@@ -600,8 +605,9 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({ onNavigate, on
               <div className="text-center">
                 <button
                   onClick={() => {
-                    setTimeRemaining(selectedMinutes * 60)
-                    setIsPraying(true)
+                    console.log('Starting prayer with', selectedMinutes, 'minutes');
+                    setTimeRemaining(selectedMinutes * 60);
+                    setIsPraying(true);
                   }}
                   className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-16 py-5 rounded-3xl text-2xl font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-300 transform hover:scale-105 shadow-2xl"
                 >
