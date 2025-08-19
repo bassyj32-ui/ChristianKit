@@ -1,15 +1,15 @@
 import React, { useState } from 'react'
-import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { useAuth } from './AuthProvider'
 
 export const SubscriptionPage: React.FC = () => {
-  const { user } = useSupabaseAuth()
+  const { user } = useAuth()
   const [showFreeRequest, setShowFreeRequest] = useState(false)
   const [freeRequestReason, setFreeRequestReason] = useState('')
   const [freeRequestSubmitted, setFreeRequestSubmitted] = useState(false)
 
   const handleProUpgrade = () => {
     // Redirect to Payooer payment link
-    const payooerLink = `https://payooer.com/request-money/${user?.id || 'user'}`
+    const payooerLink = `https://payooer.com/request-money/${user?.uid || 'user'}`
     window.open(payooerLink, '_blank')
   }
 
@@ -159,7 +159,7 @@ export const SubscriptionPage: React.FC = () => {
               </div>
             </div>
 
-                        {/* Features List */}
+            {/* Features List */}
             <div className="space-y-4 mb-8">
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
@@ -191,7 +191,7 @@ export const SubscriptionPage: React.FC = () => {
               </div>
             </div>
 
-        {/* Free Plan Request */}
+            {/* Free Plan Request */}
             <div className="text-center">
               <button
                 onClick={() => setShowFreeRequest(true)}

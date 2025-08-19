@@ -194,8 +194,8 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
             </div>
             
       {/* Weekly Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-        <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+      <div className="flex flex-row overflow-x-auto gap-4 w-full pb-2">
+        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
           <div className="text-center">
             <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">
               {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'prayer') : 0}%
@@ -204,7 +204,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
           </div>
         </div>
         
-        <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
           <div className="text-center">
             <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">
               {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'bible') : 0}%
@@ -213,24 +213,24 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
           </div>
         </div>
 
-        <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
-              <div className="text-center">
+        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+          <div className="text-center">
             <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-2">
               {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'meditation') : 0}%
             </div>
             <div className="text-sm text-gray-400">Meditation Average</div>
           </div>
-          </div>
+        </div>
 
-        <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
           <div className="text-center">
             <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">
               {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'journal') : 0}%
             </div>
             <div className="text-sm text-gray-400">Journal Average</div>
           </div>
-            </div>
-            </div>
+        </div>
+      </div>
 
       {/* Weekly Summary - Only show if showSummary is true */}
       {showSummary && (

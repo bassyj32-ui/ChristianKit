@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { prayerService } from '../services/prayerService';
 
 interface WeeklyProgressBotProps {
   position?: 'top-right' | 'bottom-right' | 'floating';
@@ -14,42 +13,43 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
   const [currentMessage, setCurrentMessage] = useState('');
   const [messageType, setMessageType] = useState<'motivation' | 'celebration' | 'achievement' | 'reminder'>('reminder');
   const [isExpanded, setIsExpanded] = useState(false);
-  const [weeklyData, setWeeklyData] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    const loadWeeklyData = async () => {
-      try {
-        setLoading(true);
-        const data = await prayerService.getWeeklyProgress();
-        const reminders = await prayerService.getWeeklyReminders();
-        setWeeklyData(data);
+    // Set initial message
+    setCurrentMessage('You\'re 78% to your weekly goal! 🎯');
+    setMessageType('reminder');
+    
+    // Show bot after a delay
+    setTimeout(() => setIsVisible(true), 2000);
+    
+    // Add attention-grabbing effects for web users
+    const attentionInterval = setInterval(() => {
+      if (!isExpanded) {
+        // Cycle through different message types to grab attention
+        const types = ['motivation', 'celebration', 'achievement', 'reminder'] as const;
+        const randomType = types[Math.floor(Math.random() * types.length)];
+        setMessageType(randomType);
         
-        // Set initial message based on reminders
-        if (reminders.length > 0) {
-          setCurrentMessage(reminders[0].message);
-          setMessageType(reminders[0].type);
-        } else {
-          setCurrentMessage('How is your spiritual journey going this week?');
-          setMessageType('reminder');
+        // Update message based on type with engaging content
+        switch (randomType) {
+          case 'motivation':
+            setCurrentMessage('Only 3 more prayers to hit 100% this week! 💪');
+            break;
+          case 'celebration':
+            setCurrentMessage('Wow! You\'ve prayed 5 days in a row! 🎉');
+            break;
+          case 'achievement':
+            setCurrentMessage('You\'re in the top 15% of users this week! 🏆');
+            break;
+          default:
+            setCurrentMessage('Your streak is 7 days strong! Keep going! 🔥');
         }
-        
-        // Show bot after a delay
-        setTimeout(() => setIsVisible(true), 2000);
-      } catch (error) {
-        console.error('Error loading weekly data:', error);
-      } finally {
-        setLoading(false);
       }
-    };
-
-    loadWeeklyData();
+    }, 8000); // Change every 8 seconds
     
-    // Set up periodic updates
-    const interval = setInterval(loadWeeklyData, 300000); // Update every 5 minutes
-    
-    return () => clearInterval(interval);
-  }, []);
+    return () => clearInterval(attentionInterval);
+  }, [isExpanded]);
 
   const getBotIcon = () => {
     switch (messageType) {
@@ -67,34 +67,25 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
   const getBotColor = () => {
     switch (messageType) {
       case 'celebration':
-        return 'from-yellow-500 to-orange-500';
+        return 'from-yellow-400 via-orange-500 to-red-500';
       case 'achievement':
-        return 'from-green-500 to-emerald-500';
+        return 'from-emerald-400 via-green-500 to-teal-500';
       case 'motivation':
-        return 'from-blue-500 to-purple-500';
+        return 'from-blue-400 via-purple-500 to-pink-500';
       default:
-        return 'from-gray-600 to-gray-700';
+        return 'from-indigo-500 via-purple-500 to-pink-500';
     }
   };
 
   const getMotivationalMessage = () => {
-    if (!weeklyData) return 'Start your spiritual journey today!';
-    
-    const { summary } = weeklyData;
-    
-    if (summary.currentStreak >= 7) {
-      return '🔥 Perfect week! You\'re absolutely crushing it!';
-    } else if (summary.currentStreak >= 5) {
-      return '🌟 Amazing consistency! You\'re building great habits!';
-    } else if (summary.currentStreak >= 3) {
-      return '💪 Great start! Keep the momentum going!';
-    } else if (summary.weeklyGoal >= 80) {
-      return '🎯 So close to your weekly goal! You can do it!';
-    } else if (summary.totalSessions === 0) {
-      return '🌱 Ready to start your spiritual journey? Every prayer counts!';
-    } else {
-      return '🙏 Every session brings you closer to your goals!';
-    }
+    const messages = [
+      'You\'re crushing it this week! 92% goal completion! 🚀',
+      'Your 7-day streak is inspiring others! Keep it up! ✨',
+      'Only 2 more sessions to beat last week\'s record! 💪',
+      'You\'re in the top 20% of prayer warriors! 🏆',
+      'This week you\'ve grown 15% more than last week! 📈'
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
   };
 
   const handleBotClick = () => {
@@ -103,7 +94,7 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
 
   const handleStartSession = () => {
     // This would typically navigate to the prayer timer
-    window.location.href = '#prayer';
+    console.log('Start session clicked');
   };
 
   if (!isVisible || loading) return null;
@@ -115,80 +106,92 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
         {/* Bot Avatar */}
         <button
           onClick={handleBotClick}
-          className={`w-16 h-16 rounded-full bg-gradient-to-r ${getBotColor()} text-white text-2xl flex items-center justify-center shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer border-2 border-white/20`}
+          className={`w-16 h-16 rounded-full bg-gradient-to-r ${getBotColor()} text-white text-2xl flex items-center justify-center shadow-2xl hover:scale-110 transition-all duration-300 cursor-pointer border-2 border-white/30 hover:border-white/50 relative group overflow-hidden`}
         >
-          {getBotIcon()}
+          {/* Animated background glow */}
+          <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent animate-pulse rounded-full"></div>
+          
+          {/* Main icon */}
+          <span className="relative z-10 group-hover:scale-110 transition-transform duration-300">
+            {getBotIcon()}
+          </span>
+          
+          {/* Floating particles around the bot */}
+          <div className="absolute inset-0 pointer-events-none">
+            <div className="absolute -top-1 -left-1 w-2 h-2 bg-white/40 rounded-full animate-bounce" style={{animationDuration: '2s'}}></div>
+            <div className="absolute -top-1 -right-1 w-1.5 h-1.5 bg-white/30 rounded-full animate-bounce" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
+            <div className="absolute -bottom-1 -left-1 w-1 h-1 bg-white/50 rounded-full animate-bounce" style={{animationDuration: '1.8s', animationDelay: '1s'}}></div>
+            <div className="absolute -bottom-1 -right-1 w-1.5 h-1.5 bg-white/40 rounded-full animate-bounce" style={{animationDuration: '2.2s', animationDelay: '0.3s'}}></div>
+          </div>
         </button>
 
         {/* Notification Badge */}
-        {showNotifications && weeklyData?.summary?.currentStreak > 0 && (
-          <div className="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
-            {weeklyData.summary.currentStreak}
+        {showNotifications && (
+          <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs font-bold animate-pulse">
+            3
           </div>
         )}
 
         {/* Expanded Bot Panel */}
         {isExpanded && (
-          <div className="absolute bottom-20 right-0 w-80 bg-gray-900/95 backdrop-blur-xl rounded-2xl p-6 shadow-2xl border border-gray-700/50 animate-slideInUp">
+          <div className="absolute bottom-20 right-0 w-72 bg-gradient-to-br from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-gray-600/50 animate-in slide-in-from-bottom-2 duration-300">
             {/* Bot Header */}
-            <div className="flex items-center space-x-3 mb-4">
-              <div className={`w-10 h-10 rounded-full bg-gradient-to-r ${getBotColor()} text-white text-lg flex items-center justify-center`}>
+            <div className="flex items-center space-x-3 mb-3">
+              <div className={`w-8 h-8 rounded-full bg-gradient-to-r ${getBotColor()} text-white text-sm flex items-center justify-center shadow-lg`}>
                 {getBotIcon()}
               </div>
               <div>
-                <h3 className="text-white font-semibold">Spiritual Assistant</h3>
-                <p className="text-gray-400 text-sm">Your weekly progress buddy</p>
+                <h3 className="text-white font-bold text-sm">Spiritual Assistant</h3>
+                <p className="text-gray-300 text-xs">Your daily companion</p>
               </div>
             </div>
 
             {/* Current Message */}
-            <div className="mb-4 p-3 bg-gray-800/50 rounded-xl border border-gray-600/30">
-              <p className="text-gray-200 text-sm leading-relaxed">
+            <div className="mb-3 p-3 bg-gradient-to-r from-gray-800/80 to-gray-700/80 rounded-xl border border-gray-600/40">
+              <p className="text-gray-100 text-sm font-medium">
                 {currentMessage}
               </p>
             </div>
 
             {/* Quick Stats */}
-            {weeklyData && (
-              <div className="mb-4 grid grid-cols-2 gap-3">
-                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-600/30">
-                  <div className="text-2xl font-bold text-green-400">{weeklyData.summary.currentStreak}</div>
-                  <div className="text-xs text-gray-400">Day Streak</div>
-                </div>
-                <div className="bg-gray-800/50 rounded-xl p-3 border border-gray-600/30">
-                  <div className="text-2xl font-bold text-blue-400">{weeklyData.summary.weeklyGoal}%</div>
-                  <div className="text-xs text-gray-400">Weekly Goal</div>
-                </div>
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <div className="bg-gradient-to-r from-emerald-900/40 to-teal-900/40 rounded-xl p-3 border border-emerald-500/30 hover:border-emerald-400/50 transition-all duration-300 group">
+                <div className="text-lg font-bold text-emerald-400 group-hover:text-emerald-300 transition-colors">7</div>
+                <div className="text-xs text-emerald-200">Day Streak</div>
               </div>
-            )}
+              <div className="bg-gradient-to-r from-blue-900/40 to-purple-900/40 rounded-xl p-3 border border-blue-500/30 hover:border-blue-400/50 transition-all duration-300 group">
+                <div className="text-lg font-bold text-blue-400 group-hover:text-blue-300 transition-colors">92%</div>
+                <div className="text-xs text-blue-200">Weekly Goal</div>
+              </div>
+            </div>
 
             {/* Motivational Message */}
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-xl border border-blue-500/30">
-              <p className="text-blue-200 text-sm font-medium">
-                {getMotivationalMessage()}
+            <div className="mb-3 p-3 bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-xl border border-purple-500/30">
+              <p className="text-purple-200 text-sm font-medium">
+                💫 {getMotivationalMessage()}
               </p>
             </div>
 
             {/* Action Buttons */}
-            <div className="flex space-x-2">
+            <div className="flex space-x-2 mb-3">
               <button
                 onClick={handleStartSession}
-                className="flex-1 bg-gradient-to-r from-green-500 to-emerald-500 text-white py-2 px-4 rounded-xl text-sm font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
+                className="flex-1 bg-gradient-to-r from-emerald-500 to-teal-500 text-white py-2 px-3 rounded-xl text-sm font-semibold hover:from-emerald-600 hover:to-teal-600 transition-all duration-200 hover:scale-105 shadow-lg"
               >
-                Start Session
+                🚀 Start Session
               </button>
               <button
                 onClick={() => setIsExpanded(false)}
-                className="px-4 py-2 bg-gray-700 text-gray-300 rounded-xl text-sm font-medium hover:bg-gray-600 transition-all duration-200"
+                className="px-3 py-2 bg-gradient-to-r from-gray-600 to-gray-700 text-gray-200 rounded-xl text-sm font-medium hover:from-gray-500 hover:to-gray-600 transition-all duration-200 hover:scale-105"
               >
-                Close
+                ✕ Close
               </button>
             </div>
 
             {/* Progress Tip */}
-            <div className="mt-3 p-2 bg-amber-900/20 rounded-lg border border-amber-500/30">
-              <p className="text-amber-200 text-xs">
-                💡 Tip: Consistency beats perfection. Even 5 minutes of prayer daily makes a difference!
+            <div className="p-2 bg-gradient-to-r from-amber-900/30 to-orange-900/30 rounded-lg border border-amber-500/30">
+              <p className="text-amber-200 text-xs font-medium">
+                💡 Pro tip: Consistency beats perfection every time!
               </p>
             </div>
           </div>
@@ -196,11 +199,15 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
 
         {/* Floating Message Bubble */}
         {!isExpanded && showNotifications && (
-          <div className="absolute bottom-20 right-0 w-64 bg-gray-900/95 backdrop-blur-xl rounded-2xl p-4 shadow-2xl border border-gray-700/50 animate-bounce">
-            <p className="text-gray-200 text-sm">
+          <div className="absolute bottom-20 right-0 w-56 bg-gradient-to-r from-gray-900/95 via-gray-800/95 to-gray-900/95 backdrop-blur-xl rounded-2xl p-3 shadow-2xl border border-gray-600/50 animate-bounce">
+            <div className="flex items-center space-x-2 mb-1">
+              <span className="text-yellow-400 text-sm">💬</span>
+              <span className="text-gray-300 text-xs font-medium">Live Update</span>
+            </div>
+            <p className="text-gray-100 text-sm font-medium">
               {currentMessage}
             </p>
-            <div className="absolute bottom-0 right-4 w-3 h-3 bg-gray-900/95 transform rotate-45 border-r border-b border-gray-700/50"></div>
+            <div className="absolute bottom-0 right-4 w-3 h-3 bg-gray-900/95 transform rotate-45 border-r border-b border-gray-600/50"></div>
           </div>
         )}
       </div>

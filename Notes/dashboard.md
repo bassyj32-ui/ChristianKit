@@ -6,7 +6,7 @@ import { CommunitySection } from './CommunitySection'
 import { DailyProgressReminder } from './DailyProgressReminder'
 import { WeeklyProgressBot } from './WeeklyProgressBot'
 import { prayerService } from '../services/prayerService'
-import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { useAuth } from './AuthProvider'
 
 interface DashboardProps {
   onNavigate?: (page: string, duration?: number) => void;
@@ -28,7 +28,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   })
   const [loading, setLoading] = useState(true)
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
-  const { user, signOut: logout } = useSupabaseAuth()
+  const { user, logout } = useAuth()
 
   useEffect(() => {
     const loadTodayProgress = async () => {
@@ -205,10 +205,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               {/* Interactive User Info */}
               <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-800/50 rounded-xl border border-gray-600/50 hover:bg-gray-700/50 transition-all duration-300">
                 <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold hover:scale-110 transition-transform duration-300">
-                  {user?.user_metadata?.display_name?.charAt(0) || 'U'}
+                  {user?.displayName?.charAt(0) || 'U'}
                 </div>
                 <div>
-                  <div className="text-white font-medium text-sm sm:text-base">{user?.user_metadata?.display_name || 'User'}</div>
+                  <div className="text-white font-medium text-sm sm:text-base">{user?.displayName || 'User'}</div>
                   <div className="text-gray-400 text-xs sm:text-sm">{user?.email}</div>
                 </div>
               </div>
@@ -639,7 +639,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
 
       {/* Weekly Progress Bot - Mobile Version (Smaller & Compact) */}
       <div className="lg:hidden fixed bottom-32 right-3 z-40 transform scale-75 origin-bottom-right">
-      <WeeklyProgressBot position="bottom-right" showNotifications={true} />
+        <WeeklyProgressBot position="bottom-right" showNotifications={true} />
       </div>
 
       {/* Mobile Navigation Tabs - Floating Glass Tabs */}

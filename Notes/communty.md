@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useSupabaseAuth } from './SupabaseAuthProvider'
-import { supabase } from '../utils/supabase'
+import { useAuth } from './AuthProvider'
 import { cloudDataService } from '../services/cloudDataService'
 
 interface CommunityPost {
@@ -68,7 +67,7 @@ const initialPosts: CommunityPost[] = [
 ]
 
 export const CommunitySection: React.FC = () => {
-  const { user } = useSupabaseAuth()
+  const { user } = useAuth()
   const [animateIn, setAnimateIn] = useState(false)
   const [hoveredPost, setHoveredPost] = useState<string | null>(null)
   const [posts, setPosts] = useState<CommunityPost[]>(initialPosts)
@@ -103,100 +102,34 @@ export const CommunitySection: React.FC = () => {
     return matches ? matches.map(tag => tag.slice(1)) : []
   }
 
+  const isLikedByUser = (post: CommunityPost): boolean => {
+    return user ? post.likes.includes(user.uid) : false
+  }
+
   const handleLike = async (postId: string) => {
     if (!user) return
 
     try {
-      const { data, error } = await supabase
-        .from('post_likes')
-        .upsert({ 
-          post_id: postId, 
-          user_id: user.id 
-        })
-      
-      if (error) throw error
-      
-      // Update local state
-      setPosts(prevPosts => 
-        prevPosts.map(post => 
-          post.id === postId 
-            ? { ...post, likes: [...post.likes, user.id] }
-            : post
-        )
-      )
-    } catch (error) {
-      console.error('Error liking post:', error)
-    }
-  }
+      const updatedPosts = posts.map(post => {
+        if (post.id === postId) {
+          const isLiked = post.likes.includes(user.uid)
+          return {
+            ...post,
+            likes: isLiked 
+              ? post.likes.filter(id => id !== user.uid)
+              : [...post.likes, user.uid]
+          }
+        }
+        return post
+      })
 
-  const handleUnlike = async (postId: string) => {
-    if (!user) return
-    
-    try {
-      const { error } = await supabase
-        .from('post_likes')
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', user.id)
-      
-      if (error) throw error
-      
-      // Update local state
-      setPosts(prevPosts => 
-        prevPosts.map(post => 
-          post.id === postId 
-            ? { ...post, likes: post.likes.filter(id => id !== user.id) }
-            : post
-        )
-      )
-    } catch (error) {
-      console.error('Error unliking post:', error)
-    }
-  }
+      setPosts(updatedPosts)
 
-  const handleComment = async (postId: string) => {
-    if (!user || !newComment.trim()) return
-    
-    try {
-      const { data, error } = await supabase
-        .from('post_comments')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-      
-      if (error) throw error
-      
-      // Update local state
-      setPosts(prevPosts => 
-        prevPosts.map(post => 
-          post.id === postId 
-            ? { 
-                ...post, 
-                comments: [...post.comments, {
-                  id: data[0].id,
-                  authorId: user.id,
-                  authorName: user.user_metadata?.display_name || 'User',
-                  authorAvatar: user.user_metadata?.avatar_url || '👤',
-                  content: newComment.trim(),
-                  timestamp: Date.now(),
-                  likes: []
-                }]
-              }
-            : post
-        )
-      )
-      
-      setNewComment('')
-      setShowCommentInput(null)
+      // Update in cloud (we'll implement this later)
+      // For now, just update locally
     } catch (error) {
-      console.error('Error adding comment:', error)
+      console.error('Error updating like:', error)
     }
-  }
-
-  const isLiked = (postId: string) => {
-    return user ? posts.find(post => post.id === postId)?.likes.includes(user.id) : false
   }
 
   const handleCreatePost = async () => {
@@ -206,9 +139,9 @@ export const CommunitySection: React.FC = () => {
     const newPost: CommunityPost = {
       id: Date.now().toString(),
       content: newPostContent,
-      authorId: user.id,
-      authorName: user.user_metadata?.display_name || 'Anonymous',
-      authorAvatar: user.user_metadata?.avatar_url || '👤',
+      authorId: user.uid,
+      authorName: user.email?.split('@')[0] || 'Anonymous',
+      authorAvatar: user.email?.charAt(0).toUpperCase() || '👤',
       timestamp: Date.now(),
       likes: [],
       comments: [],
@@ -244,9 +177,9 @@ export const CommunitySection: React.FC = () => {
     const comment: Comment = {
       id: Date.now().toString(),
       content: newComment,
-      authorId: user.id,
-      authorName: user.user_metadata?.display_name || 'Anonymous',
-      authorAvatar: user.user_metadata?.avatar_url || '👤',
+      authorId: user.uid,
+      authorName: user.email?.split('@')[0] || 'Anonymous',
+      authorAvatar: user.email?.charAt(0).toUpperCase() || '👤',
       timestamp: Date.now(),
       likes: []
     }
@@ -286,16 +219,16 @@ export const CommunitySection: React.FC = () => {
             id: post.id,
             content: post.content,
             authorId: post.userId,
-            authorName: user.user_metadata?.display_name || 'Anonymous',
-            authorAvatar: user.user_metadata?.avatar_url || '👤',
+            authorName: user.email?.split('@')[0] || 'Anonymous',
+            authorAvatar: user.email?.charAt(0).toUpperCase() || '👤',
             timestamp: post.timestamp?.toDate?.()?.getTime() || Date.now(),
             likes: post.likes || [],
             comments: post.comments?.map(comment => ({
               id: comment.id,
               content: comment.content,
               authorId: comment.authorId,
-              authorName: user.user_metadata?.display_name || 'Anonymous',
-              authorAvatar: user.user_metadata?.avatar_url || '👤',
+              authorName: user.email?.split('@')[0] || 'Anonymous',
+              authorAvatar: user.email?.charAt(0).toUpperCase() || '👤',
               timestamp: comment.timestamp?.toDate?.()?.getTime() || Date.now(),
               likes: []
             })) || [],
@@ -458,10 +391,10 @@ export const CommunitySection: React.FC = () => {
                           <button
                             onClick={() => handleLike(post.id)}
                             className={`flex items-center space-x-1 transition-all duration-200 ${
-                              isLiked(post.id) ? 'text-green-500' : 'text-gray-500 hover:text-green-400'
+                              isLikedByUser(post) ? 'text-green-500' : 'text-gray-500 hover:text-green-400'
                             }`}
                           >
-                            <span className="text-lg">{isLiked(post.id) ? '❤️' : '🤍'}</span>
+                            <span className="text-lg">{isLikedByUser(post) ? '❤️' : '🤍'}</span>
                             <span className="text-xs font-medium">{post.likes.length}</span>
                           </button>
                           <button 
@@ -496,7 +429,7 @@ export const CommunitySection: React.FC = () => {
                               Cancel
                             </button>
                             <button
-                              onClick={() => handleComment(post.id)}
+                              onClick={() => handleAddComment(post.id)}
                               className="px-3 py-1 text-xs bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
                             >
                               Comment
@@ -584,7 +517,7 @@ export const CommunitySection: React.FC = () => {
         <div className="bg-neutral-900/80 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-green-800 mb-8">
           <div className="flex items-start space-x-4">
             <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                {user.user_metadata?.avatar_url || '👤'}
+                {user.email?.charAt(0).toUpperCase() || '👤'}
             </div>
             <div className="flex-1">
               <textarea

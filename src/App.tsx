@@ -4,7 +4,7 @@ import { PrayerTimerPage } from './components/PrayerTimerPage'
 import { CommunitySection } from './components/CommunitySection'
 import { UserQuestionnaire } from './components/UserQuestionnaire'
 import { LoginPage } from './components/LoginPage'
-import { AuthProvider, useAuth } from './components/AuthProvider'
+import { useSupabaseAuth } from './components/SupabaseAuthProvider'
 import { SimpleLogo } from './components/SimpleLogo'
 import { FeedbackForm } from './components/FeedbackForm'
 import { JournalPage } from './components/JournalPage'
@@ -31,7 +31,7 @@ interface UserPlan {
 }
 
 const AppContent: React.FC = () => {
-  const { user, loading, logout, isProUser, error, signInWithGoogle } = useAuth();
+  const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
   const [activeTab, setActiveTab] = useState('prayer') // Default to prayer timer
   const [userPlan, setUserPlan] = useState<UserPlan | null>(null)
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
@@ -43,6 +43,8 @@ const AppContent: React.FC = () => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
+
+  console.log('🚀 AppContent: Rendering with user:', user?.email, 'loading:', loading)
 
   useEffect(() => {
     // Check if user has completed questionnaire
@@ -68,7 +70,6 @@ const AppContent: React.FC = () => {
     if (user) {
       const initializeCloudSync = async () => {
         try {
-          // This will be handled by AuthProvider, but we can add additional setup here
           console.log('Cloud sync ready for user:', user.email)
         } catch (error) {
           console.error('Error initializing cloud sync:', error)
@@ -104,100 +105,23 @@ const AppContent: React.FC = () => {
     }
   }, [loading]);
 
-  // Debug useEffect to track userPlan state changes
-  useEffect(() => {
-    console.log('userPlan state changed:', {
-      userPlan,
-      isFirstTimeUser,
-      showQuestionnaire
-    })
-  }, [userPlan, isFirstTimeUser, showQuestionnaire])
-
-  useEffect(() => {
-    if (showQuestionnaire) {
-      // Mobile menu cleanup handled elsewhere
-    }
-  }, [showQuestionnaire])
-
-  // Handle clicks outside of dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Element
-      
-      // Close profile menu when clicking outside
-      if (showProfileMenu && !target.closest('.profile-menu')) {
-        setShowProfileMenu(false)
-      }
-      
-      // Close notifications when clicking outside
-      if (showNotifications && !target.closest('.notifications-dropdown')) {
-        setShowNotifications(false)
-      }
-      
-      // Close sync status when clicking outside
-      if (showSyncStatus && !target.closest('.sync-status-dropdown')) {
-        setShowSyncStatus(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [showProfileMenu, showNotifications, showSyncStatus])
-
   const handleQuestionnaireComplete = (plan: UserPlan) => {
     console.log('Questionnaire completed with plan:', plan)
-    console.log('Before saving - localStorage state:', {
-      userPlan: localStorage.getItem('userPlan'),
-      hasCompletedQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
-    })
-    
     setUserPlan(plan)
     setShowQuestionnaire(false)
     setIsFirstTimeUser(false)
-    
-    // Go back to prayer timer after questionnaire completion
     setActiveTab('prayer')
-    
-    // Save the plan and mark questionnaire as completed
     localStorage.setItem('userPlan', JSON.stringify(plan))
-    localStorage.setItem('hasCompletedQuestionnaire', 'true') // Mark as completed
-    
-    console.log('After saving - localStorage state:', {
-      userPlan: localStorage.getItem('userPlan'),
-      hasCompletedQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
-    })
+    localStorage.setItem('hasCompletedQuestionnaire', 'true')
     console.log('Questionnaire completed, user plan saved:', plan)
-    console.log('User experience level:', plan.experienceLevel)
   }
 
   const handleCustomizePlan = () => {
     setShowQuestionnaire(true)
   }
 
-  // Helper function to check if user should be considered first-time
-  const shouldShowQuestionnaire = () => {
-    // Check localStorage directly instead of relying on state
-    const localStorageUserPlan = localStorage.getItem('userPlan')
-    const hasPlan = !!localStorageUserPlan
-    const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire') === 'true'
-    const result = !hasPlan || !hasCompletedQuestionnaire
-    
-    // Debug logging
-    console.log('shouldShowQuestionnaire check:', {
-      hasPlan,
-      hasCompletedQuestionnaire,
-      result,
-      userPlan,
-      localStorageUserPlan: localStorage.getItem('userPlan'),
-      localStorageQuestionnaire: localStorage.getItem('hasCompletedQuestionnaire')
-    })
-    
-    return result
-  }
-
   const handleNavigate = (page: string, duration?: number) => {
     if (page === 'prayer' && duration) {
-      // Set the selected minutes for the timer
       setSelectedMinutes(duration);
     }
     setActiveTab(page);
@@ -205,44 +129,17 @@ const AppContent: React.FC = () => {
 
   const handleTimerComplete = () => {
     console.log('Timer completed, staying on prayer timer')
-    // Stay on prayer timer page after completion
   }
 
   const handleLogout = async () => {
     await logout();
-    setActiveTab('prayer'); // Default to prayer timer
+    setActiveTab('prayer');
     setUserPlan(null);
     setShowQuestionnaire(false);
     setIsFirstTimeUser(true);
     localStorage.removeItem('userPlan');
-    localStorage.removeItem('hasCompletedQuestionnaire'); // Reset questionnaire flag
-    
+    localStorage.removeItem('hasCompletedQuestionnaire');
     console.log('User logged out, reset to first-time user')
-  }
-
-  // Show error screen
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-        <div className="max-w-md w-full mx-auto px-6 text-center">
-          <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-neutral-800">
-            <div className="text-6xl mb-4">⚠️</div>
-            <h1 className="text-2xl font-bold text-gray-100 mb-4">
-              Something went wrong
-            </h1>
-            <p className="text-gray-400 mb-6">
-              {error}
-            </p>
-            <button
-              onClick={() => window.location.reload()}
-              className="mt-6 bg-gradient-to-r from-green-500 to-emerald-500 text-white px-6 py-3 rounded-xl font-bold hover:from-green-600 hover:to-emerald-600 transition-all duration-200"
-            >
-              Retry
-            </button>
-          </div>
-        </div>
-      </div>
-    );
   }
 
   // Show loading screen
@@ -343,26 +240,16 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-gray-100">
-      {/* No Navigation Bar - Clean Full Screen */}
-
       {/* Main Content */}
       <main className="flex-1">
         {renderContent()}
       </main>
-
-      {/* No Mobile Navigation - Clean Full Screen */}
-
-      {/* Clean Full Screen - No Additional Components */}
     </div>
   )
 }
 
 const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <AppContent />
-    </AuthProvider>
-  )
+  return <AppContent />
 }
 
 export default App

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useAuth } from './AuthProvider'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
 
 interface PrayerSession {
@@ -32,11 +32,11 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   selectedMinutes: propSelectedMinutes,
   isFirstTimeUser = false 
 }) => {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle } = useSupabaseAuth();
   console.log('PrayerTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
   
-  const [selectedMinutes, setSelectedMinutes] = useState(5) // Default to 5 minutes
-  const [timeRemaining, setTimeRemaining] = useState(5 * 60) // Default to 5 minutes
+  const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
+  const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
   const [isPraying, setIsPraying] = useState(true) // Start with timer running automatically
   const [prayerCompleted, setPrayerCompleted] = useState(false)
   const [prayerMessage, setPrayerMessage] = useState("Lord Jesus, I'm here with You now to talk about...")
@@ -250,22 +250,30 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     setPrayerCompleted(false);
   };
 
-  // Floating login button
-  const FloatingLogin = () => (
-    <div className="fixed top-4 sm:top-6 right-4 sm:right-6 z-[9999]">
-      <button
-        onClick={signInWithGoogle}
-        className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 sm:px-8 py-2 sm:py-4 rounded-full font-bold hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-2xl hover:scale-110 border-2 border-amber-300/50 backdrop-blur-md text-sm sm:text-lg"
-      >
-        ✨ Sign In
-      </button>
-    </div>
-  );
+  // Floating login button - Only show when user is not logged in
+  const FloatingLogin = () => {
+    // Don't render if user is logged in
+    if (user) {
+      return null;
+    }
 
-  // Bottom action buttons - Cute and Compact
+    return (
+      <div className="fixed top-4 sm:top-6 right-4 sm:right-6 z-[9999]">
+        <button
+          onClick={signInWithGoogle}
+          className="bg-gradient-to-r from-amber-500 to-yellow-500 text-white px-4 sm:px-8 py-2 sm:py-4 rounded-full font-bold hover:from-amber-600 hover:to-yellow-600 transition-all duration-300 shadow-2xl hover:scale-110 border-2 border-amber-300/50 backdrop-blur-md text-sm sm:text-lg"
+        >
+          ✨ Sign In
+        </button>
+      </div>
+    );
+  };
+
+  // Bottom action buttons - Beautiful Glassmorphism Design
   const BottomActionButtons = () => (
-    <div className="fixed bottom-2 sm:bottom-4 left-1/2 transform -translate-x-1/2 bg-gradient-to-r from-purple-900/90 to-blue-900/90 backdrop-blur-xl border border-purple-500/30 rounded-2xl shadow-2xl z-50">
-      <div className="flex items-center justify-around py-1 sm:py-2 px-4 sm:px-6">
+    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-6">
+      <div className="flex items-center space-x-4">
+        {/* Home Tab */}
         <button
           onClick={() => {
             if (isFirstTimeUser) {
@@ -274,30 +282,40 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
               onNavigate?.('dashboard');
             }
           }}
-          className="flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 text-purple-200 hover:text-white hover:bg-purple-500/20 hover:scale-110 group"
+          className="flex flex-col items-center space-y-2 group"
         >
-          <span className="text-lg sm:text-xl mb-1 group-hover:animate-bounce">🏠</span>
-          <span className="text-xs font-medium">Home</span>
+          <div className="w-16 h-20 bg-gradient-to-br from-purple-400/10 to-blue-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/30 border border-purple-300/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-400/30 to-blue-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/40 border border-purple-300/30 mb-2">
+              <span className="text-2xl group-hover:animate-bounce">🏠</span>
+            </div>
+            <span className="text-xs font-medium text-purple-100 group-hover:text-purple-50 transition-colors duration-300 tracking-wide">Home</span>
+          </div>
         </button>
         
-        <div className="w-px h-6 sm:h-8 bg-purple-500/30 mx-1 sm:mx-2"></div>
-        
+        {/* Restart Tab */}
         <button
           onClick={resetPrayer}
-          className="flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 text-blue-200 hover:text-white hover:bg-blue-500/20 hover:scale-110 group"
+          className="flex flex-col items-center space-y-2 group"
         >
-          <span className="text-lg sm:text-xl mb-1 group-hover:animate-spin">🔄</span>
-          <span className="text-xs font-medium">Restart</span>
+          <div className="w-16 h-20 bg-gradient-to-br from-blue-400/10 to-indigo-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/30 border border-blue-300/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-blue-400/30 to-indigo-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/40 border border-blue-300/30 mb-2">
+              <span className="text-2xl group-hover:animate-spin">🔄</span>
+            </div>
+            <span className="text-xs font-medium text-blue-100 group-hover:text-blue-50 transition-colors duration-300 tracking-wide">Restart</span>
+          </div>
         </button>
         
-        <div className="w-px h-6 sm:h-8 bg-blue-500/30 mx-1 sm:mx-2"></div>
-        
+        {/* Share Tab */}
         <button
           onClick={() => onNavigate?.('community')}
-          className="flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 text-emerald-200 hover:text-white hover:bg-emerald-500/20 hover:scale-110 group"
+          className="flex flex-col items-center space-y-2 group"
         >
-          <span className="text-lg sm:text-xl mb-1 group-hover:animate-pulse">🌟</span>
-          <span className="text-xs font-medium">Share</span>
+          <div className="w-16 h-20 bg-gradient-to-br from-emerald-400/10 to-teal-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/30 border border-emerald-300/20">
+            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400/30 to-teal-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/40 border border-emerald-300/30 mb-2">
+              <span className="text-2xl group-hover:animate-pulse">🌟</span>
+            </div>
+            <span className="text-xs font-medium text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300 tracking-wide">Share</span>
+          </div>
         </button>
       </div>
     </div>
@@ -381,50 +399,77 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
               </div>
             </div>
 
-        {/* Time Selection Bar - Floating Pill Style (Like Bottom Bar) */}
+        {/* Time Selection Bar - Beautiful Glassmorphism Design */}
         <div className="fixed top-2 sm:top-4 left-1/2 transform -translate-x-1/2 z-50">
-          <div className="bg-gradient-to-r from-purple-900/90 to-blue-900/90 backdrop-blur-md rounded-2xl shadow-2xl border border-purple-500/30">
-            <div className="flex items-center gap-1 p-1 sm:p-2">
+          <div className="flex items-center space-x-2 sm:space-x-3">
+            {/* 5 Minutes Tab */}
               <button
                 onClick={() => handleTimeSelect(5)}
-                className={`group flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 ${
+              className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+            >
+              <div className={`w-12 h-16 sm:w-16 sm:h-20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg border ${
+                selectedMinutes === 5
+                  ? 'bg-gradient-to-br from-blue-400/30 to-indigo-500/40 border-blue-300/40 group-hover:shadow-blue-400/40'
+                  : 'bg-gradient-to-br from-blue-400/10 to-indigo-500/20 border-blue-300/20 group-hover:shadow-blue-400/30'
+              }`}>
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg border mb-1 sm:mb-2 ${
                   selectedMinutes === 5
-                    ? 'bg-blue-500/30 text-blue-300'
-                    : 'text-slate-300 hover:text-blue-300 hover:bg-blue-500/20'
-                }`}
-              >
-                <span className="text-lg sm:text-xl mb-1 font-bold group-hover:scale-110 transition-transform duration-200">5</span>
-                <span className="text-xs font-medium">min</span>
+                    ? 'bg-gradient-to-br from-blue-400/50 to-indigo-500/60 border-blue-300/50'
+                    : 'bg-gradient-to-br from-blue-400/30 to-indigo-500/40 border-blue-300/30'
+                }`}>
+                  <span className="text-lg sm:text-2xl font-bold text-blue-100 group-hover:text-blue-50 transition-colors duration-300">5</span>
+                </div>
+                <span className={`text-xs font-medium tracking-wide transition-colors duration-300 ${
+                  selectedMinutes === 5 ? 'text-blue-100' : 'text-blue-200'
+                }`}>min</span>
+              </div>
               </button>
               
-              <div className="w-px h-6 sm:h-8 bg-slate-600/50"></div>
-              
+            {/* 10 Minutes Tab */}
               <button
                 onClick={() => handleTimeSelect(10)}
-                className={`group flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 ${
+              className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+            >
+              <div className={`w-12 h-16 sm:w-16 sm:h-20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg border ${
+                selectedMinutes === 10
+                  ? 'bg-gradient-to-br from-emerald-400/30 to-teal-500/40 border-emerald-300/40 group-hover:shadow-emerald-400/40'
+                  : 'bg-gradient-to-br from-emerald-400/10 to-teal-500/20 border-emerald-300/20 group-hover:shadow-emerald-400/30'
+              }`}>
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg border mb-1 sm:mb-2 ${
                   selectedMinutes === 10
-                    ? 'bg-green-500/30 text-green-300'
-                    : 'text-slate-300 hover:text-green-300 hover:bg-green-500/20'
-                }`}
-              >
-                <span className="text-lg sm:text-xl mb-1 font-bold group-hover:scale-110 transition-transform duration-200">10</span>
-                <span className="text-xs font-medium">min</span>
+                    ? 'bg-gradient-to-br from-emerald-400/50 to-teal-500/60 border-emerald-300/50'
+                    : 'bg-gradient-to-br from-emerald-400/30 to-teal-500/40 border-emerald-300/30'
+                }`}>
+                  <span className="text-lg sm:text-2xl font-bold text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300">10</span>
+                </div>
+                <span className={`text-xs font-medium tracking-wide transition-colors duration-300 ${
+                  selectedMinutes === 10 ? 'text-emerald-100' : 'text-emerald-200'
+                }`}>min</span>
+              </div>
               </button>
               
-              <div className="w-px h-6 sm:h-8 bg-slate-600/50"></div>
-              
+            {/* 30 Minutes Tab */}
               <button
                 onClick={() => handleTimeSelect(30)}
-                className={`group flex flex-col items-center p-1 sm:p-2 rounded-xl transition-all duration-300 ${
+              className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+            >
+              <div className={`w-12 h-16 sm:w-16 sm:h-20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg border ${
+                selectedMinutes === 30
+                  ? 'bg-gradient-to-br from-amber-400/30 to-orange-500/40 border-amber-300/40 group-hover:shadow-amber-400/40'
+                  : 'bg-gradient-to-br from-amber-400/10 to-orange-500/20 border-amber-300/20 group-hover:shadow-amber-400/30'
+              }`}>
+                <div className={`w-8 h-8 sm:w-10 sm:h-10 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg border mb-1 sm:mb-2 ${
                   selectedMinutes === 30
-                    ? 'bg-amber-500/30 text-amber-300'
-                    : 'text-slate-300 hover:text-amber-300 hover:bg-amber-500/20'
-                }`}
-              >
-                <span className="text-lg sm:text-xl mb-1 font-bold group-hover:scale-110 transition-transform duration-200">30</span>
-                <span className="text-xs font-medium">min</span>
+                    ? 'bg-gradient-to-br from-amber-400/50 to-orange-500/60 border-amber-300/50'
+                    : 'bg-gradient-to-br from-amber-400/30 to-orange-500/40 border-amber-300/30'
+                }`}>
+                  <span className="text-lg sm:text-2xl font-bold text-amber-100 group-hover:text-amber-50 transition-colors duration-300">30</span>
+                </div>
+                <span className={`text-xs font-medium tracking-wide transition-colors duration-300 ${
+                  selectedMinutes === 30 ? 'text-amber-100' : 'text-amber-200'
+                }`}>min</span>
+              </div>
               </button>
-            </div>
           </div>
         </div>
 
@@ -520,8 +565,55 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
         </div>
       </div>
 
-      {/* Bottom Action Buttons */}
-      <BottomActionButtons />
+      {/* Navigation Tabs - Beautiful Glassmorphism Design (Mobile & Web) */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4 sm:pb-6">
+        <div className="flex items-center space-x-2 sm:space-x-4">
+          {/* Home Tab */}
+          <button
+            onClick={() => {
+              if (isFirstTimeUser) {
+                onStartQuestionnaire?.();
+              } else {
+                onNavigate?.('dashboard');
+              }
+            }}
+            className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+          >
+            <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-br from-purple-400/10 to-blue-500/20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/30 border border-purple-300/20">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-purple-400/30 to-blue-500/40 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/40 border border-purple-300/30 mb-1 sm:mb-2">
+                <span className="text-lg sm:text-2xl group-hover:animate-bounce">🏠</span>
+              </div>
+              <span className="text-xs font-medium text-purple-100 group-hover:text-purple-50 transition-colors duration-300 tracking-wide">Home</span>
+            </div>
+          </button>
+          
+          {/* Restart Tab */}
+          <button
+            onClick={resetPrayer}
+            className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+          >
+            <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-br from-blue-400/10 to-indigo-500/20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/30 border border-blue-300/20">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-400/30 to-indigo-500/40 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/40 border border-blue-300/30 mb-1 sm:mb-2">
+                <span className="text-lg sm:text-2xl group-hover:animate-spin">🔄</span>
+              </div>
+              <span className="text-xs font-medium text-blue-100 group-hover:text-blue-50 transition-colors duration-300 tracking-wide">Restart</span>
+            </div>
+          </button>
+          
+          {/* Share Tab */}
+          <button
+            onClick={() => onNavigate?.('community')}
+            className="flex flex-col items-center space-y-1 sm:space-y-2 group"
+          >
+            <div className="w-12 h-16 sm:w-16 sm:h-20 bg-gradient-to-br from-emerald-400/10 to-teal-500/20 backdrop-blur-xl rounded-xl sm:rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/30 border border-emerald-300/20">
+              <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-emerald-400/30 to-teal-500/40 backdrop-blur-xl rounded-lg sm:rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/40 border border-emerald-300/30 mb-1 sm:mb-2">
+                <span className="text-lg sm:text-2xl group-hover:animate-pulse">🌟</span>
+              </div>
+              <span className="text-xs font-medium text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300 tracking-wide">Share</span>
+            </div>
+          </button>
+        </div>
+      </div>
     </div>
   );
 };
