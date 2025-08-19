@@ -260,7 +260,7 @@ class PrayerService {
     ];
   }
 
-  // Weekly Progress
+  // Weekly Progress - Enhanced Logic
   async getWeeklyProgress(): Promise<any> {
     try {
       const sessions = await this.getPrayerSessions();
@@ -279,7 +279,7 @@ class PrayerService {
         return sessionDate >= startOfWeek && sessionDate <= endOfWeek && session.completed;
       });
       
-      // Group sessions by day
+      // Group sessions by day with enhanced tracking
       const dailyProgress: any = {};
       const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
       
@@ -288,46 +288,209 @@ class PrayerService {
           prayer: 0,
           bible: 0,
           meditation: 0,
-          journal: 0
+          journal: 0,
+          totalMinutes: 0,
+          sessionsCount: 0,
+          streak: 0
         };
       });
       
-      // Calculate daily progress based on session types and durations
+      // Calculate daily progress with enhanced logic
       weeklySessions.forEach(session => {
         const sessionDate = new Date(session.date);
         const dayIndex = sessionDate.getDay();
         const dayName = days[dayIndex];
         
-        // Determine activity type based on session focus and duration
+        // Enhanced activity type detection
         let activityType = 'prayer'; // Default
         
-        if (session.focus && session.focus.toLowerCase().includes('bible')) {
+        // More sophisticated activity detection
+        const focus = session.focus?.toLowerCase() || '';
+        const mood = session.mood?.toLowerCase() || '';
+        
+        if (focus.includes('bible') || focus.includes('scripture') || focus.includes('reading')) {
           activityType = 'bible';
-        } else if (session.focus && session.focus.toLowerCase().includes('meditation')) {
+        } else if (focus.includes('meditation') || focus.includes('contemplation') || focus.includes('silence')) {
           activityType = 'meditation';
-        } else if (session.focus && session.focus.toLowerCase().includes('journal')) {
+        } else if (focus.includes('journal') || focus.includes('writing') || focus.includes('reflection')) {
           activityType = 'journal';
+        } else if (focus.includes('prayer') || focus.includes('worship') || focus.includes('thanksgiving')) {
+          activityType = 'prayer';
         }
         
-        // Calculate percentage based on target duration (assuming 30 min target)
+        // Calculate percentage based on user's target duration (default 30 min)
         const targetDuration = 30;
         const percentage = Math.min(100, Math.round((session.duration / targetDuration) * 100));
         
+        // Update daily progress
         dailyProgress[dayName][activityType] = Math.max(
           dailyProgress[dayName][activityType], 
           percentage
         );
+        dailyProgress[dayName].totalMinutes += session.duration;
+        dailyProgress[dayName].sessionsCount += 1;
       });
+      
+      // Calculate streaks and goals
+      let currentStreak = 0;
+      let weeklyGoal = 0;
+      
+      // Calculate current streak
+      for (let i = 0; i < 7; i++) {
+        const dayName = days[i];
+        if (dailyProgress[dayName].sessionsCount > 0) {
+          currentStreak++;
+        } else {
+          break;
+        }
+      }
+      
+      // Calculate weekly goal achievement
+      const totalWeeklyMinutes = Object.values(dailyProgress).reduce((sum: number, day: any) => sum + day.totalMinutes, 0);
+      const weeklyGoalMinutes = 210; // 30 min per day * 7 days
+      weeklyGoal = Math.min(100, Math.round((totalWeeklyMinutes / weeklyGoalMinutes) * 100));
       
       // Convert to array format for the component
       const weeklyData = days.map(day => ({
         day,
-        ...dailyProgress[day]
+        ...dailyProgress[day],
+        goalAchieved: dailyProgress[day].totalMinutes >= 30,
+        isToday: day === days[today.getDay()]
       }));
       
-      return weeklyData;
+      return {
+        dailyData: weeklyData,
+        summary: {
+          totalMinutes: totalWeeklyMinutes,
+          totalSessions: weeklySessions.length,
+          currentStreak,
+          weeklyGoal,
+          averageDailyMinutes: Math.round(totalWeeklyMinutes / 7),
+          mostActiveDay: this.getMostActiveDay(dailyProgress),
+          activityBreakdown: this.getActivityBreakdown(weeklySessions)
+        }
+      };
     } catch (error) {
       console.error('Error getting weekly progress:', error);
+      return {
+        dailyData: [],
+        summary: {
+          totalMinutes: 0,
+          totalSessions: 0,
+          currentStreak: 0,
+          weeklyGoal: 0,
+          averageDailyMinutes: 0,
+          mostActiveDay: 'None',
+          activityBreakdown: { prayer: 0, bible: 0, meditation: 0, journal: 0 }
+        }
+      };
+    }
+  }
+
+  // Helper methods for enhanced weekly progress
+  private getMostActiveDay(dailyProgress: any): string {
+    let mostActive = 'None';
+    let maxMinutes = 0;
+    
+    Object.entries(dailyProgress).forEach(([day, data]: [string, any]) => {
+      if (data.totalMinutes > maxMinutes) {
+        maxMinutes = data.totalMinutes;
+        mostActive = day;
+      }
+    });
+    
+    return mostActive;
+  }
+
+  private getActivityBreakdown(sessions: any[]): any {
+    const breakdown = { prayer: 0, bible: 0, meditation: 0, journal: 0 };
+    
+    sessions.forEach(session => {
+      const focus = session.focus?.toLowerCase() || '';
+      
+      if (focus.includes('bible') || focus.includes('scripture')) {
+        breakdown.bible += session.duration;
+      } else if (focus.includes('meditation') || focus.includes('contemplation')) {
+        breakdown.meditation += session.duration;
+      } else if (focus.includes('journal') || focus.includes('writing')) {
+        breakdown.journal += session.duration;
+      } else {
+        breakdown.prayer += session.duration;
+      }
+    });
+    
+    return breakdown;
+  }
+
+  // Weekly Goals Management
+  async getWeeklyGoals(): Promise<any> {
+    try {
+      const saved = localStorage.getItem('weeklyGoals');
+      return saved ? JSON.parse(saved) : this.getDefaultWeeklyGoals();
+    } catch (error) {
+      console.error('Error loading weekly goals:', error);
+      return this.getDefaultWeeklyGoals();
+    }
+  }
+
+  async saveWeeklyGoals(goals: any): Promise<void> {
+    try {
+      localStorage.setItem('weeklyGoals', JSON.stringify(goals));
+    } catch (error) {
+      console.error('Error saving weekly goals:', error);
+    }
+  }
+
+  private getDefaultWeeklyGoals(): any {
+    return {
+      prayer: { target: 30, current: 0 },
+      bible: { target: 20, current: 0 },
+      meditation: { target: 15, current: 0 },
+      journal: { target: 10, current: 0 },
+      totalMinutes: { target: 210, current: 0 }
+    };
+  }
+
+  // Weekly Progress Reminders
+  async getWeeklyReminders(): Promise<any[]> {
+    try {
+      const progress = await this.getWeeklyProgress();
+      const goals = await this.getWeeklyGoals();
+      const reminders = [];
+      
+      // Check if user is falling behind
+      const daysLeft = 7 - new Date().getDay();
+      const averageNeeded = (goals.totalMinutes.target - progress.summary.totalMinutes) / daysLeft;
+      
+      if (averageNeeded > 30) {
+        reminders.push({
+          type: 'motivation',
+          message: `You're ${Math.round(averageNeeded)} minutes behind your weekly goal. Don't worry, you can catch up!`,
+          priority: 'high'
+        });
+      }
+      
+      // Check for streaks
+      if (progress.summary.currentStreak > 0) {
+        reminders.push({
+          type: 'celebration',
+          message: `Amazing! You're on a ${progress.summary.currentStreak}-day streak. Keep it going!`,
+          priority: 'medium'
+        });
+      }
+      
+      // Check for goal achievement
+      if (progress.summary.weeklyGoal >= 100) {
+        reminders.push({
+          type: 'achievement',
+          message: '🎉 Congratulations! You\'ve reached your weekly goal!',
+          priority: 'high'
+        });
+      }
+      
+      return reminders;
+    } catch (error) {
+      console.error('Error getting weekly reminders:', error);
       return [];
     }
   }

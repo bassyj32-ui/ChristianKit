@@ -7,6 +7,11 @@ interface ProgressData {
   bible: number
   meditation: number
   journal: number
+  totalMinutes?: number
+  sessionsCount?: number
+  streak?: number
+  goalAchieved?: boolean
+  isToday?: boolean
 }
 
 interface WeeklyProgressProps {
@@ -24,7 +29,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
       try {
         setLoading(true)
         const data = await prayerService.getWeeklyProgress()
-        setProgressData(data)
+        setProgressData(data.dailyData || [])
         setAnimateProgress(true)
         setTimeout(() => setAnimateStats(true), 500)
       } catch (error) {
@@ -74,6 +79,26 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
     
     return 'You\'re taking the first steps on your spiritual journey. Every prayer session matters! 💪'
   }
+
+  // Enhanced progress calculation
+  const getEnhancedProgress = () => {
+    if (progressData.length === 0) return null;
+    
+    const totalMinutes = progressData.reduce((sum, day) => sum + (day.totalMinutes || 0), 0);
+    const totalSessions = progressData.reduce((sum, day) => sum + (day.sessionsCount || 0), 0);
+    const currentStreak = progressData.filter(day => (day.sessionsCount || 0) > 0).length;
+    const weeklyGoal = Math.min(100, Math.round((totalMinutes / 210) * 100)); // 210 min = 30 min/day * 7 days
+    
+    return {
+      totalMinutes,
+      totalSessions,
+      currentStreak,
+      weeklyGoal,
+      averageDailyMinutes: Math.round(totalMinutes / 7)
+    };
+  };
+
+  const enhancedProgress = getEnhancedProgress();
 
   return (
     <div className="space-y-8">
