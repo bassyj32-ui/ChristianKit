@@ -48,9 +48,11 @@ const AppContent: React.FC = () => {
   // Check if we're on the auth callback route
   const isAuthCallback = window.location.pathname === '/auth/callback';
   
-  // Check for OAuth callback parameters in URL
+  // Check for OAuth callback parameters in URL (both query params and hash)
   const urlParams = new URLSearchParams(window.location.search);
-  const hasAuthParams = urlParams.has('access_token') || urlParams.has('error');
+  const hashParams = new URLSearchParams(window.location.hash.substring(1));
+  const hasAuthParams = urlParams.has('access_token') || urlParams.has('error') || 
+                       hashParams.has('access_token') || hashParams.has('error');
 
   console.log('🚀 AppContent: Rendering with user:', user?.email, 'loading:', loading)
 
@@ -58,9 +60,11 @@ const AppContent: React.FC = () => {
     // Handle OAuth callback parameters
     if (hasAuthParams) {
       console.log('🔄 AppContent: Detected OAuth callback parameters, cleaning URL...')
+      console.log('🔄 Current URL:', window.location.href)
       // Clean up the URL by removing auth parameters
       const cleanUrl = window.location.pathname
       window.history.replaceState({}, document.title, cleanUrl)
+      console.log('🔄 Cleaned URL:', cleanUrl)
     }
 
     // Check if user has completed questionnaire

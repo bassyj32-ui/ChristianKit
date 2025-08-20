@@ -57,10 +57,15 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setLoading(false)
       })
 
-      // Handle OAuth callback if present
+      // Handle OAuth callback if present (check both query params and hash)
       const urlParams = new URLSearchParams(window.location.search)
-      if (urlParams.has('access_token') || urlParams.has('error')) {
+      const hashParams = new URLSearchParams(window.location.hash.substring(1))
+      
+      if (urlParams.has('access_token') || urlParams.has('error') || 
+          hashParams.has('access_token') || hashParams.has('error')) {
         console.log('🔄 SupabaseAuthProvider: Processing OAuth callback...')
+        console.log('🔄 URL params:', Object.fromEntries(urlParams))
+        console.log('🔄 Hash params:', Object.fromEntries(hashParams))
         // The session will be updated by the auth state change listener
       }
 
