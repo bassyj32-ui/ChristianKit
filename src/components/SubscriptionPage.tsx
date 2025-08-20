@@ -101,13 +101,44 @@ export const SubscriptionPage: React.FC = () => {
                   <span className="text-green-400 text-xl">✓</span>
                   <span>Everything in Free</span>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>👥 Community Access</span>
+                
+                {/* NEW PREMIUM FEATURES */}
+                <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-amber-400 text-xl">⭐</span>
+                    <span className="text-amber-100 font-semibold">📧 Daily Re-Engagement System</span>
+                  </div>
+                  <p className="text-slate-300 text-sm ml-6">Uplifting daily messages & encouraging reminders to stay consistent</p>
                 </div>
+                
+                <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-amber-400 text-xl">⭐</span>
+                    <span className="text-amber-100 font-semibold">📊 Weekly Progress Tracking</span>
+                  </div>
+                  <p className="text-slate-300 text-sm ml-6">Detailed analytics, insights & progress visualization</p>
+                </div>
+                
+                <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-amber-400 text-xl">⭐</span>
+                    <span className="text-amber-100 font-semibold">🎯 Monthly Habit Builder</span>
+                  </div>
+                  <p className="text-slate-300 text-sm ml-6">Focus on one spiritual habit each month (e.g., "Fear of God")</p>
+                </div>
+                
+                <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className="text-amber-400 text-xl">⭐</span>
+                    <span className="text-amber-100 font-semibold">🙏 Community Prayer Requests</span>
+                  </div>
+                  <p className="text-slate-300 text-sm ml-6">Special prayer posts with "I Prayed" button for encouragement</p>
+                </div>
+
+                {/* EXISTING FEATURES */}
                 <div className="flex items-center gap-3">
                   <span className="text-green-400 text-xl">✓</span>
-                  <span>📊 Weekly Analysis & Insights</span>
+                  <span>👥 Full Community Access</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-green-400 text-xl">✓</span>
@@ -161,33 +192,55 @@ export const SubscriptionPage: React.FC = () => {
 
                         {/* Features List */}
             <div className="space-y-4 mb-8">
+              {/* FREE FEATURES */}
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
                 <span className="text-slate-200">Basic habit tracking</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span className="text-slate-200">Prayer timer (limited)</span>
+                <span className="text-slate-200">Prayer timer (limited to 30 mins)</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span className="text-slate-200">Bible reading progress</span>
+                <span className="text-slate-200">Basic Bible reading progress</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
-                <span className="text-slate-200">Weekly progress tracking</span>
+                <span className="text-slate-200">Simple weekly overview</span>
               </div>
-              <div className="flex items-center gap-3">
-                <span className="text-red-400 text-xl">✗</span>
-                <span className="text-slate-500">👥 Community access</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-red-400 text-xl">✗</span>
-                <span className="text-slate-500">📊 Weekly Analysis</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="text-red-400 text-xl">✗</span>
-                <span className="text-slate-500">📅 30-Day Devotionals</span>
+              
+              {/* MISSING PREMIUM FEATURES */}
+              <div className="border-t border-slate-600 pt-4 mt-4">
+                <p className="text-slate-400 text-sm mb-3 font-semibold">Missing Premium Features:</p>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">📧 Daily Re-Engagement System</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">📊 Advanced Weekly Tracking</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">🎯 Monthly Habit Builder</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">🙏 Community Prayer Requests</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">👥 Full Community Access</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">📅 30-Day Devotionals</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="text-red-400 text-xl">✗</span>
+                  <span className="text-slate-500">Cloud sync & Premium support</span>
+                </div>
               </div>
             </div>
 
@@ -285,7 +338,7 @@ export const SubscriptionPage: React.FC = () => {
                 What's included in the Pro plan?
               </h4>
               <p className="text-slate-300">
-                Pro includes Community access, Weekly Analysis, 30-Day Devotionals, unlimited sessions, advanced tracking, cloud sync, and priority support.
+                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus full community access, 30-Day Devotionals, unlimited sessions, cloud sync, and premium support.
               </p>
             </div>
 
