@@ -140,7 +140,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       // Use current location for redirect (works for both localhost and Vercel)
       const currentOrigin = window.location.origin
-      const redirectUrl = `${currentOrigin}/callback`
+      const redirectUrl = `${currentOrigin}/auth/callback`
       console.log('🔐 Signing in with Google, redirect to:', redirectUrl)
       console.log('🔐 Current origin:', currentOrigin)
       console.log('🔐 Full redirect URL:', redirectUrl)

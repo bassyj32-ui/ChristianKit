@@ -5,6 +5,8 @@ import { CommunitySection } from './components/CommunitySection'
 import { UserQuestionnaire } from './components/UserQuestionnaire'
 import { LoginPage } from './components/LoginPage'
 import { useSupabaseAuth } from './components/SupabaseAuthProvider'
+import AuthCallback from './pages/AuthCallback'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { SimpleLogo } from './components/SimpleLogo'
 import { FeedbackForm } from './components/FeedbackForm'
 import { JournalPage } from './components/JournalPage'
@@ -19,7 +21,6 @@ import { reminderService } from './services/reminderService'
 import { SyncStatus } from './components/SyncStatus'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { Footer } from './components/Footer'
-import { AuthCallback } from './components/AuthCallback'
 
 interface UserPlan {
   prayerTime: number;
@@ -45,29 +46,11 @@ const AppContent: React.FC = () => {
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-  // Check if we're on the auth callback route or have auth parameters
-  const isAuthCallback = window.location.pathname === '/auth/callback' || 
-                        window.location.pathname === '/callback' ||
-                        window.location.hash.includes('access_token');
-  
-  // Check for OAuth callback parameters in URL (both query params and hash)
-  const urlParams = new URLSearchParams(window.location.search);
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const hasAuthParams = urlParams.has('access_token') || urlParams.has('error') || 
-                       hashParams.has('access_token') || hashParams.has('error');
+
 
   console.log('🚀 AppContent: Rendering with user:', user?.email, 'loading:', loading)
 
   useEffect(() => {
-    // Handle OAuth callback parameters
-    if (hasAuthParams) {
-      console.log('🔄 AppContent: Detected OAuth callback parameters, cleaning URL...')
-      console.log('🔄 Current URL:', window.location.href)
-      // Clean up the URL by removing auth parameters
-      const cleanUrl = window.location.pathname
-      window.history.replaceState({}, document.title, cleanUrl)
-      console.log('🔄 Cleaned URL:', cleanUrl)
-    }
 
     // Check if user has completed questionnaire
     const savedPlan = localStorage.getItem('userPlan')
@@ -110,7 +93,7 @@ const AppContent: React.FC = () => {
         }
       })
     }
-  }, [user, hasAuthParams])
+  }, [user])
 
   // Add timeout for loading state to prevent freezing
   useEffect(() => {
@@ -199,10 +182,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  // Show auth callback page if we're on the callback route
-  if (isAuthCallback) {
-    return <AuthCallback />
-  }
+
 
   // Show questionnaire for first-time users
   if (showQuestionnaire) {
@@ -266,16 +246,19 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-black text-gray-100">
-      {/* Main Content */}
-      <main className="flex-1">
-        {renderContent()}
-      </main>
+      <main className="flex-1">{renderContent()}</main>
     </div>
   )
 }
 
 const App: React.FC = () => {
-  return <AppContent />
+  return (
+    <Routes>
+      <Route path="/auth/callback" element={<AuthCallback />} />
+      <Route path="/callback" element={<AuthCallback />} />
+      <Route path="/*" element={<AppContent />} />
+    </Routes>
+  )
 }
 
 export default App
