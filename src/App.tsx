@@ -101,16 +101,15 @@ const AppContent: React.FC = () => {
       initializeCloudSync()
     }
 
-    // Register service worker for push notifications (temporarily disabled)
-    // if ('serviceWorker' in navigator) {
-    //   navigator.serviceWorker.register('/sw.js')
-    //     .then((registration) => {
-    //       console.log('Service Worker registered successfully:', registration)
-    //     })
-    //     .catch((error) => {
-    //       console.error('Service Worker registration failed:', error)
-    //     })
-    // }
+    // Unregister any existing service workers to prevent cache errors
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then((registrations) => {
+        for (let registration of registrations) {
+          registration.unregister()
+          console.log('Service Worker unregistered')
+        }
+      })
+    }
   }, [user, hasAuthParams])
 
   // Add timeout for loading state to prevent freezing
