@@ -29,6 +29,13 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   useEffect(() => {
     console.log('🔐 SupabaseAuthProvider: Initializing...')
     
+    // Check if Supabase is available
+    if (!supabase) {
+      console.warn('⚠️ SupabaseAuthProvider: Supabase client not available. Running in demo mode.')
+      setLoading(false)
+      return
+    }
+    
     try {
       // Test Supabase connection first
       console.log('🔐 SupabaseAuthProvider: Testing connection...')
@@ -87,7 +94,36 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     )
   }
 
+  // Show demo mode message if Supabase is not available
+  if (!supabase) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900 text-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-auto p-6">
+          <h1 className="text-3xl font-bold mb-4">🚀 ChristianKit</h1>
+          <p className="text-blue-200 mb-4">
+            Running in demo mode. Backend features are disabled.
+          </p>
+          <p className="text-sm text-blue-300 mb-6">
+            To enable full features, add Supabase environment variables to your deployment.
+          </p>
+          <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 text-left">
+            <p className="text-sm font-mono text-blue-200">
+              Required variables:<br/>
+              • VITE_SUPABASE_URL<br/>
+              • VITE_SUPABASE_ANON_KEY
+            </p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   const signInWithGoogle = async () => {
+    if (!supabase) {
+      console.warn('Supabase not available for sign in')
+      return
+    }
+    
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
@@ -102,6 +138,11 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   }
 
   const signOut = async () => {
+    if (!supabase) {
+      console.warn('Supabase not available for sign out')
+      return
+    }
+    
     try {
       const { error } = await supabase.auth.signOut()
       if (error) throw error
