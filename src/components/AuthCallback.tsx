@@ -10,12 +10,47 @@ export const AuthCallback: React.FC = () => {
     const handleAuthCallback = async () => {
       try {
         console.log('🔄 AuthCallback: Processing OAuth callback...')
+        console.log('🔄 Current URL:', window.location.href)
         
         if (!supabase) {
           throw new Error('Supabase client not available')
         }
 
-        // Get the session from the URL
+        // Check if we have auth parameters in the hash
+        const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        if (hashParams.has('access_token')) {
+          console.log('🔄 Found access token in hash, processing...')
+          
+          // Set the session manually from the hash parameters
+          const accessToken = hashParams.get('access_token')
+          const refreshToken = hashParams.get('refresh_token')
+          
+          if (accessToken && refreshToken) {
+            const { data: { session }, error } = await supabase.auth.setSession({
+              access_token: accessToken,
+              refresh_token: refreshToken
+            })
+            
+            if (error) {
+              console.error('❌ AuthCallback: Session error:', error)
+              throw error
+            }
+            
+            if (session) {
+              console.log('✅ AuthCallback: Successfully authenticated:', session.user.email)
+              setStatus('success')
+              
+              // Clean up the URL and redirect
+              setTimeout(() => {
+                window.history.replaceState({}, document.title, '/')
+                window.location.href = '/'
+              }, 2000)
+              return
+            }
+          }
+        }
+
+        // Fallback: Get the session from the URL
         const { data: { session }, error } = await supabase.auth.getSession()
         
         if (error) {
