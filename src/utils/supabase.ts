@@ -11,14 +11,16 @@ const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
 const isDevelopment = import.meta.env.DEV
 
 if (!supabaseUrl || !supabaseAnonKey) {
+  console.error('❌ Supabase: Missing environment variables!')
+  console.error('❌ URL:', supabaseUrl)
+  console.error('❌ Key:', supabaseAnonKey ? 'Found' : 'Missing')
+  console.error('❌ Environment:', isDevelopment ? 'Development' : 'Production')
+  
   if (isDevelopment) {
-    console.error('❌ Supabase: Missing environment variables in development!')
-    console.error('❌ URL:', supabaseUrl)
-    console.error('❌ Key:', supabaseAnonKey ? 'Found' : 'Missing')
     throw new Error('Missing Supabase environment variables. Please check your .env file.')
   } else {
-    // In production (Vercel), log warning but don't crash
-    console.warn('⚠️ Supabase: Environment variables missing in production. App will work without backend features.')
+    // In production, still throw error but with more helpful message
+    throw new Error('Missing Supabase environment variables in production. Please check Vercel environment variables.')
   }
 }
 

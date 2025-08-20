@@ -57,6 +57,13 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         setLoading(false)
       })
 
+      // Handle OAuth callback if present
+      const urlParams = new URLSearchParams(window.location.search)
+      if (urlParams.has('access_token') || urlParams.has('error')) {
+        console.log('🔄 SupabaseAuthProvider: Processing OAuth callback...')
+        // The session will be updated by the auth state change listener
+      }
+
       // Listen for auth changes
       const {
         data: { subscription },
@@ -120,24 +127,52 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const signInWithGoogle = async () => {
     if (!supabase) {
-      console.warn('Supabase not available for sign in')
+      console.error('❌ Supabase client is null - environment variables may be missing')
+      alert('Authentication service not available. Please check environment configuration.')
       return
     }
     
     try {
       // Use current location for redirect (works for both localhost and Vercel)
       const currentOrigin = window.location.origin
-      console.log('🔐 Signing in with Google, redirect to:', `${currentOrigin}/auth/callback`)
+      const redirectUrl = `${currentOrigin}/auth/callback`
+      console.log('🔐 Signing in with Google, redirect to:', redirectUrl)
+      console.log('🔐 Current origin:', currentOrigin)
+      console.log('🔐 Full redirect URL:', redirectUrl)
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${currentOrigin}/auth/callback`
+          redirectTo: redirectUrl
         }
       })
-      if (error) throw error
+      
+      if (error) {
+        console.error('❌ OAuth sign-in error:', error)
+        console.error('❌ Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name,
+          currentOrigin: window.location.origin,
+          redirectUrl: redirectUrl
+        })
+        
+        // Provide specific error messages
+        if (error.message.includes('redirect_uri_mismatch')) {
+          const currentUrl = window.location.origin
+          throw new Error(`OAuth redirect URL not configured. Current URL: ${currentUrl}/auth/callback. Please check Supabase settings.`)
+        } else if (error.message.includes('invalid_client')) {
+          throw new Error('Google OAuth client not configured. Please check Google Cloud Console.')
+        } else if (error.message.includes('not found') || error.message.includes('NOT_FOUND')) {
+          throw new Error(`OAuth redirect URL not found. Please ensure ${window.location.origin}/auth/callback is configured in Supabase. Current error: ${error.message}`)
+        } else {
+          throw error
+        }
+      }
     } catch (error) {
       console.error('Error signing in with Google:', error)
+      // You can add a toast notification here if you have a notification system
+      alert(`Sign-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }
 

@@ -19,6 +19,7 @@ import { reminderService } from './services/reminderService'
 import { SyncStatus } from './components/SyncStatus'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { Footer } from './components/Footer'
+import { AuthCallback } from './components/AuthCallback'
 
 interface UserPlan {
   prayerTime: number;
@@ -44,9 +45,24 @@ const AppContent: React.FC = () => {
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
+  // Check if we're on the auth callback route
+  const isAuthCallback = window.location.pathname === '/auth/callback';
+  
+  // Check for OAuth callback parameters in URL
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAuthParams = urlParams.has('access_token') || urlParams.has('error');
+
   console.log('🚀 AppContent: Rendering with user:', user?.email, 'loading:', loading)
 
   useEffect(() => {
+    // Handle OAuth callback parameters
+    if (hasAuthParams) {
+      console.log('🔄 AppContent: Detected OAuth callback parameters, cleaning URL...')
+      // Clean up the URL by removing auth parameters
+      const cleanUrl = window.location.pathname
+      window.history.replaceState({}, document.title, cleanUrl)
+    }
+
     // Check if user has completed questionnaire
     const savedPlan = localStorage.getItem('userPlan')
     const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire')
@@ -89,7 +105,7 @@ const AppContent: React.FC = () => {
           console.error('Service Worker registration failed:', error)
         })
     }
-  }, [user])
+  }, [user, hasAuthParams])
 
   // Add timeout for loading state to prevent freezing
   useEffect(() => {
@@ -176,6 +192,11 @@ const AppContent: React.FC = () => {
         </div>
       </div>
     );
+  }
+
+  // Show auth callback page if we're on the callback route
+  if (isAuthCallback) {
+    return <AuthCallback />
   }
 
   // Show questionnaire for first-time users
