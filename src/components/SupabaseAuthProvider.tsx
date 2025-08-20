@@ -125,10 +125,14 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
     
     try {
+      // Use current location for redirect (works for both localhost and Vercel)
+      const currentOrigin = window.location.origin
+      console.log('🔐 Signing in with Google, redirect to:', `${currentOrigin}/auth/callback`)
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${currentOrigin}/auth/callback`
         }
       })
       if (error) throw error
