@@ -140,7 +140,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     try {
       // Use current location for redirect (works for both localhost and Vercel)
       const currentOrigin = window.location.origin
-      const redirectUrl = `${currentOrigin}/auth/callback`
+      const redirectUrl = `${currentOrigin}/callback`
       console.log('🔐 Signing in with Google, redirect to:', redirectUrl)
       console.log('🔐 Current origin:', currentOrigin)
       console.log('🔐 Full redirect URL:', redirectUrl)
@@ -165,11 +165,11 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Provide specific error messages
         if (error.message.includes('redirect_uri_mismatch')) {
           const currentUrl = window.location.origin
-          throw new Error(`OAuth redirect URL not configured. Current URL: ${currentUrl}/auth/callback. Please check Supabase settings.`)
+          throw new Error(`OAuth redirect URL not configured. Current URL: ${currentUrl}/callback. Please check Supabase settings.`)
         } else if (error.message.includes('invalid_client')) {
           throw new Error('Google OAuth client not configured. Please check Google Cloud Console.')
         } else if (error.message.includes('not found') || error.message.includes('NOT_FOUND')) {
-          throw new Error(`OAuth redirect URL not found. Please ensure ${window.location.origin}/auth/callback is configured in Supabase. Current error: ${error.message}`)
+          throw new Error(`OAuth redirect URL not found. Please ensure ${window.location.origin}/callback is configured in Supabase. Current error: ${error.message}`)
         } else {
           throw error
         }

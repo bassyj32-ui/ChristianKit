@@ -45,8 +45,10 @@ const AppContent: React.FC = () => {
   const [showSyncStatus, setShowSyncStatus] = useState(false);
   const [loadingTimeout, setLoadingTimeout] = useState(false);
 
-  // Check if we're on the auth callback route
-  const isAuthCallback = window.location.pathname === '/auth/callback';
+  // Check if we're on the auth callback route or have auth parameters
+  const isAuthCallback = window.location.pathname === '/auth/callback' || 
+                        window.location.pathname === '/callback' ||
+                        window.location.hash.includes('access_token');
   
   // Check for OAuth callback parameters in URL (both query params and hash)
   const urlParams = new URLSearchParams(window.location.search);
