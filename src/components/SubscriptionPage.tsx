@@ -138,26 +138,6 @@ export const SubscriptionPage: React.FC = () => {
                 {/* EXISTING FEATURES */}
                 <div className="flex items-center gap-3">
                   <span className="text-green-400 text-xl">✓</span>
-                  <span>👥 Full Community Access</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>📅 30-Day Devotionals</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>Unlimited prayer sessions</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>Advanced Bible tracking</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
-                  <span>Cloud sync across devices</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-green-400 text-xl">✓</span>
                   <span>Premium support</span>
                 </div>
               </div>
@@ -231,15 +211,7 @@ export const SubscriptionPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-red-400 text-xl">✗</span>
-                  <span className="text-slate-500">👥 Full Community Access</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-red-400 text-xl">✗</span>
-                  <span className="text-slate-500">📅 30-Day Devotionals</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-red-400 text-xl">✗</span>
-                  <span className="text-slate-500">Cloud sync & Premium support</span>
+                  <span className="text-slate-500">Premium support</span>
                 </div>
               </div>
             </div>
@@ -338,7 +310,7 @@ export const SubscriptionPage: React.FC = () => {
                 What's included in the Pro plan?
               </h4>
               <p className="text-slate-300">
-                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus full community access, 30-Day Devotionals, unlimited sessions, cloud sync, and premium support.
+                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus premium support.
               </p>
             </div>
 

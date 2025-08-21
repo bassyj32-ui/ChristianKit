@@ -17,10 +17,15 @@ import { PrayerHistory } from './components/PrayerHistory'
 import { PrayerSettings } from './components/PrayerSettings'
 import { BibleTracker } from './components/BibleTracker'
 import { WeeklyProgressBot } from './components/WeeklyProgressBot'
+import { OsmoLandingPage } from './components/OsmoLandingPage'
 import { reminderService } from './services/reminderService'
+import { subscriptionService } from './services/subscriptionService'
+import { dailyReEngagementService } from './services/dailyReEngagementService'
 import { SyncStatus } from './components/SyncStatus'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { Footer } from './components/Footer'
+import { pwaService } from './services/pwaService'
+import './theme/osmoGlobal.css'
 
 interface UserPlan {
   prayerTime: number;
@@ -71,11 +76,20 @@ const AppContent: React.FC = () => {
       console.log('No saved plan found, user is first-time')
     }
 
-    // Initialize cloud sync if user is authenticated
+    // Initialize cloud sync and pro features if user is authenticated
     if (user) {
       const initializeCloudSync = async () => {
         try {
           console.log('Cloud sync ready for user:', user.email)
+          
+          // Initialize subscription service
+          await subscriptionService.initializeUserSubscription(user.id)
+          console.log('✅ Subscription service initialized')
+          
+          // Initialize daily re-engagement service
+          await dailyReEngagementService.initialize()
+          console.log('✅ Daily re-engagement service initialized')
+          
         } catch (error) {
           console.error('Error initializing cloud sync:', error)
         }
@@ -84,16 +98,55 @@ const AppContent: React.FC = () => {
       initializeCloudSync()
     }
 
-    // Unregister any existing service workers to prevent cache errors
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        for (let registration of registrations) {
-          registration.unregister()
-          console.log('Service Worker unregistered')
+    // Initialize PWA features
+    const initializePWA = async () => {
+      try {
+        console.log('🚀 Initializing PWA features...')
+        
+        // Setup network listeners
+        pwaService.setupNetworkListeners(
+          () => {
+            console.log('🌐 App back online - syncing data...')
+            // Handle coming back online
+          },
+          () => {
+            console.log('📱 App offline - enabling offline mode...')
+            // Handle going offline
+          }
+        )
+
+        // Schedule daily reminders for returning users
+        if (!isFirstTimeUser && user) {
+          pwaService.scheduleLocalReminders()
+          console.log('⏰ Daily reminders scheduled')
         }
-      })
+
+        // Show welcome back notification for returning users
+        const lastVisit = localStorage.getItem('lastVisit')
+        const now = new Date().toISOString()
+        
+        if (lastVisit && user) {
+          const daysSinceLastVisit = Math.floor(
+            (new Date(now).getTime() - new Date(lastVisit).getTime()) / (1000 * 60 * 60 * 24)
+          )
+          
+          if (daysSinceLastVisit >= 1) {
+            setTimeout(() => {
+              pwaService.showStreakBrokenNotification(daysSinceLastVisit)
+            }, 3000) // Show after 3 seconds
+          }
+        }
+        
+        localStorage.setItem('lastVisit', now)
+        
+        console.log('✅ PWA features initialized')
+      } catch (error) {
+        console.error('❌ Error initializing PWA:', error)
+      }
     }
-  }, [user])
+
+    initializePWA()
+  }, [user, isFirstTimeUser])
 
   // Add timeout for loading state to prevent freezing
   useEffect(() => {
@@ -131,8 +184,13 @@ const AppContent: React.FC = () => {
     setActiveTab(page);
   };
 
-  const handleTimerComplete = () => {
+  const handleTimerComplete = (duration?: number) => {
     console.log('Timer completed, staying on prayer timer')
+    
+    // Show PWA celebration notification
+    if (duration && duration > 0) {
+      pwaService.showPrayerCompletedNotification(duration)
+    }
   }
 
   const handleLogout = async () => {
@@ -230,6 +288,8 @@ const AppContent: React.FC = () => {
         return <PrayerSettings />
       case 'bible':
         return <BibleTracker />
+      case 'osmo-landing':
+        return <OsmoLandingPage />
       default:
         return (
           <PrayerTimerPage 
@@ -247,6 +307,7 @@ const AppContent: React.FC = () => {
   return (
     <div className="min-h-screen bg-black text-gray-100">
       <main className="flex-1">{renderContent()}</main>
+      <PWAInstallPrompt />
     </div>
   )
 }

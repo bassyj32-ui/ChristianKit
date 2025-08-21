@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { supabase } from '../utils/supabase'
 import { cloudDataService } from '../services/cloudDataService'
+import { CommunityPrayerRequests } from './CommunityPrayerRequests'
+import { ProFeatureGate } from './ProFeatureGate'
 
 interface CommunityPost {
   id: string
@@ -558,103 +560,19 @@ export const CommunitySection: React.FC = () => {
           </div>
         </div>
 
-        {/* Premium Upgrade Section */}
-        <div className="bg-gradient-to-r from-purple-900/50 to-pink-900/50 rounded-3xl p-6 shadow-xl border border-purple-800 mb-8">
-          <div className="text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">⭐</span>
-            </div>
-            <h3 className="text-2xl font-bold text-gray-100 mb-2">Join the Community</h3>
-            <p className="text-gray-400 mb-4">
-              Share your spiritual journey and connect with fellow believers
-            </p>
-            <div className="flex justify-center gap-4">
-              <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-6 py-3 rounded-xl font-medium hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
-                Start Free Trial
-              </button>
-              <button className="bg-neutral-900 text-gray-100 px-6 py-3 rounded-xl font-medium border-2 border-neutral-700 hover:bg-neutral-800 transition-all duration-300">
-                Learn More
-              </button>
-            </div>
+        {/* Community Prayer Requests - Unified Section */}
+        <div className="text-center mb-8">
+          <div className="w-20 h-20 mx-auto mb-6 bg-gradient-to-br from-purple-500 via-pink-500 to-purple-600 rounded-full flex items-center justify-center shadow-2xl">
+            <span className="text-white text-3xl">🙏</span>
           </div>
-        </div>
-          
-        {/* Create Post Section */}
-        {user ? (
-        <div className="bg-neutral-900/80 backdrop-blur-sm rounded-3xl p-6 shadow-2xl border border-green-800 mb-8">
-          <div className="flex items-start space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-br from-green-400 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                {user.user_metadata?.avatar_url || '👤'}
-            </div>
-            <div className="flex-1">
-              <textarea
-                  value={newPostContent}
-                  onChange={(e) => setNewPostContent(e.target.value)}
-                  placeholder="Share what God is doing in your life... Use #hashtags to connect with others!"
-                className="w-full p-4 border border-green-700 bg-neutral-900 text-gray-100 rounded-2xl resize-none focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                rows={3}
-              />
-              <div className="flex justify-between items-center mt-4">
-                <div className="flex space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-gray-300 transition-colors" title="Add photo">
-                    📷
-                  </button>
-                    <button className="p-2 text-gray-400 hover:text-gray-300 transition-colors" title="Add Bible verse">
-                    📖
-                  </button>
-                    <button className="p-2 text-gray-400 hover:text-gray-300 transition-colors" title="Add prayer">
-                    🙏
-                  </button>
-                </div>
-                  <button 
-                    onClick={handleCreatePost}
-                    disabled={!newPostContent.trim()}
-                    className={`px-6 py-2 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 ${
-                      newPostContent.trim() 
-                        ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white hover:from-green-600 hover:to-emerald-600' 
-                        : 'bg-neutral-700 text-gray-400 cursor-not-allowed'
-                    }`}
-                  >
-                    Share Post
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        ) : (
-          <div className="bg-gradient-to-r from-blue-900/50 to-purple-900/50 rounded-3xl p-6 shadow-xl border border-blue-800 mb-8 text-center">
-            <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center">
-              <span className="text-white text-2xl">🔐</span>
-            </div>
-            <h3 className="text-xl font-bold text-gray-100 mb-2">Sign in to Join the Conversation</h3>
-            <p className="text-gray-400 mb-4">
-              Create posts, like, and comment to connect with fellow believers
-            </p>
-          </div>
-        )}
-
-        {/* Load More Button */}
-        <div className="text-center mt-8">
-          <button className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-8 py-3 rounded-xl font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300 transform hover:scale-105 shadow-lg">
-            Load More Posts
-          </button>
-        </div>
-
-        {/* Footer Description */}
-        <div className="text-center mt-12">
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-8">
-            Connect with fellow believers and share your spiritual journey
+          <h1 className="text-3xl md:text-4xl font-bold text-gray-100 mb-3">
+            Community Prayer & Support
+          </h1>
+          <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+            Share prayer requests, encourage others, and grow together in faith
           </p>
           
-          {/* Community Header at Bottom */}
-          <div className="text-center">
-            <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
-              <span className="text-white text-4xl">👥</span>
-            </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-100">
-              Community
-            </h1>
-          </div>
+          <CommunityPrayerRequests />
         </div>
 
         {/* Mobile Bottom Spacing */}

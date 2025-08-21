@@ -1,15 +1,15 @@
 {
-  "name": "ChristianKit - Your Spiritual Growth Companion",
+  "name": "ChristianKit - Grow Your Faith Daily",
   "short_name": "ChristianKit",
-  "description": "Prayer timer, Bible tracking, community, and spiritual progress all in one app",
-  "start_url": "/",
+  "description": "Build spiritual habits with prayer timer, Bible tracking, daily reminders, and faith community - all in one PWA",
+  "start_url": "/?source=pwa",
   "display": "standalone",
   "background_color": "#000000",
-  "theme_color": "#4F46E5",
+  "theme_color": "#f97316",
   "orientation": "portrait-primary",
   "scope": "/",
   "lang": "en",
-  "categories": ["lifestyle", "spiritual", "productivity"],
+  "categories": ["lifestyle", "spiritual", "productivity", "health"],
   "icons": [
     {
       "src": "/icon-192x192.png",
