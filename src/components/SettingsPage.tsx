@@ -466,17 +466,17 @@ export const SettingsPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-100">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      <div className="max-w-4xl mx-auto py-8 px-4">
         {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-blue-400 to-cyan-500 rounded-full flex items-center justify-center shadow-2xl">
-            <span className="text-white text-4xl">⚙️</span>
-          </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-100 mb-4">
-            Settings
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Your{' '}
+            <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">
+              Settings
+            </span>
           </h1>
-          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
+          <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
             Customize your ChristianKit experience and manage your account
           </p>
         </div>

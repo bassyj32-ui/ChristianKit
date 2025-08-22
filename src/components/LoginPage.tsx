@@ -6,8 +6,8 @@ export const LoginPage: React.FC = () => {
   const { signInWithGoogle, loading } = useAuth();
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 flex items-center justify-center">
-      <div className="max-w-md w-full mx-auto px-6">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
+      <div className="osmo-card max-w-md w-full mx-4">
         {/* Logo and Header */}
         <div className="text-center mb-12">
           <div className="flex justify-center mb-6">
@@ -21,8 +21,8 @@ export const LoginPage: React.FC = () => {
         {/* Login Card */}
         <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-neutral-800">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-gray-100 mb-2">
-              Welcome Back
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+              Welcome to ChristianKit
             </h2>
             <p className="text-gray-400">
               Sign in to continue your spiritual journey
@@ -33,7 +33,7 @@ export const LoginPage: React.FC = () => {
           <button
             onClick={signInWithGoogle}
             disabled={loading}
-            className="w-full bg-white text-gray-900 rounded-xl py-4 px-6 font-bold text-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg mb-6 flex items-center justify-center gap-3"
+            className="w-full bg-white text-[var(--text-primary)] rounded-xl py-4 px-6 font-bold text-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg mb-6 flex items-center justify-center gap-3"
           >
             <svg className="w-6 h-6" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>

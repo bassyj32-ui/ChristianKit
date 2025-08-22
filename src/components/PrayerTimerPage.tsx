@@ -261,7 +261,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
       <div className="fixed top-6 right-6 z-[9999]">
         <button
           onClick={signInWithGoogle}
-          className="bg-amber-400 text-black px-6 py-3 rounded-lg font-semibold hover:bg-amber-300 transition-all duration-300 shadow-lg shadow-amber-400/25 hover:scale-105"
+                        className="bg-amber-400 text-[var(--text-inverse)] px-6 py-3 rounded-lg font-semibold hover:bg-amber-300 transition-all duration-300 shadow-lg shadow-amber-400/25 hover:scale-105"
         >
           Sign In
         </button>
@@ -322,34 +322,23 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   );
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-gray-100 relative">
+    <div className="h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden">
       {/* Floating Login - Outside main container */}
       <FloatingLogin />
       
-      {/* Osmo-Style Background */}
-      <div className="absolute inset-0 pointer-events-none">
-        {/* Subtle gradient overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-400/5 via-transparent to-amber-400/5"></div>
+      {/* Background with subtle patterns */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
+        {/* Subtle gradient overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-primary)]/2 via-transparent to-[var(--accent-primary)]/2"></div>
         
-        {/* Minimal grid pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div style={{
-            backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-            backgroundSize: '50px 50px'
-          }}></div>
-        </div>
-
         {/* Floating particles */}
-        <div className="absolute inset-0">
-          <div className="absolute top-1/4 left-1/4 w-1 h-1 bg-amber-400/30 rounded-full animate-pulse" style={{animationDuration: '4s'}}></div>
-          <div className="absolute top-1/3 right-1/3 w-0.5 h-0.5 bg-white/20 rounded-full animate-pulse" style={{animationDuration: '3s', animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 left-1/3 w-0.5 h-0.5 bg-amber-300/20 rounded-full animate-pulse" style={{animationDuration: '5s', animationDelay: '2s'}}></div>
-          <div className="absolute top-2/3 right-1/4 w-1 h-1 bg-white/10 rounded-full animate-pulse" style={{animationDuration: '3.5s', animationDelay: '0.5s'}}></div>
-        </div>
-              </div>
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-[var(--spiritual-blue)] rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
+        <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-[var(--spiritual-purple)] rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-[var(--spiritual-green)] rounded-full animate-bounce" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
+      </div>
 
       {/* Main Timer Content */}
-      <div className="flex flex-col items-center justify-center min-h-screen px-4 py-4 pb-24 relative z-10">
+      <div className="flex flex-col items-center justify-center h-screen px-4 py-4 pb-24 relative z-10">
 
         {/* Time Selection Bar - Osmo Style */}
         <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
@@ -360,7 +349,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
                 onClick={() => handleTimeSelect(5)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedMinutes === 5
-                    ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/25'
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -372,7 +361,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
                 onClick={() => handleTimeSelect(10)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedMinutes === 10
-                    ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/25'
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -384,7 +373,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
                 onClick={() => handleTimeSelect(30)}
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
                   selectedMinutes === 30
-                    ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/25'
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
                     : 'text-white hover:bg-white/10'
                 }`}
               >
@@ -395,66 +384,76 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
         </div>
 
         {/* Osmo-Style Timer Display */}
-        <div className="text-center w-full relative z-10 pt-8">
+        <div className="text-center w-full relative z-10 pt-2">
           
-          {/* Timer Container - Extra Width for Side Elements */}
-          <div className="relative flex items-center justify-center mb-2 w-full px-32 sm:px-40 lg:px-48 xl:px-56">
+          {/* Mobile-First Prayer Message Above Timer - Bigger and Closer to App Bar */}
+          <div className="text-center mb-2 mt-16 sm:hidden">
+            <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 mx-3 shadow-lg">
+              <p className="text-base font-black text-white leading-tight">
+                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black text-lg">Dear Jesus</span>, <span className="font-black text-white drop-shadow-lg">thank You for listening to me right now</span>
+              </p>
+            </div>
+          </div>
+          
+          {/* Timer Container - Optimized for Mobile Visibility */}
+          <div className="relative flex items-center justify-center mb-4 w-full px-4 sm:px-40 lg:px-48 xl:px-56">
             
-                        {/* Timer Circle with Animation */}
-            <div className="relative w-[280px] h-[280px] sm:w-[350px] sm:h-[350px] lg:w-[400px] lg:h-[400px] xl:w-[450px] xl:h-[450px]">
+            {/* Timer Circle with Enhanced Bold Design - Bigger for Attention */}
+            <div className="relative w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] lg:w-[450px] lg:h-[450px] xl:w-[500px] xl:h-[500px]">
               
-              {/* Background Circle */}
-              <div className="absolute inset-0 bg-white/5 backdrop-blur-xl border border-white/10 rounded-full shadow-2xl"></div>
+              {/* Enhanced Background Circle */}
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-full shadow-2xl"></div>
               
-              {/* Progress Ring Animation */}
+              {/* Progress Ring Animation - Bolder Design */}
               <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-                {/* Background Track */}
+                {/* Background Track - Bolder */}
                 <circle
                   cx="50"
                   cy="50"
                   r="45"
                   fill="none"
-                  stroke="rgba(255, 255, 255, 0.1)"
-                  strokeWidth="3"
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth="4"
                 />
-                {/* Animated Progress Arc */}
+                {/* Animated Progress Arc - Bolder and More Visible */}
                 <circle
                   cx="50"
                   cy="50"
                   r="45"
                   fill="none"
                   stroke="#fbbf24"
-                  strokeWidth="3"
+                  strokeWidth="6"
                   strokeDasharray={`${2 * Math.PI * 45}`}
                   strokeDashoffset={`${2 * Math.PI * 45 * (1 - (selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60))}`}
                   strokeLinecap="round"
                   className="transition-all duration-1000 ease-out drop-shadow-lg"
+                  filter="drop-shadow(0 0 12px rgba(251, 191, 36, 0.6))"
                 />
               </svg>
               
-              {/* Center Display - Timer & Percentage */}
+              {/* Center Display - Timer & Percentage - Much Bigger Text */}
               <div className="absolute inset-0 flex items-center justify-center">
                 <div className="text-center">
-                  <div className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-black text-white mb-2 drop-shadow-2xl">
+                  <div className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-white mb-1 drop-shadow-2xl">
                     {formatTime(timeRemaining)}
                   </div>
-                  <div className="text-amber-400 text-lg sm:text-xl lg:text-2xl font-bold">
+                  <div className="text-amber-400 text-lg sm:text-3xl lg:text-4xl font-bold">
                   {Math.round(((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100)}%
                   </div>
                 </div>
               </div>
 
-              {/* Left Side - Prayer Message */}
-              <div className="absolute left-[-140px] sm:left-[-160px] lg:left-[-180px] top-1/2 transform -translate-y-1/2">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px]">
-                  <p className="text-sm sm:text-base font-bold text-white leading-tight">
-                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Dear Jesus</span>, <span className="font-black">thank You for listening to me right now</span>
+              {/* Left Side - Prayer Message (Hidden on Mobile) */}
+              <div className="absolute left-[-140px] sm:left-[-160px] lg:left-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
+                <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px] shadow-lg">
+                  <p className="text-sm sm:text-base font-black text-white leading-tight">
+                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Dear Jesus</span>, <span className="font-black text-white drop-shadow-lg">thank You for listening to me right now</span>
                   </p>
                 </div>
               </div>
 
-              {/* Right Side - Prayer Time Title */}
-              <div className="absolute right-[-140px] sm:right-[-160px] lg:right-[-180px] top-1/2 transform -translate-y-1/2">
+              {/* Right Side - Prayer Time Title (Hidden on Mobile) */}
+              <div className="absolute right-[-140px] sm:right-[-160px] lg:right-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
                 <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px]">
                   <div className="text-2xl sm:text-3xl font-black text-white mb-2">
                     Prayer Time
@@ -467,6 +466,17 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
             </div>
           </div>
 
+          {/* Mobile-First Prayer Time Below Timer */}
+          <div className="text-center mt-3 sm:hidden">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 mx-4">
+              <div className="text-base font-black text-white mb-1">
+                Prayer Time
+              </div>
+              <div className="text-sm font-bold text-amber-400">
+                {selectedMinutes} min
+              </div>
+            </div>
+          </div>
 
 
           {/* Reminder - Osmo Style */}
@@ -481,7 +491,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
       {/* Navigation Tabs - Osmo Style */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-2 sm:space-x-1">
           {/* Home Tab */}
           <button
             onClick={() => {
@@ -491,28 +501,28 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
                 onNavigate?.('dashboard');
               }
             }}
-              className="flex items-center space-x-2 px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group"
+              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform duration-300">🏠</span>
-              <span className="text-sm font-medium">Home</span>
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏠</span>
+              <span className="text-sm font-medium sm:block hidden">Home</span>
           </button>
           
           {/* Restart Tab */}
           <button
             onClick={resetPrayer}
-              className="flex items-center space-x-2 px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group"
+              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform duration-300">🔄</span>
-              <span className="text-sm font-medium">Restart</span>
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🔄</span>
+              <span className="text-sm font-medium sm:block hidden">Restart</span>
           </button>
           
           {/* Share Tab */}
           <button
             onClick={() => onNavigate?.('community')}
-              className="flex items-center space-x-2 px-4 py-3 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group"
+              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
-              <span className="text-lg group-hover:scale-110 transition-transform duration-300">🌟</span>
-              <span className="text-sm font-medium">Share</span>
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🌟</span>
+              <span className="text-sm font-medium sm:block hidden">Share</span>
             </button>
             </div>
         </div>

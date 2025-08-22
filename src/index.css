@@ -1,171 +1,23 @@
+/* Import Osmo theme styles */
+@import './theme/osmoGlobal.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Base styles for dark mode */
-html.dark {
+/* Essential base styles - Osmo compatible */
+html {
+  scroll-behavior: smooth;
   color-scheme: dark;
 }
 
-html.dark body {
-  background-color: #000; /* Pure black background */
-  color: #e0e0e0; /* Light gray text */
+body {
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--bg-primary, #0a0a0a);
+  color: var(--text-primary, #ffffff);
 }
 
-/* Smooth scrolling */
-html {
-  scroll-behavior: smooth;
-}
-
-/* Enhanced transitions for dashboard components */
-.dashboard-section {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.dashboard-section:hover {
-  transform: translateY(-2px);
-}
-
-/* Progress bar animations */
-.progress-bar {
-  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Card hover effects */
-.habit-card {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.habit-card:hover {
-  transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-}
-
-/* Button animations */
-.btn-primary {
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-}
-
-.btn-primary:active {
-  transform: translateY(0);
-}
-
-/* Loading animations */
-@keyframes fadeInUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes fadeInScale {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.fade-in-up {
-  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.fade-in-scale {
-  animation: fadeInScale 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-/* Pulse animation for active elements */
-@keyframes pulse-glow {
-  0%, 100% {
-    box-shadow: 0 0 5px rgba(34, 197, 94, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(34, 197, 94, 0.6);
-  }
-}
-
-.pulse-glow {
-  animation: pulse-glow 2s infinite;
-}
-
-/* Smooth section transitions */
-.section-transition {
-  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.section-transition:hover {
-  transform: scale(1.01);
-}
-
-/* Enhanced focus states for accessibility */
-button:focus-visible,
-a:focus-visible {
-  outline: 2px solid #22c55e;
-  outline-offset: 2px;
-  border-radius: 0.5rem;
-}
-
-/* Custom scrollbar for dark theme */
-::-webkit-scrollbar {
-  width: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: #1f2937;
-}
-
-::-webkit-scrollbar-thumb {
-  background: #374151;
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: #4b5563;
-}
-
-/* Responsive text sizing */
-@media (max-width: 640px) {
-  .text-responsive {
-    font-size: 0.875rem;
-    line-height: 1.25rem;
-  }
-}
-
-@media (min-width: 641px) {
-  .text-responsive {
-    font-size: 1rem;
-    line-height: 1.5rem;
-  }
-}
-
-/* Dramatic slide-in animation for prayer focus */
-@keyframes slideInUp {
-  from {
-    opacity: 0;
-    transform: translateY(50px) scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.animate-slideInUp {
-  animation: slideInUp 1s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-}
-
+/* Essential animations only */
 @keyframes float {
   0%, 100% {
     transform: translateY(0px);
@@ -175,19 +27,6 @@ a:focus-visible {
   }
 }
 
-@keyframes glow {
-  0%, 100% {
-    box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 40px rgba(139, 92, 246, 0.6), 0 0 60px rgba(59, 130, 246, 0.4);
-  }
-}
-
 .animate-float {
   animation: float 3s ease-in-out infinite;
-}
-
-.animate-glow {
-  animation: glow 2s ease-in-out infinite;
 }

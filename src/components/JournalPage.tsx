@@ -70,7 +70,7 @@ export const JournalPage: React.FC = () => {
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-green-400 via-emerald-500 to-teal-600 rounded-full flex items-center justify-center shadow-2xl">
             <span className="text-white text-4xl">📝</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                      <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-4">
             Spiritual Journal
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -91,7 +91,7 @@ export const JournalPage: React.FC = () => {
         {/* New Entry Form */}
         {showNewEntry && (
           <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-green-200 mb-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">New Journal Entry</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">New Journal Entry</h2>
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Title</label>
@@ -164,7 +164,7 @@ export const JournalPage: React.FC = () => {
             <div key={entry.id} className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-xl border border-green-200 hover:shadow-2xl transition-all duration-300">
               <div className="flex items-start justify-between mb-4">
                 <div>
-                  <h3 className="text-2xl font-bold text-gray-900 mb-2">{entry.title}</h3>
+                  <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-2">{entry.title}</h3>
                   <p className="text-sm text-gray-500">{entry.date}</p>
                 </div>
                 <span className="px-4 py-2 bg-green-100 text-green-700 rounded-full text-sm font-medium">

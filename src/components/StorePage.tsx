@@ -102,7 +102,7 @@ export const StorePage: React.FC = () => {
           <div className="w-24 h-24 mx-auto mb-6 bg-gradient-to-br from-purple-400 via-pink-500 to-rose-600 rounded-full flex items-center justify-center shadow-2xl">
             <span className="text-white text-4xl">🛍️</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
+                      <h1 className="text-4xl md:text-5xl font-bold text-[var(--text-primary)] mb-4">
             Christian Store
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
@@ -137,7 +137,7 @@ export const StorePage: React.FC = () => {
                 <div className="w-20 h-20 mx-auto bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl flex items-center justify-center text-3xl mb-4">
                   {item.image}
                 </div>
-                <h3 className="text-xl font-bold text-gray-900 mb-2">{item.name}</h3>
+                <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">{item.name}</h3>
                 <p className="text-gray-600 mb-4">{item.description}</p>
                 <div className="flex items-center justify-center space-x-2 mb-4">
                   <div className="flex items-center">
@@ -164,7 +164,7 @@ export const StorePage: React.FC = () => {
         {/* Shopping Cart */}
         {cart.length > 0 && (
           <div className="bg-white/90 backdrop-blur-sm rounded-3xl p-8 shadow-2xl border border-purple-200">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Shopping Cart</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-6">Shopping Cart</h2>
             <div className="space-y-4 mb-6">
               {cart.map((item, index) => (
                 <div key={index} className="flex items-center justify-between p-4 bg-purple-50 rounded-2xl">
@@ -173,7 +173,7 @@ export const StorePage: React.FC = () => {
                       {item.image}
                     </div>
                     <div>
-                      <h3 className="font-bold text-gray-900">{item.name}</h3>
+                      <h3 className="font-bold text-[var(--text-primary)]">{item.name}</h3>
                       <p className="text-gray-600">${item.price}</p>
                     </div>
                   </div>
@@ -187,7 +187,7 @@ export const StorePage: React.FC = () => {
               ))}
             </div>
             <div className="flex items-center justify-between border-t border-purple-200 pt-4">
-              <span className="text-xl font-bold text-gray-900">Total: ${totalPrice.toFixed(2)}</span>
+                              <span className="text-xl font-bold text-[var(--text-primary)]">Total: ${totalPrice.toFixed(2)}</span>
               <button className="bg-gradient-to-r from-purple-500 to-pink-500 text-white px-8 py-3 rounded-xl font-bold hover:from-purple-600 hover:to-pink-600 transition-all duration-300 transform hover:scale-105">
                 Checkout
               </button>

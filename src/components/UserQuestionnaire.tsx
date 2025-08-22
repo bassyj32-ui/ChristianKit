@@ -81,11 +81,11 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 1:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Welcome to Your Spiritual Journey! 🙏</h2>
-            <p className="text-lg sm:text-xl text-amber-200 mb-6 sm:mb-8 px-4">Let's create a personalized plan just for you</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Welcome to Your Spiritual Journey! 🙏</h2>
+            <p className="text-lg sm:text-xl text-[var(--text-secondary)] mb-6 sm:mb-8 px-4">Let's create a personalized plan just for you</p>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">What's your experience level?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">What's your experience level?</h3>
               <div className="space-y-3 sm:space-y-4">
                 {[
                   { value: 'beginner', label: '🌱 Beginner', desc: 'Just starting my spiritual journey' },
@@ -97,11 +97,11 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     onClick={() => handleAnswer('experience', option.value)}
                     className={`w-full p-4 sm:p-6 rounded-2xl text-left transition-all duration-300 border-2 ${
                       answers.experience === option.value
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
-                    <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{option.label}</div>
+                    <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2 text-[var(--text-primary)]">{option.label}</div>
                     <div className="text-sm opacity-80">{option.desc}</div>
                   </button>
                 ))}
@@ -113,10 +113,10 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 2:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Daily Time Commitment ⏰</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Daily Time Commitment ⏰</h2>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">How much time can you dedicate daily?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">How much time can you dedicate daily?</h3>
               <div className="space-y-3 sm:space-y-4">
                 {[
                   { value: '5min', label: '5 minutes', desc: 'Perfect for busy schedules' },
@@ -128,11 +128,11 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     onClick={() => handleAnswer('dailyTime', option.value)}
                     className={`w-full p-4 sm:p-6 rounded-2xl text-left transition-all duration-300 border-2 ${
                       answers.dailyTime === option.value
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
-                    <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{option.label}</div>
+                    <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2 text-[var(--text-primary)]">{option.label}</div>
                     <div className="text-sm opacity-80">{option.desc}</div>
                   </button>
                 ))}
@@ -144,10 +144,10 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 3:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Prayer Focus Areas 🙏</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Prayer Focus Areas 🙏</h2>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">What areas do you want to focus on in prayer?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">What areas do you want to focus on in prayer?</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   'Gratitude', 'Healing', 'Guidance', 'Forgiveness', 
@@ -165,8 +165,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     }}
                     className={`p-3 sm:p-4 rounded-xl transition-all duration-300 border-2 ${
                       answers.prayerFocus.includes(focus)
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
                     {focus}
@@ -180,10 +180,10 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 4:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Bible Study Topics 📖</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Bible Study Topics 📖</h2>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">Which Bible topics interest you most?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Which Bible topics interest you most?</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
                 {[
                   'Psalms', 'Gospels', 'Proverbs', 'Epistles', 
@@ -201,8 +201,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     }}
                     className={`p-3 sm:p-4 rounded-xl transition-all duration-300 border-2 ${
                       answers.bibleTopics.includes(topic)
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
                     {topic}
@@ -216,10 +216,10 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 5:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Prayer Style 🧘‍♀️</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Prayer Style 🧘‍♀️</h2>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">What prayer style resonates with you?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">What prayer style resonates with you?</h3>
               <div className="space-y-3 sm:space-y-4">
                 {[
                   { value: 'mindfulness', label: 'Mindfulness', desc: 'Present moment awareness and breathing' },
@@ -232,8 +232,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     onClick={() => handleAnswer('prayerStyle', option.value)}
                     className={`w-full p-4 sm:p-6 rounded-2xl text-left transition-all duration-300 border-2 ${
                       answers.prayerStyle === option.value
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
                     <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{option.label}</div>
@@ -248,10 +248,10 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 6:
         return (
           <div className="text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6">Daily Spiritual Goal 🎯</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">Daily Spiritual Goal 🎯</h2>
             
-            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-amber-500/50 shadow-2xl max-w-2xl mx-auto">
-              <h3 className="text-xl sm:text-2xl font-bold text-amber-300 mb-4 sm:mb-6">What's your main spiritual goal?</h3>
+            <div className="bg-gradient-to-r from-slate-900/95 to-slate-800/95 backdrop-blur-md rounded-2xl p-4 sm:p-8 border-2 border-[var(--border-primary)] shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4 sm:mb-6">What's your main spiritual goal?</h3>
               <div className="space-y-3 sm:space-y-4">
                 {[
                   { value: 'closer-to-god', label: 'Closer to God', desc: 'Deepen my relationship with God' },
@@ -264,8 +264,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                     onClick={() => handleAnswer('dailyGoal', option.value)}
                     className={`w-full p-4 sm:p-6 rounded-2xl text-left transition-all duration-300 border-2 ${
                       answers.dailyGoal === option.value
-                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white border-amber-300 shadow-lg'
-                        : 'bg-slate-800/80 text-white border-amber-500/30 hover:bg-amber-500/20 hover:border-amber-400/50'
+                        ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] border-[var(--border-primary)] shadow-lg'
+                        : 'bg-slate-800/80 text-[var(--text-primary)] border-[var(--border-primary)] hover:bg-amber-500/20 hover:border-amber-400/50'
                     }`}
                   >
                     <div className="text-lg sm:text-2xl font-bold mb-1 sm:mb-2">{option.label}</div>
@@ -283,7 +283,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
   }
 
   return (
-    <div className="min-h-screen bg-black text-gray-100 relative overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden">
       {/* Celestial Background - Same as Prayer Timer */}
       <div className="absolute inset-0 bg-gradient-to-b from-amber-900 via-yellow-800/50 to-amber-900 pointer-events-none">
         {/* Milky Way Arc */}
@@ -310,8 +310,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
           {/* Progress Bar */}
           <div className="mb-6 sm:mb-8">
             <div className="flex justify-between items-center mb-2">
-              <span className="text-sm font-medium text-amber-200">Step {currentStep} of 6</span>
-              <span className="text-sm font-medium text-amber-200">{Math.round((currentStep / 6) * 100)}% Complete</span>
+              <span className="text-sm font-medium text-[var(--text-secondary)]">Step {currentStep} of 6</span>
+              <span className="text-sm font-medium text-[var(--text-secondary)]">{Math.round((currentStep / 6) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-slate-800/50 rounded-full h-2">
               <div 
@@ -331,8 +331,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
               disabled={currentStep === 1}
               className={`px-4 sm:px-8 py-2 sm:py-3 rounded-2xl font-bold transition-all duration-300 ${
                 currentStep === 1
-                  ? 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
-                  : 'bg-slate-800/80 text-white hover:bg-slate-700/80 transform hover:scale-105 border border-amber-500/30'
+                  ? 'bg-slate-700/50 text-[var(--text-secondary)] cursor-not-allowed'
+                  : 'bg-slate-800/80 text-[var(--text-primary)] hover:bg-slate-700/80 transform hover:scale-105 border border-[var(--border-primary)]'
               }`}
             >
               ← Previous
@@ -344,8 +344,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                 disabled={!canProceed()}
                 className={`px-4 sm:px-8 py-2 sm:py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl ${
                   canProceed()
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600'
-                    : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] hover:from-amber-600 hover:to-yellow-600'
+                    : 'bg-slate-700/50 text-[var(--text-secondary)] cursor-not-allowed'
                 }`}
               >
                 Next →
@@ -356,8 +356,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                 disabled={!canProceed()}
                 className={`px-4 sm:px-8 py-2 sm:py-3 rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl ${
                   canProceed()
-                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600'
-                    : 'bg-slate-700/50 text-slate-500 cursor-not-allowed'
+                    ? 'bg-gradient-to-r from-amber-500 to-yellow-500 text-[var(--text-primary)] hover:from-amber-600 hover:to-yellow-600'
+                    : 'bg-slate-700/50 text-[var(--text-secondary)] cursor-not-allowed'
                 }`}
               >
                 Create My Plan ✨
@@ -370,7 +370,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
             <div className="text-center mt-4 sm:mt-6">
               <button
                 onClick={onBack}
-                className="text-amber-300 hover:text-amber-200 text-sm underline transition-colors duration-300"
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm underline transition-colors duration-300"
               >
                 ← Back to Timer
               </button>

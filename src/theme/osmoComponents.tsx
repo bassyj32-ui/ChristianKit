@@ -50,7 +50,7 @@ export const OsmoButton: React.FC<OsmoButtonProps> = ({
   const baseClasses = 'font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 active:scale-95'
   
   const variantClasses = {
-    primary: 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black hover:from-amber-300 hover:to-yellow-400 shadow-lg shadow-amber-500/25',
+    primary: 'bg-gradient-to-r from-amber-400 to-yellow-500 text-[var(--text-inverse)] hover:from-amber-300 hover:to-yellow-400 shadow-lg shadow-amber-500/25',
     secondary: 'bg-white/10 text-white border border-white/20 hover:bg-white/15 hover:border-white/30',
     ghost: 'text-white hover:bg-white/10'
   }

@@ -76,33 +76,33 @@ export const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50 bg-gradient-to-r from-purple-600 to-indigo-700 rounded-2xl p-4 text-white shadow-2xl border border-purple-400/30">
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
-            <span className="text-2xl">📱</span>
+    <div className="fixed bottom-4 left-4 right-4 z-50">
+      <div className="bg-[var(--glass-dark)] backdrop-blur-xl border border-[var(--glass-border)] rounded-2xl p-4 shadow-2xl">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="w-10 h-10 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-xl flex items-center justify-center">
+              <span className="text-[var(--text-inverse)] text-lg">📱</span>
+            </div>
+            <div>
+              <h3 className="text-[var(--text-primary)] font-semibold">Install ChristianKit</h3>
+              <p className="text-[var(--text-secondary)] text-sm">Get quick access from your home screen</p>
+            </div>
           </div>
-          <div>
-            <h3 className="font-bold text-lg">Install ChristianKit</h3>
-            <p className="text-purple-100 text-sm">
-              Add to home screen for the best experience
-            </p>
+          
+          <div className="flex space-x-2">
+            <button
+              onClick={handleDismiss}
+              className="px-3 py-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+            >
+              Dismiss
+            </button>
+            <button
+              onClick={handleInstallClick}
+              className="px-4 py-2 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] rounded-lg font-medium hover:from-[var(--accent-primary)]/90 hover:to-[var(--accent-secondary)]/90 transition-all duration-300"
+            >
+              Install
+            </button>
           </div>
-        </div>
-        
-        <div className="flex gap-2">
-          <button
-            onClick={handleDismiss}
-            className="px-4 py-2 text-purple-200 hover:text-white transition-colors text-sm"
-          >
-            Maybe Later
-          </button>
-          <button
-            onClick={handleInstallClick}
-            className="bg-white text-purple-700 px-6 py-2 rounded-xl font-semibold hover:bg-purple-50 transition-all duration-300"
-          >
-            Install
-          </button>
         </div>
       </div>
     </div>

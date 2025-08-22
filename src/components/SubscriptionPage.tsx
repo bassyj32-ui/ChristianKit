@@ -27,15 +27,15 @@ export const SubscriptionPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-black py-8 px-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] py-8 px-4">
       {/* Top Navigation Bar */}
       <div className="fixed top-0 left-0 right-0 z-50 mb-8">
-        <div className="bg-gradient-to-r from-slate-900/95 via-gray-900/95 to-slate-900/95 backdrop-blur-xl border-b-2 border-gray-600/50 shadow-2xl">
+        <div className="bg-[var(--glass-dark)] backdrop-blur-xl border-b-2 border-[var(--glass-border)] shadow-2xl">
           <div className="flex items-center justify-between py-4 px-6">
             <div className="flex items-center space-x-4">
               <button 
                 onClick={() => window.location.href = '/'}
-                className="text-white font-semibold hover:text-amber-300 transition-colors duration-300"
+                className="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] transition-colors duration-300"
               >
                 🏠 Home
               </button>
@@ -43,7 +43,7 @@ export const SubscriptionPage: React.FC = () => {
             <div className="flex items-center space-x-3">
               <button 
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="bg-gradient-to-r from-amber-600 to-orange-600 text-white px-4 py-2 rounded-xl font-semibold hover:from-amber-500 hover:to-orange-500 transition-all duration-300 border border-amber-500/30"
+                className="osmo-button-primary px-4 py-2 font-semibold"
               >
                 Pro
               </button>
@@ -68,30 +68,30 @@ export const SubscriptionPage: React.FC = () => {
           
           {/* Pro Plan - Featured */}
           <div className="relative">
-            <div className="bg-gradient-to-br from-slate-800/90 via-gray-800/90 to-slate-900/90 backdrop-blur-xl rounded-3xl p-8 text-white shadow-2xl transform hover:scale-105 transition-all duration-300 border border-gray-600/30">
+            <div className="osmo-card p-8 transform hover:scale-105 transition-all duration-300">
               {/* Popular Badge */}
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-900 px-6 py-2 rounded-full text-sm font-bold shadow-lg border border-amber-300/50">
+                <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] px-6 py-2 rounded-full text-sm font-bold shadow-lg border border-[var(--accent-primary)]/50">
                   ⭐ MOST POPULAR
                 </span>
               </div>
               
               {/* Plan Header */}
               <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-amber-400 via-orange-500 to-red-500 bg-clip-text text-transparent">
+                <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] bg-clip-text text-transparent">
                   Pro Plan
                 </h2>
-                <p className="text-slate-300 text-lg">Unlock everything</p>
+                <p className="text-[var(--text-secondary)] text-lg">Unlock everything</p>
               </div>
 
               {/* Pricing - Prominent Display */}
               <div className="text-center mb-8">
                 <div className="mb-2">
-                  <span className="text-5xl font-bold text-white">$2.50</span>
-                  <span className="text-2xl text-slate-300">/month</span>
+                  <span className="text-5xl font-bold text-[var(--text-primary)]">$2.50</span>
+                  <span className="text-2xl text-[var(--text-secondary)]">/month</span>
                 </div>
-                <div className="text-slate-300 text-lg font-semibold">
-                  Billed annually at <span className="text-white font-bold">$30/year</span>
+                <div className="text-[var(--text-secondary)] text-lg font-semibold">
+                  Billed annually at <span className="text-[var(--text-primary)] font-bold">$30/year</span>
                 </div>
               </div>
 
@@ -153,19 +153,19 @@ export const SubscriptionPage: React.FC = () => {
           </div>
 
           {/* Free Plan */}
-          <div className="bg-slate-800/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-gray-600/30 text-white">
+          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)]">
             <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-white mb-2">Free Plan</h2>
-              <p className="text-slate-300 text-lg">Basic features included</p>
+              <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Free Plan</h2>
+              <p className="text-[var(--text-secondary)] text-lg">Basic features included</p>
             </div>
 
             {/* Pricing */}
             <div className="text-center mb-8">
               <div className="mb-2">
-                <span className="text-5xl font-bold text-white">$0</span>
-                <span className="text-2xl text-slate-300">/month</span>
+                <span className="text-5xl font-bold text-[var(--text-primary)]">$0</span>
+                <span className="text-2xl text-[var(--text-secondary)]">/month</span>
               </div>
-              <div className="text-slate-400 text-lg">
+              <div className="text-[var(--text-tertiary)] text-lg">
                 Forever free
               </div>
             </div>
@@ -233,7 +233,7 @@ export const SubscriptionPage: React.FC = () => {
 
         {/* Free Plan Request Modal */}
         {showFreeRequest && (
-          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="fixed inset-0 bg-[var(--glass-dark)] flex items-center justify-center p-4 z-50">
             <div className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-gray-600/30">
               <h3 className="text-2xl font-bold text-white mb-4 text-center">
                 Request Free Access

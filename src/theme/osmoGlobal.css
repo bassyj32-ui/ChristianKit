@@ -3,7 +3,7 @@
 /* Import Inter font (like Osmo) */
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* CSS Custom Properties */
+/* CSS Custom Properties - Osmo Theme */
 :root {
   /* Colors - Dark theme like Osmo */
   --bg-primary: #0a0a0a;
@@ -14,7 +14,7 @@
   --text-primary: #ffffff;
   --text-secondary: #a1a1aa;
   --text-tertiary: #71717a;
-  --text-inverse: #000000;
+  --text-inverse: #ffffff;
   
   --accent-primary: #fbbf24;
   --accent-secondary: #f59e0b;
@@ -25,6 +25,15 @@
   --spiritual-purple: #8b5cf6;
   --spiritual-green: #10b981;
   --spiritual-rose: #f43f5e;
+  --spiritual-teal: #14b8a6;
+  --spiritual-indigo: #6366f1;
+  --spiritual-cyan: #06b6d4;
+  --spiritual-orange: #f97316;
+  --spiritual-emerald: #059669;
+  --spiritual-violet: #7c3aed;
+  --spiritual-sky: #0ea5e9;
+  --spiritual-red: #ef4444;
+  --spiritual-pink: #ec4899;
   
   --border-primary: #27272a;
   --border-secondary: #3f3f46;
@@ -61,268 +70,200 @@
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
-  --shadow-glow: 0 0 20px rgb(251 191 36 / 0.15);
-  --shadow-spiritual: 0 0 30px rgb(139 92 246 / 0.2);
+  --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   
-  /* Animation */
-  --duration-fast: 150ms;
-  --duration-normal: 300ms;
-  --duration-slow: 500ms;
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 250ms ease-in-out;
+  --transition-slow: 350ms ease-in-out;
   
-  --easing-default: cubic-bezier(0.4, 0, 0.2, 1);
-  --easing-in: cubic-bezier(0.4, 0, 1, 1);
-  --easing-out: cubic-bezier(0, 0, 0.2, 1);
+  /* Z-Index */
+  --z-dropdown: 1000;
+  --z-sticky: 1020;
+  --z-fixed: 1030;
+  --z-modal-backdrop: 1040;
+  --z-modal: 1050;
+  --z-popover: 1060;
+  --z-tooltip: 1070;
 }
 
-/* Global resets and base styles */
+/* Light Mode Overrides (when user switches to light) */
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f8fafc;
+  --bg-tertiary: #f1f5f9;
+  --bg-accent: rgba(0, 0, 0, 0.04);
+  
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-tertiary: #64748b;
+  --text-inverse: #ffffff;
+  
+  --border-primary: #e2e8f0;
+  --border-secondary: #cbd5e1;
+  --border-subtle: rgba(0, 0, 0, 0.06);
+  
+  --glass-light: rgba(0, 0, 0, 0.03);
+  --glass-medium: rgba(0, 0, 0, 0.06);
+  --glass-dark: rgba(0, 0, 0, 0.12);
+  --glass-border: rgba(0, 0, 0, 0.08);
+}
+
+/* Dark Mode (Default - Osmo Theme) */
+[data-theme="dark"] {
+  --bg-primary: #0a0a0a;
+  --bg-secondary: #111111;
+  --bg-tertiary: #1a1a1a;
+  --bg-accent: rgba(255, 255, 255, 0.04);
+  
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #71717a;
+  --text-inverse: #ffffff;
+  
+  --border-primary: #27272a;
+  --border-secondary: #3f3f46;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  
+  --glass-light: rgba(255, 255, 255, 0.03);
+  --glass-medium: rgba(255, 255, 255, 0.06);
+  --glass-dark: rgba(0, 0, 0, 0.12);
+  --glass-border: rgba(255, 255, 255, 0.08);
+}
+
+/* Base Styles */
 * {
   box-sizing: border-box;
 }
 
 html {
-  scroll-behavior: smooth;
+  font-family: var(--font-sans);
+  line-height: 1.6;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  color: var(--text-primary);
 }
 
 body {
-  font-family: var(--font-sans);
-  background-color: var(--bg-primary);
-  color: var(--text-primary);
-  line-height: 1.6;
   margin: 0;
   padding: 0;
-  min-height: 100vh;
-}
-
-/* Typography styles */
-h1, h2, h3, h4, h5, h6 {
-  font-weight: 700;
-  line-height: 1.2;
-  margin: 0;
   color: var(--text-primary);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  transition: background-color var(--transition-normal), color var(--transition-normal);
 }
 
-h1 {
-  font-size: 3rem;
-  font-weight: 800;
-  letter-spacing: -0.025em;
-}
-
-h2 {
-  font-size: 2.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-h3 {
-  font-size: 1.875rem;
-  font-weight: 600;
-}
-
-h4 {
-  font-size: 1.5rem;
-  font-weight: 600;
-}
-
-h5 {
-  font-size: 1.25rem;
-  font-weight: 600;
-}
-
-h6 {
-  font-size: 1.125rem;
-  font-weight: 600;
-}
-
-p {
-  margin: 0;
-  color: var(--text-secondary);
-  line-height: 1.7;
-}
-
-/* Link styles */
-a {
-  color: var(--accent-primary);
-  text-decoration: none;
-  transition: color var(--duration-normal) var(--easing-default);
-}
-
-a:hover {
-  color: var(--accent-secondary);
-}
-
-/* Button base styles */
-button {
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  outline: none;
-  transition: all var(--duration-normal) var(--easing-default);
-}
-
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-/* Input base styles */
-input, textarea, select {
-  font-family: inherit;
-  outline: none;
-  transition: all var(--duration-normal) var(--easing-default);
-}
-
-/* Utility classes for Osmo-inspired styling */
+/* Osmo-inspired Components */
 .osmo-card {
-  background: var(--glass-medium);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--radius-xl);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-lg);
   padding: var(--spacing-lg);
-  box-shadow: var(--shadow-lg);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(10px);
+  transition: all var(--transition-normal);
 }
 
 .osmo-card:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.12);
   transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+  border-color: var(--border-accent);
 }
 
 .osmo-button-primary {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   color: var(--text-inverse);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   font-weight: 600;
-  box-shadow: var(--shadow-glow);
-  transform: translateY(0);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  box-shadow: var(--shadow-sm);
 }
 
 .osmo-button-primary:hover {
-  transform: translateY(-2px) scale(1.02);
-  box-shadow: 0 0 25px rgb(251 191 36 / 0.25);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+  filter: brightness(1.1);
+}
+
+.osmo-button-primary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .osmo-button-secondary {
-  background: var(--glass-medium);
+  background: var(--bg-tertiary);
   color: var(--text-primary);
-  border: 1px solid var(--glass-border);
-  padding: var(--spacing-sm) var(--spacing-lg);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-primary);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm) var(--spacing-md);
   font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-normal);
 }
 
 .osmo-button-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+  background: var(--bg-accent);
+  border-color: var(--border-accent);
 }
 
-.osmo-input {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  padding: var(--spacing-sm) var(--spacing-md);
+/* Glass Morphism Effects */
+.osmo-glass {
+  background: var(--glass-medium);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
 }
 
-.osmo-input::placeholder {
-  color: var(--text-tertiary);
+.osmo-glass-light {
+  background: var(--glass-light);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--glass-border);
 }
 
-.osmo-input:focus {
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 3px rgba(251, 191, 36, 0.1);
-}
-
-.osmo-gradient-text {
+/* Typography */
+.osmo-text-gradient {
   background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
-.osmo-spiritual-gradient {
-  background: linear-gradient(135deg, var(--spiritual-purple), var(--spiritual-blue));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.osmo-heading {
+  font-weight: 700;
+  line-height: 1.2;
+  margin: 0;
 }
 
-/* Section spacing */
-.osmo-section {
-  padding: var(--spacing-3xl) 0;
+.osmo-heading-xl {
+  font-size: 2.5rem;
+  font-weight: 800;
 }
 
-.osmo-container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 var(--spacing-lg);
+.osmo-heading-lg {
+  font-size: 2rem;
+  font-weight: 700;
 }
 
-/* Grid utilities */
-.osmo-grid {
-  display: grid;
-  gap: var(--spacing-lg);
+.osmo-heading-md {
+  font-size: 1.5rem;
+  font-weight: 600;
 }
 
-.osmo-grid-2 {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+.osmo-heading-sm {
+  font-size: 1.25rem;
+  font-weight: 600;
 }
 
-.osmo-grid-3 {
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-}
-
-.osmo-grid-4 {
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-}
-
-/* Responsive utilities */
-@media (max-width: 768px) {
-  h1 {
-    font-size: 2.5rem;
-  }
-  
-  h2 {
-    font-size: 2rem;
-  }
-  
-  .osmo-container {
-    padding: 0 var(--spacing-md);
-  }
-  
-  .osmo-section {
-    padding: var(--spacing-2xl) 0;
-  }
-}
-
-/* Animation utilities */
-.osmo-animate-fade-in {
-  animation: fadeIn var(--duration-slow) var(--easing-out);
-}
-
-.osmo-animate-slide-up {
-  animation: slideUp var(--duration-slow) var(--easing-out);
-}
-
-.osmo-animate-scale-in {
-  animation: scaleIn var(--duration-normal) var(--easing-out);
-}
-
-@keyframes fadeIn {
+/* Animations */
+@keyframes osmo-fade-in {
   from {
     opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(20px);
   }
   to {
     opacity: 1;
@@ -330,18 +271,58 @@ input, textarea, select {
   }
 }
 
-@keyframes scaleIn {
+@keyframes osmo-slide-in {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: translateX(-20px);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: translateX(0);
   }
 }
 
-/* Custom scrollbar (like Osmo) */
+.osmo-fade-in {
+  animation: osmo-fade-in 0.6s ease-out;
+}
+
+.osmo-slide-in {
+  animation: osmo-slide-in 0.6s ease-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .osmo-heading-xl {
+    font-size: 2rem;
+  }
+  
+  .osmo-heading-lg {
+    font-size: 1.75rem;
+  }
+  
+  .osmo-heading-md {
+    font-size: 1.25rem;
+  }
+  
+  .osmo-card {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Focus States */
+.osmo-button-primary:focus,
+.osmo-button-secondary:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--accent-primary);
+  color: var(--text-inverse);
+}
+
+/* Scrollbar Styling */
 ::-webkit-scrollbar {
   width: 8px;
 }
@@ -351,22 +332,10 @@ input, textarea, select {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-secondary);
-  border-radius: var(--radius-lg);
+  background: var(--border-primary);
+  border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--accent-primary);
-}
-
-/* Selection styling */
-::selection {
-  background: var(--accent-primary);
-  color: var(--text-inverse);
-}
-
-/* Focus visible styling */
-:focus-visible {
-  outline: 2px solid var(--accent-primary);
-  outline-offset: 2px;
+  background: var(--border-accent);
 }

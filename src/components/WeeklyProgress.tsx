@@ -1,328 +1,198 @@
-import React, { useState, useEffect } from 'react'
-import { prayerService } from '../services/prayerService'
+import React, { useState, useEffect } from 'react';
 
 interface ProgressData {
-  day: string
-  prayer: number
-  bible: number
-  meditation: number
-  journal: number
-  totalMinutes?: number
-  sessionsCount?: number
-  streak?: number
-  goalAchieved?: boolean
-  isToday?: boolean
+  day: string;
+  prayer: number;
+  bible: number;
+  meditation: number;
+  journal: number;
 }
 
 interface WeeklyProgressProps {
   showSummary?: boolean;
+  embedded?: boolean;
 }
 
-export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = true }) => {
-  const [animateProgress, setAnimateProgress] = useState(false)
-  const [animateStats, setAnimateStats] = useState(false)
-  const [progressData, setProgressData] = useState<ProgressData[]>([])
-  const [loading, setLoading] = useState(true)
+export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ 
+  showSummary = true, 
+  embedded = false 
+}) => {
+  const [loading, setLoading] = useState(true);
+  const [progressData, setProgressData] = useState<ProgressData[]>([]);
 
   useEffect(() => {
-    const loadWeeklyProgress = async () => {
-      try {
-        setLoading(true)
-        const data = await prayerService.getWeeklyProgress()
-        setProgressData(data.dailyData || [])
-        setAnimateProgress(true)
-        setTimeout(() => setAnimateStats(true), 500)
-      } catch (error) {
-        console.error('Error loading weekly progress:', error)
-        // Fallback to empty data
-        setProgressData([])
-      } finally {
-        setLoading(false)
-      }
-    }
+    // Simulate loading
+    setTimeout(() => {
+      const mockData: ProgressData[] = [
+        { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
+        { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
+        { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
+        { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
+        { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
+        { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
+        { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
+      ];
+      setProgressData(mockData);
+      setLoading(false);
+    }, 1000);
+  }, []);
 
-    loadWeeklyProgress()
-  }, [])
-
-  const calculateAverage = (data: ProgressData[], key: keyof ProgressData) => {
-    const values = data.map(item => item[key] as number)
-    return Math.round(values.reduce((sum, val) => sum + val, 0) / values.length)
-  }
-
-  const getProgressColor = (percentage: number) => {
-    if (percentage >= 80) return 'from-green-400 to-emerald-500'
-    if (percentage >= 60) return 'from-yellow-400 to-orange-500'
-    return 'from-red-400 to-pink-500'
-  }
-
-  const getProgressText = (percentage: number) => {
-    if (percentage >= 80) return 'Excellent!'
-    if (percentage >= 60) return 'Good Job!'
-    return 'Keep Going!'
-  }
-
-  const getWeeklySummaryMessage = (data: ProgressData[]) => {
-    if (data.length === 0) return 'Start your spiritual journey this week!'
-    
-    const totalPrayer = data.reduce((sum, day) => sum + day.prayer, 0)
-    const totalBible = data.reduce((sum, day) => sum + day.bible, 0)
-    const totalMeditation = data.reduce((sum, day) => sum + day.meditation, 0)
-    const totalJournal = data.reduce((sum, day) => sum + day.journal, 0)
-    
-    const totalActivities = totalPrayer + totalBible + totalMeditation + totalJournal
-    const averagePerDay = totalActivities / 7
-    
-    if (averagePerDay >= 200) return 'Outstanding week! You\'re truly dedicated to your spiritual growth. Keep shining! ✨'
-    if (averagePerDay >= 150) return 'Amazing progress this week! Your consistency is inspiring. Keep up the great work! 🌟'
-    if (averagePerDay >= 100) return 'Great job this week! You\'re building strong spiritual habits. Keep going! 🙏'
-    if (averagePerDay >= 50) return 'Good start this week! Every step counts in your spiritual journey. Keep growing! 🌱'
-    
-    return 'You\'re taking the first steps on your spiritual journey. Every prayer session matters! 💪'
-  }
-
-  // Enhanced progress calculation
-  const getEnhancedProgress = () => {
-    if (progressData.length === 0) return null;
-    
-    const totalMinutes = progressData.reduce((sum, day) => sum + (day.totalMinutes || 0), 0);
-    const totalSessions = progressData.reduce((sum, day) => sum + (day.sessionsCount || 0), 0);
-    const currentStreak = progressData.filter(day => (day.sessionsCount || 0) > 0).length;
-    const weeklyGoal = Math.min(100, Math.round((totalMinutes / 210) * 100)); // 210 min = 30 min/day * 7 days
-    
-    return {
-      totalMinutes,
-      totalSessions,
-      currentStreak,
-      weeklyGoal,
-      averageDailyMinutes: Math.round(totalMinutes / 7)
-    };
+  const calculateAverage = (data: ProgressData[], activity: keyof ProgressData): number => {
+    if (data.length === 0) return 0;
+    const sum = data.reduce((acc, day) => acc + (day[activity] as number), 0);
+    return Math.round(sum / data.length);
   };
 
-  const enhancedProgress = getEnhancedProgress();
+  const getWeeklySummaryMessage = (data: ProgressData[]): string => {
+    const avgPrayer = calculateAverage(data, 'prayer');
+    if (avgPrayer >= 85) return "Outstanding prayer consistency this week! You're truly inspiring!";
+    if (avgPrayer >= 70) return "Great job maintaining your prayer routine! Keep up the momentum!";
+    return "Every prayer session counts! You're building a strong foundation.";
+  };
+
+  if (loading) {
+    return (
+      <div className={`${embedded ? 'py-4' : 'min-h-screen py-8 px-4'} ${embedded ? '' : 'bg-[var(--bg-primary)]'} text-[var(--text-primary)]`}>
+        <div className="text-center">
+          <div className={`${embedded ? 'text-2xl' : 'text-4xl'} mb-4`}>📊</div>
+          <p className="text-[var(--text-secondary)]">Loading your progress...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-8">
-      {/* Weekly Chart */}
-      <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-6 sm:p-8 shadow-2xl border border-white/10">
-        <div className="flex items-center justify-center mb-6">
-          <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center mr-3">
-            <span className="text-lg">📊</span>
-          </div>
-          <h3 className="text-xl sm:text-2xl font-bold text-white">Weekly Progress</h3>
+    <div className={`${embedded ? '' : 'min-h-screen bg-[var(--bg-primary)] py-8 px-4'} text-[var(--text-primary)]`}>
+      {/* Header - only show when not embedded */}
+      {!embedded && (
+        <div className="text-center mb-8">
+          <h1 className="text-4xl md:text-5xl font-bold mb-4">
+            Your Weekly{' '}
+            <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">
+              Progress
+            </span>
+          </h1>
+          <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+            Track your spiritual journey and celebrate your growth
+          </p>
         </div>
-        
-        <div className="grid grid-cols-7 gap-2 sm:gap-4 mb-6">
-          {loading ? (
-            // Loading state
-            Array.from({ length: 7 }).map((_, index) => {
-              const dayPatterns = [
-                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center&blur=40', // Sunday - Peaceful nature
-                'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=200&h=150&fit=crop&crop=center&blur=40', // Monday - Productivity
-                'https://images.unsplash.com/photo-1544373365-d0501372d1bd?w=200&h=150&fit=crop&crop=center&blur=40', // Tuesday - Growth
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=150&fit=crop&crop=center&blur=40', // Wednesday - Prayer
-                'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=200&h=150&fit=crop&crop=center&blur=40', // Thursday - Planning
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=150&fit=crop&crop=center&blur=40', // Friday - Analytics
-                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center&blur=40', // Saturday - Rest
-              ]
+      )}
+
+      {/* Progress Overview Card */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <div className="osmo-card">
+          <div className="text-center mb-6">
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">This Week's Highlights</h2>
+            <p className="text-[var(--text-secondary)]">Keep up the great work!</p>
+          </div>
+          
+          <div className={`grid grid-cols-7 ${embedded ? 'gap-1' : 'gap-2 sm:gap-4'} mb-6`}>
+            {progressData.map((day, index) => {
+              const todayIndex = new Date().getDay();
+              const isToday = index === todayIndex;
               return (
-                <div key={index} className="text-center p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative overflow-hidden group hover:bg-white/8 transition-all duration-300">
-                  <div 
-                    className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
-                    style={{
-                      backgroundImage: `url(${dayPatterns[index]})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
+                <div key={day.day} className={`text-center ${embedded ? 'p-1.5' : 'p-3'} rounded-xl bg-[var(--glass-light)]/5 backdrop-blur-xl border border-[var(--glass-border)]/10 relative overflow-hidden group hover:bg-[var(--glass-light)]/8 transition-all duration-300 ${isToday ? 'ring-2 ring-[var(--accent-primary)]/60 shadow-lg shadow-[var(--accent-primary)]/20' : ''}`}>
                   <div className="relative z-10">
-                    <div className="text-xs sm:text-sm font-medium text-white/90 mb-2">
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index]}
-                    </div>
-                <div className="space-y-1 sm:space-y-2">
-                  {['prayer', 'bible', 'meditation', 'journal'].map((activity) => (
-                    <div key={activity} className="relative">
-                      <div className="w-full bg-neutral-700 rounded-full h-1 sm:h-2">
-                        <div className="h-1 sm:h-2 rounded-full bg-neutral-600 animate-pulse"></div>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">--</div>
-                    </div>
-                  ))}
-                  </div>
-                </div>
-              </div>
-            )})
-          ) : progressData.length > 0 ? (
-            progressData.map((day, index) => {
-              const dayPatterns = [
-                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center&blur=40', // Sunday - Peaceful nature
-                'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=200&h=150&fit=crop&crop=center&blur=40', // Monday - Productivity
-                'https://images.unsplash.com/photo-1544373365-d0501372d1bd?w=200&h=150&fit=crop&crop=center&blur=40', // Tuesday - Growth
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=150&fit=crop&crop=center&blur=40', // Wednesday - Prayer
-                'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=200&h=150&fit=crop&crop=center&blur=40', // Thursday - Planning
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=150&fit=crop&crop=center&blur=40', // Friday - Analytics
-                'https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=200&h=150&fit=crop&crop=center&blur=40', // Saturday - Zen
-              ]
-              const todayIndex = new Date().getDay()
-              const isToday = index === todayIndex
-              return (
-                <div key={day.day} className={`text-center p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative overflow-hidden group hover:bg-white/8 transition-all duration-300 ${isToday ? 'ring-2 ring-amber-400/60 shadow-lg shadow-amber-400/20' : ''}`}>
-                  <div 
-                    className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
-                    style={{
-                      backgroundImage: `url(${dayPatterns[index]})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
-                  <div className="relative z-10">
-                    <div className={`text-xs sm:text-sm font-medium mb-2 ${isToday ? 'text-amber-300 font-bold' : 'text-white/90'}`}>
+                    <div className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} font-medium ${embedded ? 'mb-1' : 'mb-2'} ${isToday ? 'text-[var(--accent-primary)] font-bold' : 'text-[var(--text-primary)]/90'}`}>
                       {day.day} {isToday ? '●' : ''}
                     </div>
-                <div className="space-y-1 sm:space-y-2">
-                  {['prayer', 'bible', 'meditation', 'journal'].map((activity) => {
-                    const value = day[activity as keyof ProgressData] as number
-                    return (
-                      <div key={activity} className="relative">
-                        <div className="w-full bg-black/30 backdrop-blur-sm rounded-full h-1 sm:h-2 border border-white/10">
-                          <div
-                            className={`h-1 sm:h-2 rounded-full bg-gradient-to-r from-white/60 to-white/80 shadow-lg transition-all duration-1000 ease-out ${
-                              animateProgress ? 'w-full' : 'w-0'
-                            }`}
-                            style={{ width: `${value}%` }}
-                          />
-                        </div>
-                        <div className="text-xs text-gray-500 mt-1">{value}%</div>
-                      </div>
-                    )
-                  })}
+                    <div className={`${embedded ? 'space-y-0.5' : 'space-y-1 sm:space-y-2'}`}>
+                      {['prayer', 'bible', 'meditation', 'journal'].map((activity) => {
+                        const value = day[activity as keyof ProgressData] as number;
+                        return (
+                          <div key={activity} className="relative">
+                            <div className={`w-full bg-[var(--glass-dark)]/30 backdrop-blur-sm rounded-full ${embedded ? 'h-1' : 'h-1 sm:h-2'} border border-[var(--glass-border)]/10`}>
+                              <div
+                                className={`${embedded ? 'h-1' : 'h-1 sm:h-2'} rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-500`}
+                                style={{ width: `${value}%` }}
+                              />
+                            </div>
+                            {!embedded && <div className="text-xs text-[var(--text-secondary)] mt-1">{value}%</div>}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
-              </div>
-            )})
-          ) : (
-            // No data state
-            Array.from({ length: 7 }).map((_, index) => {
-              const dayPatterns = [
-                'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=200&h=150&fit=crop&crop=center&blur=40', // Sunday - Peaceful nature
-                'https://images.unsplash.com/photo-1551836022-deb4988cc6c0?w=200&h=150&fit=crop&crop=center&blur=40', // Monday - Productivity
-                'https://images.unsplash.com/photo-1544373365-d0501372d1bd?w=200&h=150&fit=crop&crop=center&blur=40', // Tuesday - Growth
-                'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=200&h=150&fit=crop&crop=center&blur=40', // Wednesday - Prayer
-                'https://images.unsplash.com/photo-1484480974693-6ca0a78fb36b?w=200&h=150&fit=crop&crop=center&blur=40', // Thursday - Planning
-                'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=200&h=150&fit=crop&crop=center&blur=40', // Friday - Analytics
-                'https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=200&h=150&fit=crop&crop=center&blur=40', // Saturday - Zen
-              ]
-              const todayIndex = new Date().getDay()
-              const isToday = index === todayIndex
-              return (
-                <div key={index} className={`text-center p-3 rounded-xl bg-white/5 backdrop-blur-xl border border-white/10 relative overflow-hidden group hover:bg-white/8 transition-all duration-300 ${isToday ? 'ring-2 ring-amber-400/60 shadow-lg shadow-amber-400/20' : ''}`}>
-                  <div 
-                    className="absolute inset-0 opacity-20 group-hover:opacity-30 transition-opacity duration-300"
-                    style={{
-                      backgroundImage: `url(${dayPatterns[index]})`,
-                      backgroundSize: 'cover',
-                      backgroundPosition: 'center',
-                    }}
-                  />
-                  <div className="relative z-10">
-                    <div className={`text-xs sm:text-sm font-medium mb-2 ${isToday ? 'text-amber-300 font-bold' : 'text-white/90'}`}>
-                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][index]} {isToday ? '●' : ''}
-                    </div>
-                <div className="space-y-1 sm:space-y-2">
-                  {['prayer', 'bible', 'meditation', 'journal'].map((activity) => (
-                    <div key={activity} className="relative">
-                      <div className="w-full bg-neutral-700 rounded-full h-1 sm:h-2">
-                        <div className="h-1 sm:h-2 rounded-full bg-neutral-600"></div>
-                      </div>
-                      <div className="text-xs text-gray-500 mt-1">0%</div>
-                    </div>
-                  ))}
-                  </div>
-                </div>
-              </div>
-            )})
-          )}
-        </div>
+              );
+            })}
+          </div>
 
-        {/* Activity Legend */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gradient-to-r from-green-400 to-emerald-500 rounded-lg shadow-lg"></div>
-            <span className="text-xs sm:text-sm text-white font-medium">🙏 Prayer</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gradient-to-r from-blue-400 to-cyan-500 rounded-lg shadow-lg"></div>
-            <span className="text-xs sm:text-sm text-white font-medium">📖 Bible</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gradient-to-r from-purple-400 to-violet-500 rounded-lg shadow-lg"></div>
-            <span className="text-xs sm:text-sm text-white font-medium">🧘 Meditation</span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg shadow-lg"></div>
-            <span className="text-xs sm:text-sm text-white font-medium">📝 Journal</span>
+          {/* Activity Legend */}
+          <div className={`grid ${embedded ? 'grid-cols-4' : 'grid-cols-2 md:grid-cols-4'} ${embedded ? 'gap-1' : 'gap-3 sm:gap-4'} ${embedded ? 'p-2' : 'p-4'} bg-[var(--glass-light)]/5 rounded-xl border border-[var(--glass-border)]/10`}>
+            <div className={`flex items-center ${embedded ? 'space-x-1' : 'space-x-2'}`}>
+              <div className={`${embedded ? 'w-3 h-3' : 'w-4 h-4'} bg-gradient-to-r from-[var(--spiritual-green)] to-[var(--spiritual-emerald)] rounded-lg shadow-lg`}></div>
+              <span className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} text-[var(--text-primary)] font-medium`}>{embedded ? '🙏' : '🙏 Prayer'}</span>
+            </div>
+            <div className={`flex items-center ${embedded ? 'space-x-1' : 'space-x-2'}`}>
+              <div className={`${embedded ? 'w-3 h-3' : 'w-4 h-4'} bg-gradient-to-r from-[var(--spiritual-blue)] to-[var(--spiritual-cyan)] rounded-lg shadow-lg`}></div>
+              <span className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} text-[var(--text-primary)] font-medium`}>{embedded ? '📖' : '📖 Bible'}</span>
+            </div>
+            <div className={`flex items-center ${embedded ? 'space-x-1' : 'space-x-2'}`}>
+              <div className={`${embedded ? 'w-3 h-3' : 'w-4 h-4'} bg-gradient-to-r from-[var(--spiritual-purple)] to-[var(--spiritual-violet)] rounded-lg shadow-lg`}></div>
+              <span className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} text-[var(--text-primary)] font-medium`}>{embedded ? '🧘' : '🧘 Meditation'}</span>
+            </div>
+            <div className={`flex items-center ${embedded ? 'space-x-1' : 'space-x-2'}`}>
+              <div className={`${embedded ? 'w-3 h-3' : 'w-4 h-4'} bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg shadow-lg`}></div>
+              <span className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} text-[var(--text-primary)] font-medium`}>{embedded ? '📝' : '📝 Journal'}</span>
+            </div>
           </div>
         </div>
-            </div>
+      </div>
             
       {/* Weekly Stats */}
-      <div className="flex flex-row overflow-x-auto gap-4 w-full pb-2">
-        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+      <div className={`${embedded ? 'grid grid-cols-2 gap-2' : 'flex flex-row overflow-x-auto gap-4 w-full pb-2'} mb-8`}>
+        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-green-400 mb-2">
-              {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'prayer') : 0}%
+            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-green)] ${embedded ? 'mb-1' : 'mb-2'}`}>
+              {calculateAverage(progressData, 'prayer')}%
             </div>
-            <div className="text-sm text-gray-400">Prayer Average</div>
+            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Prayer' : 'Prayer Average'}</div>
           </div>
         </div>
         
-        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-blue-400 mb-2">
-              {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'bible') : 0}%
+            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-blue)] ${embedded ? 'mb-1' : 'mb-2'}`}>
+              {calculateAverage(progressData, 'bible')}%
             </div>
-            <div className="text-sm text-gray-400">Bible Study Average</div>
+            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Bible' : 'Bible Study Average'}</div>
           </div>
         </div>
 
-        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-purple-400 mb-2">
-              {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'meditation') : 0}%
+            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-purple)] ${embedded ? 'mb-1' : 'mb-2'}`}>
+              {calculateAverage(progressData, 'meditation')}%
             </div>
-            <div className="text-sm text-gray-400">Meditation Average</div>
+            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Meditation' : 'Meditation Average'}</div>
           </div>
         </div>
 
-        <div className="flex-shrink-0 w-80 sm:w-auto sm:flex-1 bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-4 sm:p-6 border border-neutral-800 shadow-xl">
+        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
           <div className="text-center">
-            <div className="text-2xl sm:text-3xl font-bold text-yellow-400 mb-2">
-              {animateStats && progressData.length > 0 ? calculateAverage(progressData, 'journal') : 0}%
+            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--accent-primary)] ${embedded ? 'mb-1' : 'mb-2'}`}>
+              {calculateAverage(progressData, 'journal')}%
             </div>
-            <div className="text-sm text-gray-400">Journal Average</div>
+            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Journal' : 'Journal Average'}</div>
           </div>
         </div>
       </div>
 
-      {/* Weekly Summary - Only show if showSummary is true */}
+      {/* Weekly Summary */}
       {showSummary && (
-        <div className="bg-gradient-to-r from-green-900/50 to-emerald-900/50 rounded-3xl p-6 sm:p-8 border border-neutral-800 shadow-2xl">
+        <div className="bg-gradient-to-r from-[var(--spiritual-green)]/50 to-[var(--spiritual-emerald)]/50 rounded-3xl p-6 sm:p-8 border border-[var(--glass-border)] shadow-2xl">
           <div className="text-center">
-            <h3 className="text-xl sm:text-2xl font-bold text-gray-100 mb-4">Weekly Summary</h3>
-            {loading ? (
-              <p className="text-gray-300 mb-6">Loading your progress...</p>
-            ) : progressData.length > 0 ? (
-              <p className="text-gray-300 mb-6">
-                {getWeeklySummaryMessage(progressData)}
-              </p>
-            ) : (
-              <p className="text-gray-300 mb-6">Start your spiritual journey this week! Every prayer session counts.</p>
-            )}
+            <h3 className="text-xl sm:text-2xl font-bold text-[var(--text-primary)] mb-4">Weekly Summary</h3>
+            <p className="text-[var(--text-secondary)] mb-6">
+              {getWeeklySummaryMessage(progressData)}
+            </p>
             
             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
-              <button className="bg-neutral-800 text-gray-100 px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:bg-neutral-700 transition-all duration-200 transform hover:scale-105">
+              <button className="bg-[var(--glass-medium)] text-[var(--text-primary)] px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:bg-[var(--glass-light)] transition-all duration-200 transform hover:scale-105">
                 View Details
               </button>
-              <button className="bg-gradient-to-r from-green-500 to-emerald-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:from-green-600 hover:to-emerald-600 transition-all duration-200 transform hover:scale-105">
+              <button className="bg-gradient-to-r from-[var(--spiritual-green)] to-[var(--spiritual-emerald)] text-[var(--text-inverse)] px-4 sm:px-6 py-2 sm:py-3 rounded-xl font-medium hover:from-[var(--spiritual-green)]/80 hover:to-[var(--spiritual-emerald)]/80 transition-all duration-200 transform hover:scale-105">
                 Set Goals
               </button>
             </div>
@@ -330,5 +200,6 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({ showSummary = tr
         </div>
       )}
     </div>
-  )
-}
+  );
+};
+

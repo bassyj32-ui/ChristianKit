@@ -1,0 +1,64 @@
+[33mcommit 98fb103110e3ecc67ec27587f99b16bdc9b0cf01[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: bassyj32-ui <bassyj32@gmail.com>
+Date:   Thu Aug 21 09:32:44 2025 +0300
+
+    🎨 Major UI/UX Overhaul: Osmo-Inspired Theme & Pro Features Implementation
+    
+    ✨ Dashboard Redesign:
+    - Applied Osmo-inspired dark theme with glass-morphism design
+    - Updated hero section with gradient titles and professional messaging
+    - Replaced action cards with clean grid layout and animated images
+    - Redesigned pro features with compact SVG icons and unified pricing
+    - Enhanced Weekly Analysis with polished styling and image backgrounds
+    
+    🙏 Prayer Timer Enhancement:
+    - Transformed to Osmo aesthetic with clean background and subtle effects
+    - Redesigned timer with classic animated progress ring and side panels
+    - Added prayer message and 'Prayer Time' title in elegant glass panels
+    - Optimized sizing for perfect screen fit without scrolling
+    - Maintained all functionality while improving visual impact
+    
+    ⭐ Pro Features System:
+    - Implemented subscription service with localStorage demo mode
+    - Created ProFeatureGate for conditional feature access
+    - Added 4 new pro components: Daily Re-Engagement, Advanced Weekly Progress, Monthly Habit Builder, Community Prayer Requests
+    - Integrated pro features throughout Dashboard and Community pages
+    
+    🛠️ Technical Improvements:
+    - Added new theme system with osmoTheme.ts, osmoComponents.tsx, osmoGlobal.css
+    - Enhanced user model with subscription properties
+    - Improved responsive design across all screen sizes
+    - Optimized component architecture for better maintainability
+    
+    🧹 Code Cleanup:
+    - Removed redundant sections and consolidated community features
+    - Streamlined navigation and improved user flow
+    - Enhanced accessibility and user experience
+    - Applied consistent Osmo design language throughout app
+
+Notes/backend/subscriptionservice.md
+Notes/env1.md
+SUPABASE_FIX_GUIDE.md
+SUPABASE_SETUP_COMPLETE_GUIDE.md
+index.html
+public/manifest.json
+src/App.tsx
+src/components/AdvancedWeeklyProgress.tsx
+src/components/CommunityPrayerRequests.tsx
+src/components/CommunitySection.tsx
+src/components/DailyReEngagementCard.tsx
+src/components/Dashboard.tsx
+src/components/MonthlyHabitBuilder.tsx
+src/components/OsmoLandingPage.tsx
+src/components/PrayerTimerPage.tsx
+src/components/ProFeatureGate.tsx
+src/components/ProFeaturesDemoCard.tsx
+src/components/SubscriptionPage.tsx
+src/components/WeeklyProgress.tsx
+src/models/User.ts
+src/services/dailyReEngagementService.ts
+src/services/pwaService.ts
+src/services/subscriptionService.ts
+src/theme/osmoComponents.tsx
+src/theme/osmoGlobal.css
+src/theme/osmoTheme.ts

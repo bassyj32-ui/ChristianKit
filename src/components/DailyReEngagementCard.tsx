@@ -154,11 +154,13 @@ export const DailyReEngagementCard: React.FC<DailyReEngagementCardProps> = ({ on
 
   if (isLoading) {
     return (
-      <div className="bg-gradient-to-br from-slate-800/90 via-gray-800/90 to-slate-900/90 backdrop-blur-xl rounded-2xl p-6 text-white shadow-xl border border-gray-600/30 animate-pulse">
-        <div className="h-6 bg-gray-700 rounded w-3/4 mb-4"></div>
-        <div className="h-4 bg-gray-700 rounded w-full mb-2"></div>
-        <div className="h-4 bg-gray-700 rounded w-5/6"></div>
-      </div>
+      <ProFeatureGate feature="dailyReEngagement">
+        <div className={`osmo-card ${message ? getTimingColor(message.timing) : 'bg-[var(--glass-light)]'} animate-pulse`}>
+          <div className="h-6 bg-[var(--glass-medium)] rounded w-3/4 mb-4"></div>
+          <div className="h-4 bg-[var(--glass-medium)] rounded w-1/2 mb-4"></div>
+          <div className="h-20 bg-[var(--glass-medium)] rounded"></div>
+        </div>
+      </ProFeatureGate>
     )
   }
 

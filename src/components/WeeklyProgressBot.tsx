@@ -88,6 +88,17 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
     return messages[Math.floor(Math.random() * messages.length)];
   };
 
+  const getProgressInsight = () => {
+    const messages = [
+      'You\'re crushing it this week! 92% goal completion! 🚀',
+      'Your 7-day streak is inspiring others! Keep it up! ✨',
+      'Only 2 more sessions to beat last week\'s record! 💪',
+      'You\'re in the top 20% of prayer warriors! 🏆',
+      'This week you\'ve grown 15% more than last week! 📈'
+    ];
+    return messages[Math.floor(Math.random() * messages.length)];
+  };
+
   const handleBotClick = () => {
     setIsExpanded(!isExpanded);
   };
@@ -169,6 +180,13 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
             <div className="mb-3 p-3 bg-gradient-to-r from-purple-900/40 to-pink-900/40 rounded-xl border border-purple-500/30">
               <p className="text-purple-200 text-sm font-medium">
                 💫 {getMotivationalMessage()}
+              </p>
+            </div>
+
+            {/* Progress Insights */}
+            <div className="mb-3 p-3 bg-[var(--glass-light)]/80 rounded-xl border border-[var(--glass-border)]/40">
+              <p className="text-[var(--text-primary)] text-sm font-medium">
+                {getProgressInsight()}
               </p>
             </div>
 

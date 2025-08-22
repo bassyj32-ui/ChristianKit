@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>ChristianKit Icon Converter</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
+        .container { max-width: 600px; margin: 0 auto; }
+        .icon-preview { text-align: center; margin: 20px 0; }
+        .download-btn { background: #fbbf24; color: white; border: none; padding: 10px 20px; margin: 10px; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ChristianKit Icon Converter</h1>
+        <div class="icon-preview">
+            <img src="christiankit-icon.svg" alt="Icon" style="width: 128px; height: 128px;">
+        </div>
+        <div style="text-align: center;">
+            <button class="download-btn" onclick="downloadIcon(192)">Download 192x192</button>
+            <button class="download-btn" onclick="downloadIcon(512)">Download 512x512</button>
+            <button class="download-btn" onclick="downloadIcon(32)">Download 32x32</button>
+        </div>
+    </div>
+    <script>
+        function downloadIcon(size) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const img = new Image();
+            canvas.width = size;
+            canvas.height = size;
+            img.onload = function() {
+                ctx.drawImage(img, 0, 0, size, size);
+                const link = document.createElement('a');
+                link.download = size === 32 ? 'favicon.ico' : `icon-${size}x${size}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.src = 'christiankit-icon.svg';
+        }
+    </script>
+</body>
+</html>

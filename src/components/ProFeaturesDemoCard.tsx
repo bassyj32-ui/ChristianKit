@@ -20,16 +20,16 @@ export const ProFeaturesDemoCard: React.FC = () => {
   const currentSubscription = subscriptionService.getCurrentSubscription()
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/90 via-gray-800/90 to-slate-900/90 backdrop-blur-xl rounded-2xl p-6 text-white shadow-xl border border-gray-600/30">
+    <div className="osmo-card">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 bg-gradient-to-r from-amber-500 to-orange-600 rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-xl flex items-center justify-center">
             <span className="text-xl">✨</span>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Pro Features</h3>
-            <p className="text-slate-300 text-sm">Advanced spiritual growth tools</p>
+            <h3 className="text-xl font-bold text-[var(--text-primary)]">Pro Features</h3>
+            <p className="text-[var(--text-secondary)] text-sm">Advanced spiritual growth tools</p>
           </div>
         </div>
         

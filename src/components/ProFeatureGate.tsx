@@ -35,7 +35,7 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
       onUpgradeClick()
     } else {
       // Default navigation to subscription page
-      window.location.href = '/#subscription'
+      window.location.hash = 'subscription'
     }
   }
 
@@ -70,10 +70,10 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
   const featureInfo = featureNames[feature]
 
   return (
-    <div className="bg-gradient-to-br from-slate-800/90 via-gray-800/90 to-slate-900/90 backdrop-blur-xl rounded-2xl p-6 text-white shadow-xl border border-gray-600/30">
+    <div className="osmo-card">
       {/* Pro Badge */}
       <div className="flex items-center justify-center mb-4">
-        <span className="bg-gradient-to-r from-amber-400 to-orange-500 text-amber-900 px-4 py-2 rounded-full text-sm font-bold shadow-lg border border-amber-300/50">
+        <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] px-4 py-2 rounded-full text-sm font-bold shadow-lg border border-[var(--accent-primary)]/50">
           ⭐ PRO FEATURE
         </span>
       </div>
@@ -81,10 +81,10 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
       {/* Feature Info */}
       <div className="text-center mb-6">
         <div className="text-4xl mb-3">{featureInfo.emoji}</div>
-        <h3 className="text-xl font-bold text-white mb-2">
+        <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">
           {featureInfo.name}
         </h3>
-        <p className="text-slate-300 text-sm leading-relaxed">
+        <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
           {featureInfo.description}
         </p>
       </div>
@@ -92,14 +92,14 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
       {/* Upgrade Button */}
       <button
         onClick={handleUpgradeClick}
-        className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 px-6 rounded-xl font-bold text-lg hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/40 transform hover:-translate-y-1 border border-amber-500/30"
+        className="osmo-button-primary w-full py-3 px-6 text-lg font-bold"
       >
         🚀 Upgrade to Pro - $2.50/month
       </button>
 
       {/* Additional Info */}
       <div className="text-center mt-4">
-        <p className="text-slate-400 text-xs">
+        <p className="text-[var(--text-tertiary)] text-xs">
           Join thousands growing their faith with Pro features
         </p>
       </div>

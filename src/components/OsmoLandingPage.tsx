@@ -18,7 +18,7 @@ export const OsmoLandingPage: React.FC = () => {
           <div className="flex items-center justify-between py-4">
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-gradient-to-r from-amber-400 to-yellow-500 rounded-lg flex items-center justify-center">
-                <span className="text-black font-bold text-lg">✝</span>
+                <span className="text-[var(--text-inverse)] font-bold text-lg">✝</span>
               </div>
               <span className="text-xl font-bold">ChristianKit</span>
             </div>
@@ -252,7 +252,7 @@ export const OsmoLandingPage: React.FC = () => {
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-2 mb-4 md:mb-0">
               <div className="w-6 h-6 bg-gradient-to-r from-amber-400 to-yellow-500 rounded flex items-center justify-center">
-                <span className="text-black font-bold text-sm">✝</span>
+                <span className="text-[var(--text-inverse)] font-bold text-sm">✝</span>
               </div>
               <span className="font-semibold">ChristianKit</span>
             </div>
