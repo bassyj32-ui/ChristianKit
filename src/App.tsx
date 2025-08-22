@@ -20,10 +20,9 @@ import { NotificationManager } from './components/NotificationManager'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useSupabaseAuth } from './components/SupabaseAuthProvider'
 
-// Real Supabase authentication
-const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
-
 const AppContent: React.FC = () => {
+  // Real Supabase authentication
+  const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
   const { mode, toggleMode } = useThemeMode()
   const [activeTab, setActiveTab] = useState('prayer') // Default to prayer timer
   const [selectedMinutes, setSelectedMinutes] = useState(10)
@@ -105,29 +104,41 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Show login page if user is not authenticated
+  // Show login overlay if user is not authenticated, but keep the main app visible
   if (!user) {
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
-        <div className="osmo-card max-w-md w-full mx-4">
-          {/* Logo and Header */}
-          <div className="text-center mb-12">
-            <div className="flex justify-center mb-6">
-              <div className="text-4xl">✝️</div>
-            </div>
-            <p className="text-gray-400 text-lg">
-              Transform your spiritual journey today
-            </p>
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+        {/* Main App Content - Always visible */}
+        <div className="min-h-screen">
+          {/* Theme Toggle and User Menu - Fixed Position */}
+          <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleMode}
+              className="bg-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] text-[var(--text-inverse)] p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
+              title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {mode === 'dark' ? '☀️' : '🌙'}
+            </button>
           </div>
-
-          {/* Login Card */}
-          <div className="bg-neutral-900/90 backdrop-blur-sm rounded-2xl p-8 shadow-2xl border border-neutral-800">
+          
+          {/* Prayer Timer Page - Main Content */}
+          <PrayerTimerPage />
+        </div>
+        
+        {/* Login Overlay */}
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div className="osmo-card max-w-md w-full mx-4">
+            {/* Logo and Header */}
             <div className="text-center mb-8">
+              <div className="flex justify-center mb-6">
+                <div className="text-4xl">✝️</div>
+              </div>
               <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
                 Welcome to ChristianKit
               </h2>
               <p className="text-gray-400">
-                Sign in to continue your spiritual journey
+                Sign in to unlock all features
               </p>
             </div>
 
@@ -145,18 +156,9 @@ const AppContent: React.FC = () => {
               Continue with Google
             </button>
 
-            {/* Features Preview */}
-            <div className="space-y-4">
-              <div className="bg-gradient-to-r from-green-900/50 to-emerald-900/50 rounded-xl p-4 border border-green-500/30">
-                <h3 className="text-lg font-bold text-green-400 mb-3">✨ What you'll get:</h3>
-                <ul className="text-sm text-gray-300 space-y-2">
-                  <li>• Prayer timer with guided sessions</li>
-                  <li>• Daily Bible verses and meditation</li>
-                  <li>• Habit tracking and progress analytics</li>
-                  <li>• Community of fellow believers</li>
-                  <li>• Personalized spiritual journey</li>
-                </ul>
-              </div>
+            {/* Quick Preview */}
+            <div className="text-center text-sm text-gray-400">
+              <p>✨ Prayer Timer • Bible Study • Community</p>
             </div>
           </div>
         </div>
