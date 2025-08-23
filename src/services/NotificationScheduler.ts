@@ -1,5 +1,5 @@
 // Notification Scheduler - Aggressive User Re-engagement System
-import { emailService } from './EmailService';
+import EmailService from './EmailService';
 
 export interface UserActivity {
   userId: string;
@@ -42,12 +42,12 @@ class NotificationScheduler {
 
     // Send immediate email if > 24 hours
     if (hoursSinceLastPrayer >= 24) {
-      emailService.getInstance().sendDailyReEngagementEmail(emailSchedule);
+      EmailService.getInstance().sendDailyReEngagementEmail(emailSchedule);
     }
 
     // Schedule follow-up emails
     const emailTimer = setInterval(() => {
-      emailService.getInstance().sendDailyReEngagementEmail({
+      EmailService.getInstance().sendDailyReEngagementEmail({
         ...emailSchedule,
         consecutiveMissedDays: emailSchedule.consecutiveMissedDays + 1
       });

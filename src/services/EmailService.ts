@@ -1,6 +1,7 @@
 // Email Integration Service for ChristianKit
 // Sends daily re-engagement emails to keep users spiritually active
 
+import { Resend } from 'resend';
 import { User } from '@supabase/supabase-js';
 
 export interface EmailTemplate {
@@ -20,12 +21,28 @@ export interface EmailSchedule {
 }
 
 class EmailService {
-  private apiKey: string;
-  private baseUrl: string = 'https://api.resend.com/emails';
+  private resend: Resend | null = null;
 
   constructor() {
     // Use Resend for reliable email delivery
-    this.apiKey = import.meta.env.VITE_RESEND_API_KEY || '';
+    const apiKey = import.meta.env.VITE_RESEND_API_KEY;
+    
+    if (apiKey) {
+      this.resend = new Resend(apiKey);
+      console.log('✅ Resend email service initialized');
+    } else {
+      console.warn('⚠️ VITE_RESEND_API_KEY not found. Email functionality will be disabled.');
+    }
+  }
+
+  // Singleton instance
+  private static instance: EmailService;
+  
+  static getInstance(): EmailService {
+    if (!EmailService.instance) {
+      EmailService.instance = new EmailService();
+    }
+    return EmailService.instance;
   }
 
   /**
@@ -33,29 +50,25 @@ class EmailService {
    */
   async sendDailyReEngagementEmail(schedule: EmailSchedule): Promise<boolean> {
     try {
+      if (!this.resend) {
+        console.warn('⚠️ Resend service not initialized');
+        return false;
+      }
+
       const template = this.selectEmailTemplate(schedule);
       
-      const emailData = {
-        from: 'ChristianKit <prayers@christiankit.app>',
+      const result = await this.resend.emails.send({
+        from: 'ChristianKit <onboarding@resend.dev>',
         to: schedule.email,
         subject: template.subject,
         html: this.generateEmailHTML(template, schedule),
-      };
-
-      const response = await fetch(this.baseUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(emailData),
       });
 
-      if (response.ok) {
-        console.log(`📧 Re-engagement email sent to ${schedule.email}`);
+      if (result.data) {
+        console.log(`📧 Re-engagement email sent to ${schedule.email}`, result.data);
         return true;
       } else {
-        console.error('Failed to send email:', await response.text());
+        console.error('Failed to send email:', result.error);
         return false;
       }
     } catch (error) {

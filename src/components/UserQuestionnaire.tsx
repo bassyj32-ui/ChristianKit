@@ -13,6 +13,13 @@ export interface UserPlan {
   bibleTopics: string[]
   dailyGoal: string
   experienceLevel: 'beginner' | 'intermediate' | 'advanced'
+  notificationPreferences: {
+    pushEnabled: boolean
+    emailEnabled: boolean
+    preferredTime: string
+    urgencyLevel: 'gentle' | 'moderate' | 'aggressive' | 'ruthless'
+    frequency: 'hourly' | 'daily' | 'constant'
+  }
 }
 
 export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, onBack }) => {
@@ -23,15 +30,20 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
     prayerFocus: [] as string[],
     bibleTopics: [] as string[],
     prayerStyle: '',
-    dailyGoal: ''
+    dailyGoal: '',
+    pushEnabled: true,
+    emailEnabled: true,
+    preferredTime: '9:00 AM',
+    urgencyLevel: 'moderate' as 'gentle' | 'moderate' | 'aggressive' | 'ruthless',
+    frequency: 'daily' as 'hourly' | 'daily' | 'constant'
   })
 
-  const handleAnswer = (question: string, answer: string | string[]) => {
+  const handleAnswer = (question: string, answer: string | string[] | boolean) => {
     setAnswers(prev => ({ ...prev, [question]: answer }))
   }
 
   const nextStep = () => {
-    if (currentStep < 6) {
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1)
     }
   }
@@ -53,7 +65,14 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       prayerFocus: answers.prayerFocus as string[],
       bibleTopics: answers.bibleTopics as string[],
       dailyGoal: answers.dailyGoal as string,
-      experienceLevel
+      experienceLevel,
+      notificationPreferences: {
+        pushEnabled: answers.pushEnabled,
+        emailEnabled: answers.emailEnabled,
+        preferredTime: answers.preferredTime,
+        urgencyLevel: answers.urgencyLevel,
+        frequency: answers.frequency
+      }
     }
     
     return plan
@@ -72,6 +91,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 4: return answers.bibleTopics.length > 0
       case 5: return answers.prayerStyle !== ''
       case 6: return answers.dailyGoal !== ''
+      case 7: return true // Notification preferences are optional
       default: return false
     }
   }
@@ -289,6 +309,106 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
           </div>
         )
 
+      case 7:
+        return (
+          <div className="text-center">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white mb-6 sm:mb-8 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              Notification Preferences 🔔
+            </h2>
+            
+            <div className="bg-white/10 backdrop-blur-xl rounded-3xl p-6 sm:p-10 border border-white/20 shadow-2xl max-w-2xl mx-auto">
+              <h3 className="text-2xl sm:text-3xl font-bold text-white mb-6 sm:mb-8">How would you like to stay connected?</h3>
+              
+              <div className="space-y-6">
+                {/* Push Notifications */}
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/20">
+                  <div className="text-left">
+                    <div className="text-lg font-semibold text-white">Push Notifications</div>
+                    <div className="text-sm text-white/70">Get prayer reminders on your device</div>
+                  </div>
+                  <button
+                    onClick={() => handleAnswer('pushEnabled', !answers.pushEnabled)}
+                    className={`w-14 h-7 rounded-full transition-colors duration-300 ${
+                      answers.pushEnabled 
+                        ? 'bg-gradient-to-r from-amber-400 to-yellow-500' 
+                        : 'bg-white/20'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 transform ${
+                      answers.pushEnabled ? 'translate-x-7' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* Email Notifications */}
+                <div className="flex items-center justify-between p-4 bg-white/5 rounded-xl border border-white/20">
+                  <div className="text-left">
+                    <div className="text-lg font-semibold text-white">Email Reminders</div>
+                    <div className="text-sm text-white/70">Receive spiritual guidance via email</div>
+                  </div>
+                  <button
+                    onClick={() => handleAnswer('emailEnabled', !answers.emailEnabled)}
+                    className={`w-14 h-7 rounded-full transition-colors duration-300 ${
+                      answers.emailEnabled 
+                        ? 'bg-gradient-to-r from-amber-400 to-yellow-500' 
+                        : 'bg-white/20'
+                    }`}
+                  >
+                    <div className={`w-6 h-6 bg-white rounded-full transition-transform duration-300 transform ${
+                      answers.emailEnabled ? 'translate-x-7' : 'translate-x-1'
+                    }`} />
+                  </button>
+                </div>
+
+                {/* Preferred Time */}
+                <div className="space-y-3">
+                  <label className="block text-left text-lg font-semibold text-white">Preferred Reminder Time</label>
+                  <select
+                    value={answers.preferredTime}
+                    onChange={(e) => handleAnswer('preferredTime', e.target.value)}
+                    className="w-full bg-white/10 text-white rounded-xl px-4 py-3 text-lg border border-white/20 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="6:00 AM">6:00 AM - Early Bird</option>
+                    <option value="9:00 AM">9:00 AM - Morning Start</option>
+                    <option value="12:00 PM">12:00 PM - Midday Break</option>
+                    <option value="6:00 PM">6:00 PM - Evening Wind-down</option>
+                    <option value="9:00 PM">9:00 PM - Night Reflection</option>
+                  </select>
+                </div>
+
+                {/* Urgency Level */}
+                <div className="space-y-3">
+                  <label className="block text-left text-lg font-semibold text-white">Reminder Intensity</label>
+                  <select
+                    value={answers.urgencyLevel}
+                    onChange={(e) => handleAnswer('urgencyLevel', e.target.value as any)}
+                    className="w-full bg-white/10 text-white rounded-xl px-4 py-3 text-lg border border-white/20 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="gentle">Gentle - Soft reminders</option>
+                    <option value="moderate">Moderate - Balanced approach</option>
+                    <option value="aggressive">Aggressive - Keep me motivated</option>
+                    <option value="ruthless">Ruthless - Maximum accountability</option>
+                  </select>
+                </div>
+
+                {/* Frequency */}
+                <div className="space-y-3">
+                  <label className="block text-left text-lg font-semibold text-white">Reminder Frequency</label>
+                  <select
+                    value={answers.frequency}
+                    onChange={(e) => handleAnswer('frequency', e.target.value as any)}
+                    className="w-full bg-white/10 text-white rounded-xl px-4 py-3 text-lg border border-white/20 focus:outline-none focus:border-amber-400"
+                  >
+                    <option value="daily">Daily - Once per day</option>
+                    <option value="hourly">Hourly - Regular check-ins</option>
+                    <option value="constant">Constant - Maximum support</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+
       default:
         return null
     }
@@ -312,13 +432,13 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
           {/* Progress Bar */}
           <div className="mb-8 sm:mb-10">
             <div className="flex justify-between items-center mb-3">
-              <span className="text-sm font-medium text-white/70">Step {currentStep} of 6</span>
-              <span className="text-sm font-medium text-white/70">{Math.round((currentStep / 6) * 100)}% Complete</span>
+              <span className="text-sm font-medium text-white/70">Step {currentStep} of 7</span>
+              <span className="text-sm font-medium text-white/70">{Math.round((currentStep / 7) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-2 backdrop-blur-sm">
               <div 
                 className="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-500 shadow-lg shadow-amber-500/25"
-                style={{ width: `${(currentStep / 6) * 100}%` }}
+                style={{ width: `${(currentStep / 7) * 100}%` }}
               ></div>
             </div>
           </div>
@@ -340,7 +460,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
               ← Previous
             </button>
 
-            {currentStep < 6 ? (
+            {currentStep < 7 ? (
               <button
                 onClick={nextStep}
                 disabled={!canProceed()}

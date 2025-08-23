@@ -277,25 +277,118 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white relative overflow-hidden">
-      {/* Osmosis-inspired Background */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#0a0a0a] via-[#1a1a1a] to-[#0a0a0a] pointer-events-none">
-        {/* Subtle Gradient Overlays */}
-        <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-yellow-500/5"></div>
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden font-sans">
+      {/* Osmo-inspired Minimal Background */}
+      <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
+        {/* Subtle Gradient Overlays - Osmo Style */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-primary)]/3 via-transparent to-[var(--accent-primary)]/3"></div>
         
         {/* Minimal Glow Effects */}
-        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/6 right-1/6 w-80 h-80 bg-yellow-500/5 rounded-full blur-3xl"></div>
+        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-[var(--accent-primary)]/5 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-primary-500)]/3 rounded-full blur-3xl"></div>
+      </div>
+
+      {/* Subtle Grid Pattern - Very Minimal */}
+      <div className="absolute inset-0 opacity-[0.02]">
+        <div className="absolute inset-0" style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
+          backgroundSize: '60px 60px'
+        }}></div>
+      </div>
+
+      {/* Floating Interactive Particles */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-1/6 left-1/4 w-2 h-2 bg-[var(--color-primary-500)] rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
+        <div className="absolute top-1/4 right-1/3 w-1.5 h-1.5 bg-[var(--color-info-500)] rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+        <div className="absolute top-1/3 left-1/6 w-1 h-1 bg-[var(--color-success-500)] rounded-full animate-bounce" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
+        <div className="absolute top-2/5 right-1/5 w-1.5 h-1.5 bg-[var(--color-primary-500)]/80 rounded-full animate-bounce" style={{animationDuration: '3.5s', animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/3 w-1 h-1 bg-[var(--color-info-500)]/80 rounded-full animate-bounce" style={{animationDuration: '2s', animationDelay: '1.5s'}}></div>
+        <div className="absolute top-3/5 right-1/4 w-1 h-1 bg-[var(--color-success-500)]/80 rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '0.5s'}}></div>
+      </div>
+
+      {/* App Bar - Osmo Style */}
+      <div className="relative z-50 bg-[var(--color-neutral-800)] backdrop-blur-xl border-b border-[var(--color-neutral-700)] shadow-lg sticky top-0">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14 sm:h-16">
+            {/* Osmo-style Logo */}
+            <div className="flex items-center space-x-2 sm:space-x-3 group">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--color-warning-500)] to-[var(--color-warning-600)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-[var(--color-warning-500)]/25">
+                <span className="text-[var(--color-neutral-50)] font-bold text-xs sm:text-sm">✝</span>
+              </div>
+              <div className="text-base sm:text-lg font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
+                <span className="bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] bg-clip-text text-transparent">Christian</span>
+                <span className="text-[var(--color-neutral-50)]">Kit</span>
+              </div>
+            </div>
+
+            {/* Desktop Navigation */}
+            <div className="hidden lg:flex items-center space-x-3">
+              <button
+                onClick={() => onNavigate?.('dashboard')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>🏠</span>
+                <span>Home</span>
+              </button>
+              <button
+                onClick={() => onNavigate?.('prayer')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>✨</span>
+                <span>Prayer</span>
+              </button>
+              <button
+                onClick={() => onNavigate?.('community')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>👥</span>
+                <span>Community</span>
+              </button>
+              <button
+                onClick={() => onNavigate?.('bible')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>📖</span>
+                <span>Bible</span>
+              </button>
+              <button
+                onClick={() => onNavigate?.('meditation')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-50)] bg-[var(--color-neutral-800)] hover:bg-[var(--color-neutral-700)] border border-[var(--color-neutral-700)] hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>🧘</span>
+                <span>Meditation</span>
+              </button>
+              <button
+                onClick={() => onNavigate?.('subscription')}
+                className="px-4 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-[var(--color-warning-500)]/25"
+              >
+                <span>⭐</span>
+                <span>Pro</span>
+              </button>
+            </div>
+
+            {/* Mobile Right Side - Pro Button + Menu */}
+            <div className="lg:hidden flex items-center space-x-2">
+              <button
+                onClick={() => onNavigate?.('subscription')}
+                className="px-3 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 flex items-center space-x-1 shadow-lg shadow-[var(--color-warning-500)]/25 text-sm"
+              >
+                <span>⭐</span>
+                <span className="hidden sm:inline">Pro</span>
+              </button>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center min-h-screen p-4">
+      <div className="relative z-10 flex flex-col items-center justify-center p-4 pt-24">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-6xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+          <h1 className="text-4xl sm:text-6xl font-bold text-[var(--text-primary)] mb-4">
             Meditation Time
           </h1>
-          <p className="text-lg sm:text-xl text-white/80">Find peace and stillness in your spiritual practice</p>
+          <p className="text-lg sm:text-xl text-[var(--text-secondary)] mb-6">Find peace and stillness in your spiritual practice</p>
         </div>
 
         {/* Timer Container */}
@@ -396,50 +489,52 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
         )}
       </div>
 
-      {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
-          <div className="flex items-center space-x-2 sm:space-x-1">
-            {/* Home Tab */}
-            <button
-              onClick={() => {
-                console.log('Home tab clicked!')
-                console.log('isFirstTimeUser:', isFirstTimeUser)
-                console.log('onStartQuestionnaire function:', onStartQuestionnaire)
-                console.log('onNavigate function:', onNavigate)
-                
-                if (isFirstTimeUser) {
-                  console.log('Starting questionnaire...')
-                  onStartQuestionnaire?.();
-                } else {
-                  console.log('Navigating to dashboard...')
-                  onNavigate?.('dashboard');
-                }
-              }}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏠</span>
-              <span className="text-sm font-medium">Home</span>
-            </button>
-            
-            {/* Restart Tab */}
-            <button
-              onClick={resetMeditation}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🔄</span>
-              <span className="text-sm font-medium">Restart</span>
-            </button>
-            
-            {/* Share Tab */}
-            <button
-              onClick={() => onNavigate?.('community')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🌟</span>
-              <span className="text-sm font-medium">Share</span>
-            </button>
-          </div>
+      {/* Mobile Navigation Tabs - Side by Side Compact */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
+        <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
+          {/* Home Tab */}
+          <button
+            onClick={() => onNavigate?.('dashboard')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-neutral-700)]/30 to-[var(--color-neutral-800)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-neutral-600)]/50 border-2 border-[var(--color-neutral-600)]/80 group-hover:border-[var(--color-neutral-500)]">
+              <span className="text-lg text-[var(--color-neutral-300)]">🏠</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-neutral-300)] transition-colors duration-300">Home</span>
+          </button>
+          
+          {/* Prayer Tab */}
+          <button
+            onClick={() => onNavigate?.('prayer')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
+              <span className="text-lg text-[var(--color-primary-500)]">✨</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">Prayer</span>
+          </button>
+          
+          {/* Bible Tab */}
+          <button
+            onClick={() => onNavigate?.('bible')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
+              <span className="text-lg text-[var(--color-warning-500)]">📖</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-neutral-500)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">Bible</span>
+          </button>
+          
+          {/* Meditation Tab - Active */}
+          <button
+            onClick={() => onNavigate?.('meditation')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
+              <span className="text-lg text-[var(--color-success-500)]">🧘</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-success-500)] group-hover:text-[var(--color-success-400)] transition-colors duration-300">Meditation</span>
+          </button>
         </div>
       </div>
     </div>
