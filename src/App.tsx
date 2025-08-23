@@ -14,6 +14,8 @@ import { BibleTracker } from './components/BibleTracker'
 import { OsmoLandingPage } from './components/OsmoLandingPage'
 import { UserQuestionnaire } from './components/UserQuestionnaire'
 import { LoginPage } from './components/LoginPage'
+import { BibleReadingPage } from './components/BibleReadingPage'
+import { MeditationPage } from './components/MeditationPage'
 import AuthCallback from './pages/AuthCallback'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { NotificationManager } from './components/NotificationManager'
@@ -23,12 +25,59 @@ import { useSupabaseAuth } from './components/SupabaseAuthProvider'
 const AppContent: React.FC = () => {
   // Real Supabase authentication
   const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
-  const { mode, toggleMode } = useThemeMode()
+  const { mode } = useThemeMode()
   const [activeTab, setActiveTab] = useState('prayer') // Default to prayer timer
   const [selectedMinutes, setSelectedMinutes] = useState(10)
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [userPlan, setUserPlan] = useState<any>(null)
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(true)
+
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 AppContent Debug:', {
+      user: user?.email,
+      loading,
+      activeTab,
+      showQuestionnaire,
+      isFirstTimeUser
+    })
+  }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser])
+
+  // Trial period management
+  const [trialStartDate, setTrialStartDate] = useState<string>(() => {
+    const saved = localStorage.getItem('trialStartDate')
+    if (saved) return saved
+    const newTrialStart = new Date().toISOString()
+    localStorage.setItem('trialStartDate', newTrialStart)
+    return newTrialStart
+  })
+
+  const [showTrialExpired, setShowTrialExpired] = useState(false)
+
+  // Check if trial has expired (2 weeks = 14 days)
+  const isTrialExpired = () => {
+    const trialStart = new Date(trialStartDate)
+    const now = new Date()
+    const daysDiff = (now.getTime() - trialStart.getTime()) / (1000 * 60 * 60 * 24)
+    return daysDiff > 14
+  }
+
+  // Check if user should see trial expired message
+  useEffect(() => {
+    if (!user && isTrialExpired()) {
+      setShowTrialExpired(true)
+    }
+  }, [user, trialStartDate])
+
+  // Determine if user is first time user (for non-authenticated users, check if they've used the app before)
+  const determineIsFirstTimeUser = () => {
+    if (user) {
+      return isFirstTimeUser
+    }
+    // For non-authenticated users, check if they've completed the questionnaire before
+    const hasCompletedQuestionnaire = localStorage.getItem('hasCompletedQuestionnaire')
+    return !hasCompletedQuestionnaire
+  }
 
   const handleNavigate = (page: string) => {
     setActiveTab(page)
@@ -40,19 +89,49 @@ const AppContent: React.FC = () => {
   }
 
   const renderContent = () => {
+    console.log('🔍 renderContent called with:', { user: user?.email, activeTab, showQuestionnaire })
+    
+    // If trial has expired and user is not signed in, show trial expired message
+    if (!user && isTrialExpired()) {
+      console.log('🔍 Showing trial expired message')
+      return (
+        <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+          <div className="text-center max-w-md mx-4">
+            <div className="text-6xl mb-6">⏰</div>
+            <h1 className="text-3xl font-bold mb-4">Trial Period Expired</h1>
+            <p className="text-gray-300 mb-6">Your 2-week free trial has ended. Sign in to continue using all ChristianKit features and unlock your personalized spiritual journey.</p>
+            <button
+              onClick={signInWithGoogle}
+              className="bg-gradient-to-r from-amber-400 to-yellow-500 text-black px-8 py-3 rounded-xl font-semibold hover:from-amber-300 hover:to-yellow-400 transition-all duration-300 mb-4"
+            >
+              Sign In to Continue
+            </button>
+            <div className="text-sm text-gray-400">
+              <p>Already have an account? Sign in to restore your data.</p>
+            </div>
+          </div>
+        </div>
+      )
+    }
+
     switch (activeTab) {
       case 'prayer':
+        console.log('🔍 Rendering PrayerTimerPage')
         return (
           <PrayerTimerPage 
             onNavigate={handleNavigate}
-            onStartQuestionnaire={() => setShowQuestionnaire(true)}
+            onStartQuestionnaire={() => {
+              console.log('onStartQuestionnaire called from PrayerTimerPage')
+              setShowQuestionnaire(true)
+            }}
             onTimerComplete={handleTimerComplete}
             userPlan={userPlan}
             selectedMinutes={selectedMinutes}
-            isFirstTimeUser={isFirstTimeUser}
+            isFirstTimeUser={determineIsFirstTimeUser()}
           />
         )
       case 'dashboard':
+        console.log('🔍 Rendering Dashboard')
         return (
           <Dashboard 
             onNavigate={(page) => setActiveTab(page)}
@@ -60,32 +139,72 @@ const AppContent: React.FC = () => {
           />
         )
       case 'community':
+        console.log('🔍 Rendering CommunitySection')
         return <CommunitySection />
       case 'journal':
+        console.log('🔍 Rendering JournalPage')
         return <JournalPage />
       case 'store':
+        console.log('🔍 Rendering StorePage')
         return <StorePage />
       case 'subscription':
+        console.log('🔍 Rendering SubscriptionPage')
         return <SubscriptionPage />
       case 'settings':
+        console.log('🔍 Rendering SettingsPage')
         return <SettingsPage />
       case 'prayerHistory':
+        console.log('🔍 Rendering PrayerHistory')
         return <PrayerHistory />
       case 'prayerSettings':
+        console.log('🔍 Rendering PrayerSettings')
         return <PrayerSettings />
       case 'bible':
-        return <BibleTracker />
-      case 'osmo-landing':
-        return <OsmoLandingPage />
-      default:
+        console.log('🔍 Rendering BibleReadingPage')
         return (
-          <PrayerTimerPage 
+          <BibleReadingPage 
             onNavigate={handleNavigate}
-            onStartQuestionnaire={() => setShowQuestionnaire(true)}
+            onStartQuestionnaire={() => {
+              console.log('onStartQuestionnaire called from BibleReadingPage')
+              setShowQuestionnaire(true)
+            }}
             onTimerComplete={handleTimerComplete}
             userPlan={userPlan}
             selectedMinutes={selectedMinutes}
-            isFirstTimeUser={isFirstTimeUser}
+            isFirstTimeUser={determineIsFirstTimeUser()}
+          />
+        )
+      case 'meditation':
+        console.log('🔍 Rendering MeditationPage')
+        return (
+          <MeditationPage 
+            onNavigate={handleNavigate}
+            onStartQuestionnaire={() => {
+              console.log('onStartQuestionnaire called from MeditationPage')
+              setShowQuestionnaire(true)
+            }}
+            onTimerComplete={handleTimerComplete}
+            userPlan={userPlan}
+            selectedMinutes={selectedMinutes}
+            isFirstTimeUser={determineIsFirstTimeUser()}
+          />
+        )
+      case 'osmo-landing':
+        console.log('🔍 Rendering OsmoLandingPage')
+        return <OsmoLandingPage />
+      default:
+        console.log('🔍 Rendering default case - PrayerTimerPage')
+        return (
+          <PrayerTimerPage 
+            onNavigate={handleNavigate}
+            onStartQuestionnaire={() => {
+              console.log('onStartQuestionnaire called from PrayerTimerPage (default case)')
+              setShowQuestionnaire(true)
+            }}
+            onTimerComplete={handleTimerComplete}
+            userPlan={userPlan}
+            selectedMinutes={selectedMinutes}
+            isFirstTimeUser={determineIsFirstTimeUser()}
           />
         )
     }
@@ -104,76 +223,49 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Show login overlay if user is not authenticated, but keep the main app visible
+  // Show prayer timer page with floating sign-in when user is not authenticated
   if (!user) {
+    const trialDaysLeft = Math.max(0, 14 - Math.floor((new Date().getTime() - new Date(trialStartDate).getTime()) / (1000 * 60 * 60 * 24)))
+    
     return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-        {/* Main App Content - Always visible */}
-        <div className="min-h-screen">
-          {/* Theme Toggle and User Menu - Fixed Position */}
-          <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
-            {/* Theme Toggle Button */}
-            <button
-              onClick={toggleMode}
-              className="bg-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] text-[var(--text-inverse)] p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-              title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
-            >
-              {mode === 'dark' ? '☀️' : '🌙'}
-            </button>
-          </div>
-          
-          {/* Prayer Timer Page - Main Content */}
-          <PrayerTimerPage />
+      <div className="min-h-screen bg-[#0a0a0a] text-white">
+        {/* Floating Sign In Button - Top Right */}
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={signInWithGoogle}
+            className="bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl py-2 px-3 sm:py-3 sm:px-4 font-semibold text-xs sm:text-sm hover:bg-white/20 hover:border-white/30 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-1 sm:gap-2"
+          >
+            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
+              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            <span className="hidden sm:inline">Sign In</span>
+          </button>
         </div>
         
-        {/* Login Overlay */}
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center">
-          <div className="osmo-card max-w-md w-full mx-4">
-            {/* Logo and Header */}
-            <div className="text-center mb-8">
-              <div className="flex justify-center mb-6">
-                <div className="text-4xl">✝️</div>
-              </div>
-              <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-                Welcome to ChristianKit
-              </h2>
-              <p className="text-gray-400">
-                Sign in to unlock all features
-              </p>
-            </div>
-
-            {/* Google Sign In Button */}
-            <button
-              onClick={signInWithGoogle}
-              className="w-full bg-white text-[var(--text-primary)] rounded-xl py-4 px-6 font-bold text-lg hover:bg-gray-100 transition-all duration-200 transform hover:scale-105 shadow-lg mb-6 flex items-center justify-center gap-3"
-            >
-              <svg className="w-6 h-6" viewBox="0 0 24 24">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Continue with Google
-            </button>
-
-            {/* Quick Preview */}
-            <div className="text-center text-sm text-gray-400">
-              <p>✨ Prayer Timer • Bible Study • Community</p>
-            </div>
-          </div>
-        </div>
+        {/* Main App Content - Accessible to all users during trial */}
+        <main className="flex-1">
+          {renderContent()}
+        </main>
+        
+        {/* Remove the old bottom-right sign-in button */}
       </div>
     )
   }
 
   // Show questionnaire if it's the first time
   if (showQuestionnaire) {
+    console.log('Showing questionnaire...')
     return (
       <UserQuestionnaire
         onComplete={(plan) => {
+          console.log('Questionnaire completed with plan:', plan)
           setUserPlan(plan)
           setShowQuestionnaire(false)
           setIsFirstTimeUser(false)
+          localStorage.setItem('hasCompletedQuestionnaire', 'true') // Mark as completed
         }}
       />
     )
@@ -181,18 +273,13 @@ const AppContent: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Theme Toggle and User Menu - Fixed Position */}
-      <div className="fixed top-4 right-4 z-50 flex items-center gap-3">
-        {/* Theme Toggle Button */}
-        <button
-          onClick={toggleMode}
-          className="bg-[var(--accent-primary)] hover:bg-[var(--accent-secondary)] text-[var(--text-inverse)] p-3 rounded-full shadow-lg transition-all duration-300 hover:scale-110"
-          title={`Switch to ${mode === 'dark' ? 'light' : 'dark'} mode`}
-        >
-          {mode === 'dark' ? '☀️' : '🌙'}
-        </button>
-        
-        {/* User Menu */}
+      {/* Debug info for authenticated users */}
+      <div className="fixed top-4 left-4 z-40 text-xs text-white bg-black/50 p-2 rounded">
+        Auth User: {user?.email} | Tab: {activeTab} | Loading: {loading}
+      </div>
+      
+      {/* User Menu - Fixed Position (Theme toggle moved to settings) */}
+      <div className="fixed top-4 right-4 z-50 group">
         <div className="relative">
           <button
             className="bg-[var(--bg-secondary)] hover:bg-[var(--bg-tertiary)] text-[var(--text-primary)] p-3 rounded-full shadow-lg transition-all duration-300 border border-[var(--border-primary)]"

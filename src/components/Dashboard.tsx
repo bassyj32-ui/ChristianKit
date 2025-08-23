@@ -7,6 +7,8 @@ import { AdvancedWeeklyProgress } from './AdvancedWeeklyProgress'
 import { MonthlyHabitBuilder } from './MonthlyHabitBuilder'
 import { CommunityPrayerRequests } from './CommunityPrayerRequests'
 import { ProFeatureGate } from './ProFeatureGate'
+import { BibleReadingPage } from './BibleReadingPage'
+import { MeditationPage } from './MeditationPage'
 
 import { prayerService } from '../services/prayerService'
 import { subscriptionService } from '../services/subscriptionService'
@@ -385,7 +387,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
             <div className="bg-[var(--glass-light)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--glass-border)]/10 hover:border-[var(--glass-border)]/20 transition-all duration-300 group cursor-pointer"
             onClick={() => {
               const bibleTime = userPlan?.bibleTime || 20;
-              onNavigate?.('prayer', bibleTime);
+              onNavigate?.('bible', bibleTime);
                  }}>
               {/* Bible Images - Animated Collection */}
               <div className="h-20 md:h-32 bg-gradient-to-br from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 relative overflow-hidden">
@@ -443,8 +445,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                         {/* Meditation Card */}
             <div className="bg-[var(--glass-light)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--glass-border)]/10 hover:border-[var(--glass-border)]/20 transition-all duration-300 group cursor-pointer"
             onClick={() => {
-              const prayerTime = userPlan?.prayerTime || 10;
-              onNavigate?.('prayer', prayerTime);
+              const meditationTime = userPlan?.prayerTime || 10;
+              onNavigate?.('meditation', meditationTime);
                  }}>
               {/* Meditation Images - Peaceful Animation */}
               <div className="h-20 md:h-32 bg-gradient-to-br from-[var(--spiritual-green)]/20 to-[var(--spiritual-teal)]/20 relative overflow-hidden">
@@ -805,7 +807,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         <div className="flex items-center space-x-2 bg-[var(--bg-secondary)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--border-primary)] shadow-2xl">
           {/* Weekly Analysis Tab */}
           <button
-            onClick={() => window.location.href = '/weekly-analysis'}
+            onClick={() => onNavigate?.('weekly-analysis')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--accent-primary)]/30 to-[var(--accent-secondary)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--accent-primary)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
@@ -818,7 +820,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           
           {/* Prayer Tab */}
           <button
-            onClick={() => window.location.href = '/prayer'}
+            onClick={() => onNavigate?.('prayer')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--spiritual-blue)]/30 to-[var(--spiritual-indigo)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--spiritual-blue)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
@@ -831,7 +833,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           
           {/* Community Tab */}
           <button
-            onClick={() => window.location.href = '/community'}
+            onClick={() => onNavigate?.('community')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--spiritual-emerald)]/30 to-[var(--spiritual-teal)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--spiritual-emerald)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">

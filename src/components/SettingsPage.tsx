@@ -4,6 +4,7 @@ import { dataExportService } from '../services/dataExportService'
 import { reminderService } from '../services/reminderService'
 import { SyncStatus } from './SyncStatus'
 import { PushNotificationSettings } from './PushNotificationSettings'
+import { ThemeToggle } from './ThemeToggle'
 
 interface Settings {
   theme: string
@@ -109,6 +110,7 @@ export const SettingsPage: React.FC = () => {
 
   const tabs = [
     { id: 'account', label: 'Account', icon: '👤' },
+    { id: 'appearance', label: 'Appearance', icon: '🎨' },
     { id: 'notifications', label: 'Notifications', icon: '🔔' },
     { id: 'reminders', label: 'Prayer Reminders', icon: '⏰' },
     { id: 'privacy', label: 'Privacy', icon: '🔒' },
@@ -157,6 +159,47 @@ export const SettingsPage: React.FC = () => {
                 >
                   🚪 Sign Out
                 </button>
+              </div>
+            </div>
+          </div>
+        )
+
+      case 'appearance':
+        return (
+          <div className="space-y-6">
+            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
+              <h3 className="text-xl font-bold text-gray-100 mb-4">🎨 Theme & Appearance</h3>
+              <div className="space-y-6">
+                <div>
+                  <h4 className="text-lg font-semibold text-gray-200 mb-3">Theme Settings</h4>
+                  <p className="text-gray-400 mb-4">Choose your preferred theme for the best visual experience</p>
+                  <ThemeToggle showLabels={true} />
+                </div>
+                
+                <div className="pt-4 border-t border-neutral-700">
+                  <h4 className="text-lg font-semibold text-gray-200 mb-3">Visual Preferences</h4>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-gray-300">Enable Animations</span>
+                        <p className="text-sm text-gray-500">Smooth transitions and hover effects</p>
+                      </div>
+                      <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-500">
+                        <span className="inline-block h-4 w-4 transform translate-x-6 rounded-full bg-white transition-transform" />
+                      </button>
+                    </div>
+                    
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <span className="text-gray-300">Compact Mode</span>
+                        <p className="text-sm text-gray-500">Reduce spacing for more content</p>
+                      </div>
+                      <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-neutral-600">
+                        <span className="inline-block h-4 w-4 transform translate-x-1 rounded-full bg-white transition-transform" />
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

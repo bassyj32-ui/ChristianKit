@@ -38,14 +38,15 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
     }
 
     // Register service worker
-    if ('serviceWorker' in navigator) {
-      try {
-        await navigator.serviceWorker.register('/sw.js');
-        console.log('Service worker registered');
-      } catch (error) {
-        console.error('Service worker registration failed:', error);
-      }
-    }
+    // Temporarily disabled service worker registration to fix MIME type issues
+    // if ('serviceWorker' in navigator) {
+    //   try {
+    //     await navigator.serviceWorker.register('/sw.js');
+    //     console.log('Service worker registered');
+    //   } catch (error) {
+    //     console.error('Service worker registration failed:', error);
+    //   }
+    // }
   };
 
   /**

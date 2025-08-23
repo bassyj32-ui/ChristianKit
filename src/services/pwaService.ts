@@ -31,23 +31,23 @@ class PWAService {
     }
 
     try {
-      // Register service worker
-      this.swRegistration = await navigator.serviceWorker.register('/sw.js')
-      console.log('✅ PWA: Service Worker registered:', this.swRegistration)
+      // Temporarily disabled service worker registration to fix MIME type issues
+      // this.swRegistration = await navigator.serviceWorker.register('/sw.js')
+      // console.log('✅ PWA: Service Worker registered:', this.swRegistration)
 
-      // Listen for service worker updates
-      this.swRegistration.addEventListener('updatefound', () => {
-        console.log('🔄 PWA: Service Worker update found')
-        const newWorker = this.swRegistration!.installing
-        if (newWorker) {
-          newWorker.addEventListener('statechange', () => {
-            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-              console.log('🆕 PWA: New content available, please refresh')
-              this.showUpdateAvailableNotification()
-            }
-          })
-        }
-      })
+      // Temporarily disabled service worker updates to fix MIME type issues
+      // this.swRegistration.addEventListener('updatefound', () => {
+      //   console.log('🔄 PWA: Service Worker update found')
+      //   const newWorker = this.swRegistration!.installing
+      //   if (newWorker) {
+      //     newWorker.addEventListener('statechange', () => {
+      //       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+      //       console.log('🆕 PWA: New content available, please refresh')
+      //       this.showUpdateAvailableNotification()
+      //     }
+      //   })
+      // }
+      // })
 
     } catch (error) {
       console.error('❌ PWA: Service Worker registration failed:', error)

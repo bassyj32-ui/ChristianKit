@@ -250,81 +250,8 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     setPrayerCompleted(false);
   };
 
-  // Floating login button - Osmo Style
-  const FloatingLogin = () => {
-    // Don't render if user is logged in
-    if (user) {
-      return null;
-    }
-
-    return (
-      <div className="fixed top-6 right-6 z-[9999]">
-        <button
-          onClick={signInWithGoogle}
-                        className="bg-amber-400 text-[var(--text-inverse)] px-6 py-3 rounded-lg font-semibold hover:bg-amber-300 transition-all duration-300 shadow-lg shadow-amber-400/25 hover:scale-105"
-        >
-          Sign In
-        </button>
-      </div>
-    );
-  };
-
-  // Bottom action buttons - Beautiful Glassmorphism Design
-  const BottomActionButtons = () => (
-    <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-6">
-      <div className="flex items-center space-x-4">
-        {/* Home Tab */}
-        <button
-          onClick={() => {
-            if (isFirstTimeUser) {
-              onStartQuestionnaire?.();
-            } else {
-              onNavigate?.('dashboard');
-            }
-          }}
-          className="flex flex-col items-center space-y-2 group"
-        >
-          <div className="w-16 h-20 bg-gradient-to-br from-purple-400/10 to-blue-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/30 border border-purple-300/20">
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-400/30 to-blue-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-purple-400/40 border border-purple-300/30 mb-2">
-              <span className="text-2xl group-hover:animate-bounce">🏠</span>
-            </div>
-            <span className="text-xs font-medium text-purple-100 group-hover:text-purple-50 transition-colors duration-300 tracking-wide">Home</span>
-          </div>
-        </button>
-        
-        {/* Restart Tab */}
-        <button
-          onClick={resetPrayer}
-          className="flex flex-col items-center space-y-2 group"
-        >
-          <div className="w-16 h-20 bg-gradient-to-br from-blue-400/10 to-indigo-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/30 border border-blue-300/20">
-            <div className="w-10 h-10 bg-gradient-to-br from-blue-400/30 to-indigo-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/40 border border-blue-300/30 mb-2">
-              <span className="text-2xl group-hover:animate-spin">🔄</span>
-            </div>
-            <span className="text-xs font-medium text-blue-100 group-hover:text-blue-50 transition-colors duration-300 tracking-wide">Restart</span>
-          </div>
-        </button>
-        
-        {/* Share Tab */}
-        <button
-          onClick={() => onNavigate?.('community')}
-          className="flex flex-col items-center space-y-2 group"
-        >
-          <div className="w-16 h-20 bg-gradient-to-br from-emerald-400/10 to-teal-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/30 border border-emerald-300/20">
-            <div className="w-10 h-10 bg-gradient-to-br from-emerald-400/30 to-teal-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/40 border border-emerald-300/30 mb-2">
-              <span className="text-2xl group-hover:animate-pulse">🌟</span>
-            </div>
-            <span className="text-xs font-medium text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300 tracking-wide">Share</span>
-          </div>
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <div className="h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden">
-      {/* Floating Login - Outside main container */}
-      <FloatingLogin />
       
       {/* Background with subtle patterns */}
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
@@ -488,43 +415,50 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
         </div>
       </div>
 
-      {/* Navigation Tabs - Osmo Style */}
+      {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
           <div className="flex items-center space-x-2 sm:space-x-1">
-          {/* Home Tab */}
-          <button
-            onClick={() => {
-              if (isFirstTimeUser) {
-                onStartQuestionnaire?.();
-              } else {
-                onNavigate?.('dashboard');
-              }
-            }}
-              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            {/* Home Tab */}
+            <button
+              onClick={() => {
+                console.log('Home tab clicked!')
+                console.log('isFirstTimeUser:', isFirstTimeUser)
+                console.log('onStartQuestionnaire function:', onStartQuestionnaire)
+                console.log('onNavigate function:', onNavigate)
+                
+                if (isFirstTimeUser) {
+                  console.log('Starting questionnaire...')
+                  onStartQuestionnaire?.();
+                } else {
+                  console.log('Navigating to dashboard...')
+                  onNavigate?.('dashboard');
+                }
+              }}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
               <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏠</span>
-              <span className="text-sm font-medium sm:block hidden">Home</span>
-          </button>
-          
-          {/* Restart Tab */}
-          <button
-            onClick={resetPrayer}
-              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+              <span className="text-sm font-medium">Home</span>
+            </button>
+            
+            {/* Restart Tab */}
+            <button
+              onClick={resetPrayer}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
               <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🔄</span>
-              <span className="text-sm font-medium sm:block hidden">Restart</span>
-          </button>
-          
-          {/* Share Tab */}
-          <button
-            onClick={() => onNavigate?.('community')}
-              className="flex items-center space-x-2 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+              <span className="text-sm font-medium">Restart</span>
+            </button>
+            
+            {/* Share Tab */}
+            <button
+              onClick={() => onNavigate?.('community')}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
               <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🌟</span>
-              <span className="text-sm font-medium sm:block hidden">Share</span>
+              <span className="text-sm font-medium">Share</span>
             </button>
-            </div>
+          </div>
         </div>
       </div>
     </div>
