@@ -31,11 +31,13 @@ const AppContent: React.FC = () => {
   const [showQuestionnaire, setShowQuestionnaire] = useState(false)
   const [userPlan, setUserPlan] = useState<any>(null)
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   // Add error boundary for runtime errors
   useEffect(() => {
     const handleError = (error: ErrorEvent) => {
       console.error('🚨 App Error:', error.error)
+      setError(error.error?.message || 'Unknown error occurred')
     }
     
     window.addEventListener('error', handleError)
@@ -49,9 +51,42 @@ const AppContent: React.FC = () => {
       loading,
       activeTab,
       showQuestionnaire,
-      isFirstTimeUser
+      isFirstTimeUser,
+      error
     })
-  }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser])
+  }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser, error])
+
+  // Show error if something went wrong
+  if (error) {
+    return (
+      <div className="min-h-screen bg-red-900 text-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-4">
+          <div className="text-6xl mb-6">🚨</div>
+          <h1 className="text-2xl font-bold mb-4">App Error</h1>
+          <p className="text-red-200 mb-4">{error}</p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-white text-red-900 px-4 py-2 rounded"
+          >
+            Reload App
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
+        <div className="text-center">
+          <div className="text-6xl mb-6">⏳</div>
+          <h1 className="text-2xl font-bold mb-4">Loading ChristianKit...</h1>
+          <p className="text-[var(--text-secondary)]">Please wait while we initialize the app</p>
+        </div>
+      </div>
+    )
+  }
 
   // Trial period management
   const [trialStartDate, setTrialStartDate] = useState<string>(() => {
@@ -220,51 +255,6 @@ const AppContent: React.FC = () => {
     }
   }
 
-  // Show loading state while Supabase initializes
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[var(--accent-primary)] mx-auto mb-4"></div>
-          <h2 className="text-xl font-semibold">Connecting to ChristianKit...</h2>
-          <p className="text-[var(--text-secondary)]">Initializing your spiritual journey</p>
-        </div>
-      </div>
-    )
-  }
-
-  // Show prayer timer page with floating sign-in when user is not authenticated
-  if (!user) {
-    const trialDaysLeft = Math.max(0, 14 - Math.floor((new Date().getTime() - new Date(trialStartDate).getTime()) / (1000 * 60 * 60 * 24)))
-    
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] text-white">
-        {/* Floating Sign In Button - Top Right */}
-        <div className="fixed top-4 right-4 z-50">
-          <button
-            onClick={signInWithGoogle}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl py-2 px-3 sm:py-3 sm:px-4 font-semibold text-xs sm:text-sm hover:bg-white/20 hover:border-white/30 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-1 sm:gap-2"
-          >
-            <svg className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24">
-              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-            </svg>
-            <span className="hidden sm:inline">Sign In</span>
-          </button>
-        </div>
-        
-        {/* Main App Content - Accessible to all users during trial */}
-        <main className="flex-1">
-          {renderContent()}
-        </main>
-        
-        {/* Remove the old bottom-right sign-in button */}
-      </div>
-    )
-  }
-
   // Show questionnaire if it's the first time
   if (showQuestionnaire) {
     console.log('Showing questionnaire...')
@@ -337,6 +327,17 @@ const App: React.FC = () => {
       </Routes>
     </ErrorBoundary>
   )
+}
+
+// Add a simple fallback for debugging
+if (typeof window !== 'undefined') {
+  window.addEventListener('error', (event) => {
+    console.error('🚨 Global Error:', event.error)
+  })
+  
+  window.addEventListener('unhandledrejection', (event) => {
+    console.error('🚨 Unhandled Promise Rejection:', event.reason)
+  })
 }
 
 export default App
