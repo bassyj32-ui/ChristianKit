@@ -6,7 +6,7 @@ export default defineConfig({
   plugins: [react()],
   build: {
     chunkSizeWarningLimit: 1000,
-    // Ensure proper asset handling
+    // Simplified asset handling for better Vercel compatibility
     assetsDir: 'assets',
     rollupOptions: {
       output: {
@@ -15,17 +15,7 @@ export default defineConfig({
           router: ['react-router-dom'],
           supabase: ['@supabase/supabase-js']
         },
-        assetFileNames: (assetInfo) => {
-          const info = assetInfo.name?.split('.') || []
-          const ext = info[info.length - 1]
-          if (/png|jpe?g|svg|gif|tiff|bmp|ico/i.test(ext || '')) {
-            return `assets/images/[name]-[hash][extname]`
-          }
-          if (/css/i.test(ext || '')) {
-            return `assets/css/[name]-[hash][extname]`
-          }
-          return `assets/[name]-[hash][extname]`
-        },
+        assetFileNames: 'assets/[name]-[hash][extname]',
         chunkFileNames: 'assets/js/[name]-[hash].js',
         entryFileNames: 'assets/js/[name]-[hash].js'
       }
