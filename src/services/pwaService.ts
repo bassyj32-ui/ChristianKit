@@ -1,5 +1,5 @@
-// PWA Service for ChristianKit
-// Handles PWA-specific functionality like notifications, offline support, etc.
+// PWA Service - Handles Progressive Web App functionality
+// Temporarily disabled to prevent build issues
 
 export interface PWANotificationOptions {
   title: string
@@ -16,42 +16,114 @@ export interface PWANotificationOptions {
 }
 
 class PWAService {
-  private swRegistration: ServiceWorkerRegistration | null = null
-  private isSupported = false
+  private isSupported: boolean = false;
+  private isInstalled: boolean = false;
+  private deferredPrompt: any = null;
+  // private swRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
-    this.isSupported = 'serviceWorker' in navigator && 'PushManager' in window
-    this.initialize()
+    // Temporarily disable service worker support to prevent build issues
+    this.isSupported = false; // 'serviceWorker' in navigator && 'PushManager' in window
+    
+    this.setupEventListeners();
+    this.checkInstallationStatus();
   }
 
-  private async initialize() {
-    if (!this.isSupported) {
-      console.log('📱 PWA: Service Worker not supported')
-      return
+  private setupEventListeners() {
+    // Listen for beforeinstallprompt event
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+    });
+
+    // Listen for appinstalled event
+    window.addEventListener('appinstalled', () => {
+      this.isInstalled = true;
+      console.log('PWA was installed');
+    });
+  }
+
+  private async checkInstallationStatus() {
+    // Check if app is running in standalone mode (installed)
+    if (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) {
+      this.isInstalled = true;
+    }
+  }
+
+  // async registerServiceWorker() {
+  //   if (!this.isSupported) return false;
+
+  //   try {
+  //     // Temporarily disabled to prevent build issues
+  //     // this.swRegistration = await navigator.serviceWorker.register('/sw.js')
+  //     console.log('Service Worker registered successfully');
+  //     return true;
+  //   } catch (error) {
+  //     console.error('Service Worker registration failed:', error);
+  //     return false;
+  //   }
+  // }
+
+  // async checkForUpdates() {
+  //   if (!this.swRegistration) return;
+
+  //   try {
+  //     await this.swRegistration.update();
+  //     this.swRegistration.addEventListener('updatefound', () => {
+  //       const newWorker = this.swRegistration!.installing;
+  //       if (newWorker) {
+  //         newWorker.addEventListener('statechange', () => {
+  //           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+  //             // New version available
+  //             console.log('New version available');
+  //           }
+  //         });
+  //       }
+  //     });
+  //   } catch (error) {
+  //     console.error('Update check failed:', error);
+  //   }
+  // }
+
+  async showInstallPrompt() {
+    if (!this.deferredPrompt) {
+      console.log('No install prompt available');
+      return false;
     }
 
     try {
-      // Temporarily disabled service worker registration to fix MIME type issues
-      // this.swRegistration = await navigator.serviceWorker.register('/sw.js')
-      // console.log('✅ PWA: Service Worker registered:', this.swRegistration)
-
-      // Temporarily disabled service worker updates to fix MIME type issues
-      // this.swRegistration.addEventListener('updatefound', () => {
-      //   console.log('🔄 PWA: Service Worker update found')
-      //   const newWorker = this.swRegistration!.installing
-      //   if (newWorker) {
-      //     newWorker.addEventListener('statechange', () => {
-      //       if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-      //       console.log('🆕 PWA: New content available, please refresh')
-      //       this.showUpdateAvailableNotification()
-      //     }
-      //   })
-      // }
-      // })
-
+      this.deferredPrompt.prompt();
+      const { outcome } = await this.deferredPrompt.userChoice;
+      
+      if (outcome === 'accepted') {
+        console.log('User accepted the install prompt');
+        this.deferredPrompt = null;
+        return true;
+      } else {
+        console.log('User dismissed the install prompt');
+        return false;
+      }
     } catch (error) {
-      console.error('❌ PWA: Service Worker registration failed:', error)
+      console.error('Install prompt failed:', error);
+      return false;
     }
+  }
+
+  canInstall(): boolean {
+    return this.deferredPrompt !== null && !this.isInstalled;
+  }
+
+  isAppInstalled(): boolean {
+    return this.isInstalled;
+  }
+
+  getSupportStatus() {
+    return {
+      serviceWorker: false, // Temporarily disabled
+      pushManager: false,   // Temporarily disabled
+      installPrompt: this.deferredPrompt !== null,
+      isInstalled: this.isInstalled
+    };
   }
 
   // Check if app is running as PWA
@@ -297,8 +369,7 @@ class PWAService {
   }
 }
 
-// Create singleton instance
-export const pwaService = new PWAService()
+export const pwaService = new PWAService();
 
 // Export for use in components
 export default pwaService

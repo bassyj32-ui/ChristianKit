@@ -25,29 +25,30 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
   const [permissionStatus, setPermissionStatus] = useState<NotificationPermission>('default');
 
   useEffect(() => {
+    const initializeNotifications = async () => {
+      try {
+        // Temporarily disable service worker registration to prevent build issues
+        // if ('serviceWorker' in navigator) {
+        //   await navigator.serviceWorker.register('/sw.js');
+        //   console.log('Service Worker registered for notifications');
+        // }
+
+        // Check if notifications are supported
+        if ('Notification' in window) {
+          const permission = await Notification.requestPermission();
+          setPermissionStatus(permission);
+          
+          if (permission === 'granted') {
+            console.log('Notification permission granted');
+          }
+        }
+      } catch (error) {
+        console.error('Failed to initialize notifications:', error);
+      }
+    };
+
     initializeNotifications();
-    startUserTracking();
-  }, [user]);
-
-  /**
-   * Initialize notification system
-   */
-  const initializeNotifications = async () => {
-    if ('Notification' in window) {
-      setPermissionStatus(Notification.permission);
-    }
-
-    // Register service worker
-    // Temporarily disabled service worker registration to fix MIME type issues
-    // if ('serviceWorker' in navigator) {
-    //   try {
-    //     await navigator.serviceWorker.register('/sw.js');
-    //     console.log('Service worker registered');
-    //   } catch (error) {
-    //     console.error('Service worker registration failed:', error);
-    //   }
-    // }
-  };
+  }, []);
 
   /**
    * Request notification permissions with spiritual motivation
