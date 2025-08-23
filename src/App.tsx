@@ -33,6 +33,8 @@ const AppContent: React.FC = () => {
   const [isFirstTimeUser, setIsFirstTimeUser] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+
+
   // Add error boundary for runtime errors
   useEffect(() => {
     const handleError = (error: ErrorEvent) => {
@@ -134,15 +136,16 @@ const AppContent: React.FC = () => {
   }
 
   const renderContent = () => {
-    console.log('🔍 renderContent called with:', { user: user?.email, activeTab, showQuestionnaire })
-    
-    // If trial has expired and user is not signed in, show trial expired message
-    if (!user && isTrialExpired()) {
-      console.log('🔍 Showing trial expired message')
-      return (
-        <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
-          <div className="text-center max-w-md mx-4">
-            <div className="text-6xl mb-6">⏰</div>
+    try {
+      console.log('🔍 renderContent called with:', { user: user?.email, activeTab, showQuestionnaire })
+      
+      // If trial has expired and user is not signed in, show trial expired message
+      if (!user && isTrialExpired()) {
+        console.log('🔍 Showing trial expired message')
+        return (
+          <div className="min-h-screen bg-[#0a0a0a] text-white flex items-center justify-center">
+            <div className="text-center max-w-md mx-4">
+              <div className="text-6xl mb-6">⏰</div>
             <h1 className="text-3xl font-bold mb-4">Trial Period Expired</h1>
             <p className="text-gray-300 mb-6">Your 2-week free trial has ended. Sign in to continue using all ChristianKit features and unlock your personalized spiritual journey.</p>
             <button
@@ -253,6 +256,35 @@ const AppContent: React.FC = () => {
           />
         )
     }
+    
+    // Default case - should never reach here
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Unknown Tab</h1>
+          <p>Please select a valid tab from the navigation.</p>
+        </div>
+      </div>
+    )
+  } catch (error) {
+    console.error('🚨 Error in renderContent:', error)
+    return (
+      <div className="min-h-screen bg-red-900 text-white flex items-center justify-center">
+        <div className="text-center max-w-md mx-4">
+          <div className="text-6xl mb-6">🚨</div>
+          <h1 className="text-2xl font-bold mb-4">Something went wrong</h1>
+          <p className="text-red-200 mb-4">
+            {error instanceof Error ? error.message : 'An unexpected error occurred'}
+          </p>
+          <button 
+            onClick={() => window.location.reload()} 
+            className="bg-white text-red-900 px-4 py-2 rounded"
+          >
+            Refresh Page
+          </button>
+        </div>
+      </div>
+    )
   }
 
   // Show questionnaire if it's the first time
@@ -315,6 +347,7 @@ const AppContent: React.FC = () => {
       <NotificationManager user={user} />
     </div>
   )
+}
 }
 
 const App: React.FC = () => {
