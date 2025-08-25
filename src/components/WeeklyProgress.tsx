@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { ProgressService, WeeklyProgress as WeeklyProgressData, UserSession } from '../services/ProgressService';
+import { useSupabaseAuth } from './SupabaseAuthProvider';
 
 interface ProgressData {
   day: string;
@@ -19,28 +21,118 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [progressData, setProgressData] = useState<ProgressData[]>([]);
+  const [realProgressData, setRealProgressData] = useState<WeeklyProgressData | null>(null);
+  const { user } = useSupabaseAuth();
 
   useEffect(() => {
-    // Simulate loading
-    setTimeout(() => {
-      const mockData: ProgressData[] = [
-        { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
-        { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
-        { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
-        { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
-        { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
-        { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
-        { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
-      ];
-      setProgressData(mockData);
-      setLoading(false);
-    }, 1000);
-  }, []);
+    const loadRealProgress = async () => {
+      if (!user) {
+        // Fallback to mock data if no user
+        setTimeout(() => {
+          const mockData: ProgressData[] = [
+            { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
+            { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
+            { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
+            { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
+            { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
+            { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
+            { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
+          ];
+          setProgressData(mockData);
+          setLoading(false);
+        }, 1000);
+        return;
+      }
+
+      try {
+        // Get current week start (Sunday)
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - dayOfWeek);
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+
+        // Load real progress data
+        const realData = await ProgressService.getWeeklyProgress(user.id, weekStartStr);
+        setRealProgressData(realData);
+
+        // Convert real data to display format
+        const displayData: ProgressData[] = [];
+        const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+        
+        for (let i = 0; i < 7; i++) {
+          const currentDate = new Date(weekStart);
+          currentDate.setDate(weekStart.getDate() + i);
+          const dateStr = currentDate.toISOString().split('T')[0];
+          
+          const daySessions = realData.sessions.filter(s => s.session_date === dateStr);
+          
+          displayData.push({
+            day: days[i],
+            prayer: this.getDayProgress(daySessions, 'prayer'),
+            bible: this.getDayProgress(daySessions, 'bible'),
+            meditation: this.getDayProgress(daySessions, 'meditation'),
+            journal: this.getDayProgress(daySessions, 'journal')
+          });
+        }
+        
+        setProgressData(displayData);
+        setLoading(false);
+      } catch (error) {
+        console.error('Error loading progress:', error);
+        // Fallback to mock data on error
+        setTimeout(() => {
+          const mockData: ProgressData[] = [
+            { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
+            { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
+            { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
+            { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
+            { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
+            { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
+            { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
+          ];
+          setProgressData(mockData);
+          setLoading(false);
+        }, 1000);
+      }
+    };
+
+    loadRealProgress();
+  }, [user]);
 
   const calculateAverage = (data: ProgressData[], activity: keyof ProgressData): number => {
     if (data.length === 0) return 0;
     const sum = data.reduce((acc, day) => acc + (day[activity] as number), 0);
     return Math.round(sum / data.length);
+  };
+
+  // Get real calculated stats when available
+  const getRealStats = () => {
+    if (realProgressData) {
+      return realProgressData.calculatedStats;
+    }
+    return {
+      prayer: calculateAverage(progressData, 'prayer'),
+      bible: calculateAverage(progressData, 'bible'),
+      meditation: calculateAverage(progressData, 'meditation'),
+      journal: calculateAverage(progressData, 'journal')
+    };
+  };
+
+  // Helper method to calculate day progress from real sessions
+  const getDayProgress = (sessions: UserSession[], activityType: 'prayer' | 'bible' | 'meditation' | 'journal'): number => {
+    const activitySessions = sessions.filter(s => s.activity_type === activityType && s.completed);
+    if (activitySessions.length === 0) return 0;
+    
+    // Calculate percentage based on completed duration vs planned duration
+    const totalCompleted = activitySessions.reduce((sum, session) => 
+      sum + (session.completed_duration || session.duration_minutes), 0
+    );
+    const totalPlanned = activitySessions.reduce((sum, session) => 
+      sum + session.duration_minutes, 0
+    );
+    
+    return Math.min(100, Math.round((totalCompleted / totalPlanned) * 100));
   };
 
   const getWeeklySummaryMessage = (data: ProgressData[]): string => {
@@ -93,7 +185,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
               return (
                 <div key={day.day} className={`text-center ${embedded ? 'p-1.5' : 'p-3'} rounded-xl bg-[var(--glass-light)]/5 backdrop-blur-xl border border-[var(--glass-border)]/10 relative overflow-hidden group hover:bg-[var(--glass-light)]/8 transition-all duration-300 ${isToday ? 'ring-2 ring-[var(--accent-primary)]/60 shadow-lg shadow-[var(--accent-primary)]/20' : ''}`}>
                   <div className="relative z-10">
-                    <div className={`${embedded ? 'text-xs' : 'text-xs sm:text-sm'} font-medium ${embedded ? 'mb-1' : 'mb-2'} ${isToday ? 'text-[var(--accent-primary)] font-bold' : 'text-[var(--text-primary)]/90'}`}>
+                    <div className={`${embedded ? 'text-sm' : 'text-sm sm:text-base'} font-bold ${embedded ? 'mb-1' : 'mb-2'} ${isToday ? 'text-[var(--accent-primary)]' : 'text-[var(--text-primary)]'}`}>
                       {day.day} {isToday ? '●' : ''}
                     </div>
                     <div className={`${embedded ? 'space-y-0.5' : 'space-y-1 sm:space-y-2'}`}>
@@ -101,12 +193,12 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
                         const value = day[activity as keyof ProgressData] as number;
                         return (
                           <div key={activity} className="relative">
-                            <div className={`w-full bg-[var(--glass-dark)]/30 backdrop-blur-sm rounded-full ${embedded ? 'h-1' : 'h-1 sm:h-2'} border border-[var(--glass-border)]/10`}>
-                              <div
-                                className={`${embedded ? 'h-1' : 'h-1 sm:h-2'} rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-500`}
-                                style={{ width: `${value}%` }}
-                              />
-                            </div>
+                                                         <div className={`w-full bg-[var(--glass-dark)]/40 backdrop-blur-sm rounded-full ${embedded ? 'h-2' : 'h-2 sm:h-3'} border border-[var(--glass-border)]/20 shadow-inner`}>
+                               <div
+                                 className={`${embedded ? 'h-2' : 'h-2 sm:h-3'} rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] transition-all duration-500 shadow-lg`}
+                                 style={{ width: `${value}%` }}
+                               />
+                             </div>
                             {!embedded && <div className="text-xs text-[var(--text-secondary)] mt-1">{value}%</div>}
                           </div>
                         );
@@ -140,44 +232,85 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
         </div>
       </div>
             
-      {/* Weekly Stats */}
-      <div className={`${embedded ? 'grid grid-cols-2 gap-2' : 'flex flex-row overflow-x-auto gap-4 w-full pb-2'} mb-8`}>
-        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
-          <div className="text-center">
-            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-green)] ${embedded ? 'mb-1' : 'mb-2'}`}>
-              {calculateAverage(progressData, 'prayer')}%
-            </div>
-            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Prayer' : 'Prayer Average'}</div>
-          </div>
-        </div>
-        
-        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
-          <div className="text-center">
-            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-blue)] ${embedded ? 'mb-1' : 'mb-2'}`}>
-              {calculateAverage(progressData, 'bible')}%
-            </div>
-            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Bible' : 'Bible Study Average'}</div>
-          </div>
-        </div>
+             {/* Weekly Stats */}
+       <div className="max-w-4xl mx-auto mb-8">
+         <div className="osmo-card">
+           <div className="text-center mb-6">
+             <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Weekly Averages</h2>
+             <p className="text-[var(--text-secondary)]">Your spiritual journey progress</p>
+           </div>
+           
+           <div className="space-y-4">
+             {/* Prayer */}
+             <div className="flex items-center justify-between p-4 bg-[var(--glass-light)]/5 rounded-xl border border-[var(--glass-border)]/10">
+               <div className="flex items-center space-x-3">
+                 <div className="w-4 h-4 bg-gradient-to-r from-[var(--spiritual-green)] to-[var(--spiritual-emerald)] rounded-lg shadow-lg"></div>
+                 <span className="text-[var(--text-primary)] font-medium">Prayer</span>
+               </div>
+               <div className="flex items-center space-x-3">
+                 <div className="w-32 bg-[var(--glass-dark)]/30 rounded-full h-3 border border-[var(--glass-border)]/20">
+                   <div 
+                     className="h-3 rounded-full bg-gradient-to-r from-[var(--spiritual-green)] to-[var(--spiritual-emerald)] shadow-lg transition-all duration-500"
+                     style={{ width: `${getRealStats().prayer}%` }}
+                   />
+                 </div>
+                 <span className="text-[var(--spiritual-green)] font-bold text-lg">{getRealStats().prayer}%</span>
+               </div>
+             </div>
 
-        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
-          <div className="text-center">
-            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--spiritual-purple)] ${embedded ? 'mb-1' : 'mb-2'}`}>
-              {calculateAverage(progressData, 'meditation')}%
-            </div>
-            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Meditation' : 'Meditation Average'}</div>
-          </div>
-        </div>
+             {/* Bible */}
+             <div className="flex items-center justify-between p-4 bg-[var(--glass-light)]/5 rounded-xl border border-[var(--glass-border)]/10">
+               <div className="flex items-center space-x-3">
+                 <div className="w-4 h-4 bg-gradient-to-r from-[var(--spiritual-blue)] to-[var(--spiritual-cyan)] rounded-lg shadow-lg"></div>
+                 <span className="text-[var(--text-primary)] font-medium">Bible</span>
+               </div>
+               <div className="flex items-center space-x-3">
+                 <div className="w-32 bg-[var(--glass-dark)]/30 rounded-full h-3 border border-[var(--glass-border)]/20">
+                   <div 
+                     className="h-3 rounded-full bg-gradient-to-r from-[var(--spiritual-blue)] to-[var(--spiritual-cyan)] shadow-lg transition-all duration-500"
+                     style={{ width: `${getRealStats().bible}%` }}
+                   />
+                 </div>
+                 <span className="text-[var(--spiritual-blue)] font-bold text-lg">{getRealStats().bible}%</span>
+               </div>
+             </div>
 
-        <div className={`${embedded ? '' : 'flex-shrink-0 w-80 sm:w-auto sm:flex-1'} bg-[var(--glass-light)]/90 backdrop-blur-sm rounded-2xl ${embedded ? 'p-3' : 'p-4 sm:p-6'} border border-[var(--glass-border)] shadow-xl`}>
-          <div className="text-center">
-            <div className={`${embedded ? 'text-lg' : 'text-2xl sm:text-3xl'} font-bold text-[var(--accent-primary)] ${embedded ? 'mb-1' : 'mb-2'}`}>
-              {calculateAverage(progressData, 'journal')}%
-            </div>
-            <div className={`${embedded ? 'text-xs' : 'text-sm'} text-[var(--text-secondary)]`}>{embedded ? 'Journal' : 'Journal Average'}</div>
-          </div>
-        </div>
-      </div>
+             {/* Meditation */}
+             <div className="flex items-center justify-between p-4 bg-[var(--glass-light)]/5 rounded-xl border border-[var(--glass-border)]/10">
+               <div className="flex items-center space-x-3">
+                 <div className="w-4 h-4 bg-gradient-to-r from-[var(--spiritual-purple)] to-[var(--spiritual-violet)] rounded-lg shadow-lg"></div>
+                 <span className="text-[var(--text-primary)] font-medium">Meditation</span>
+               </div>
+               <div className="flex items-center space-x-3">
+                 <div className="w-32 bg-[var(--glass-dark)]/30 rounded-full h-3 border border-[var(--glass-border)]/20">
+                   <div 
+                     className="h-3 rounded-full bg-gradient-to-r from-[var(--spiritual-purple)] to-[var(--spiritual-violet)] shadow-lg transition-all duration-500"
+                     style={{ width: `${getRealStats().meditation}%` }}
+                   />
+                 </div>
+                 <span className="text-[var(--spiritual-purple)] font-bold text-lg">{getRealStats().meditation}%</span>
+               </div>
+             </div>
+
+             {/* Journal */}
+             <div className="flex items-center justify-between p-4 bg-[var(--glass-light)]/5 rounded-xl border border-[var(--glass-border)]/10">
+               <div className="flex items-center space-x-3">
+                 <div className="w-4 h-4 bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg shadow-lg"></div>
+                 <span className="text-[var(--text-primary)] font-medium">Journal</span>
+               </div>
+               <div className="flex items-center space-x-3">
+                 <div className="w-32 bg-[var(--glass-dark)]/30 rounded-full h-3 border border-[var(--glass-border)]/20">
+                   <div 
+                     className="h-3 rounded-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] shadow-lg transition-all duration-500"
+                     style={{ width: `${getRealStats().journal}%` }}
+                   />
+                 </div>
+                 <span className="text-[var(--accent-primary)] font-bold text-lg">{getRealStats().journal}%</span>
+               </div>
+             </div>
+           </div>
+         </div>
+       </div>
 
       {/* Weekly Summary */}
       {showSummary && (

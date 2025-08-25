@@ -482,20 +482,21 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
     <div className="notification-manager">
       {/* Notification Permission Button */}
       {permissionStatus !== 'granted' && (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-20 right-4 z-50 lg:bottom-4">
           <button
             onClick={requestPermissions}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-6 py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 animate-pulse"
+            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 animate-pulse text-sm sm:text-base"
           >
             <span>🔔</span>
-            <span className="font-semibold">Enable Prayer Reminders</span>
+            <span className="font-semibold hidden sm:inline">Enable Prayer Reminders</span>
+            <span className="font-semibold sm:hidden">Enable</span>
           </button>
         </div>
       )}
 
       {/* Minimal Notification Toggle */}
       {permissionStatus === 'granted' && (
-        <div className="fixed bottom-4 right-4 z-50">
+        <div className="fixed bottom-20 right-4 z-50 lg:bottom-4">
           {/* Settings Toggle Button */}
           <button
             onClick={() => setShowSettings(!showSettings)}

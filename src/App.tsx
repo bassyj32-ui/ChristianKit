@@ -18,7 +18,8 @@ import { BibleReadingPage } from './components/BibleReadingPage'
 import { MeditationPage } from './components/MeditationPage'
 import AuthCallback from './pages/AuthCallback'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
-import { NotificationManager } from './components/NotificationManager'
+import { FloatingAuthTab } from './components/FloatingAuthTab'
+
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useSupabaseAuth, SupabaseAuthProvider } from './components/SupabaseAuthProvider'
 
@@ -122,11 +123,24 @@ const AppContent: React.FC = () => {
   // Show loading state
   if (loading) {
     return (
-              <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
-        <div className="text-center">
-          <div className="text-6xl mb-6">⏳</div>
-          <h1 className="text-2xl font-bold mb-4">Loading ChristianKit...</h1>
-          <p className="text-[var(--text-secondary)]">Please wait while we initialize the app</p>
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center relative overflow-hidden">
+        {/* Osmo-inspired Background */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
+          {/* Subtle Gradient Overlays */}
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-500/5 via-transparent to-yellow-500/5"></div>
+          
+          {/* Minimal Glow Effects */}
+          <div className="absolute top-1/6 left-1/6 w-64 sm:w-96 h-64 sm:h-96 bg-amber-500/5 rounded-full blur-3xl"></div>
+          <div className="absolute bottom-1/6 right-1/6 w-56 sm:w-80 h-56 sm:h-80 bg-yellow-500/5 rounded-full blur-3xl"></div>
+        </div>
+
+        <div className="text-center relative z-10">
+          {/* ChristianKit App Icon */}
+          <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-2xl shadow-amber-500/25 animate-pulse">
+            <span className="text-4xl sm:text-6xl font-bold text-white">✝</span>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">Loading ChristianKit...</h1>
+          <p className="text-[var(--text-secondary)] text-base sm:text-lg">Please wait while we initialize the app</p>
         </div>
       </div>
     )
@@ -290,6 +304,7 @@ const AppContent: React.FC = () => {
           setUserPlan(plan)
           setShowQuestionnaire(false)
           setIsFirstTimeUser(false)
+          setActiveTab('dashboard') // Navigate to homepage after questionnaire
           localStorage.setItem('hasCompletedQuestionnaire', 'true')
           localStorage.setItem('userPlan', JSON.stringify(plan))
           
@@ -306,17 +321,17 @@ const AppContent: React.FC = () => {
   }
 
   return (
-          <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+      {/* PWA Install Prompt - Top of screen */}
+      <PWAInstallPrompt />
+      
+      {/* Floating Auth Tab - Below PWA prompt */}
+      <FloatingAuthTab className="top-28" />
+      
       {/* Main Content */}
       <div className="flex-1">
         {renderContent()}
       </div>
-
-      {/* PWA Install Prompt */}
-      <PWAInstallPrompt />
-
-      {/* Notification Manager */}
-      <NotificationManager user={user} />
     </div>
   )
 }

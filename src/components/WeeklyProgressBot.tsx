@@ -111,7 +111,7 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
   if (!isVisible || loading) return null;
 
   return (
-    <div className={`fixed ${position === 'top-right' ? 'top-4 right-4' : position === 'bottom-right' ? 'bottom-4 right-4' : 'bottom-4 right-4'} z-50`}>
+    <div className={`fixed ${position === 'top-right' ? 'top-4 right-4' : position === 'bottom-right' ? 'bottom-20 right-4 lg:bottom-4' : 'bottom-20 right-4 lg:bottom-4'} z-50`}>
       {/* Mini Bot */}
       <div className="relative">
         {/* Bot Avatar */}

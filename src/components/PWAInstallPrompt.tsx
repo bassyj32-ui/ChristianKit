@@ -76,7 +76,7 @@ export const PWAInstallPrompt: React.FC = () => {
   }
 
   return (
-    <div className="fixed bottom-4 left-4 right-4 z-50">
+    <div className="fixed top-4 left-4 right-4 z-50">
       <div className="bg-[var(--glass-dark)] backdrop-blur-xl border border-[var(--glass-border)] rounded-2xl p-4 shadow-2xl">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">

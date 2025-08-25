@@ -9,11 +9,13 @@ import { CommunityPrayerRequests } from './CommunityPrayerRequests'
 import { ProFeatureGate } from './ProFeatureGate'
 import { BibleReadingPage } from './BibleReadingPage'
 import { MeditationPage } from './MeditationPage'
+import { FloatingAuthTab } from './FloatingAuthTab'
 
 import { prayerService } from '../services/prayerService'
 import { subscriptionService } from '../services/subscriptionService'
 import { dailyReEngagementService } from '../services/dailyReEngagementService'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { ProgressService } from '../services/ProgressService'
 
 interface DashboardProps {
   onNavigate?: (page: string, duration?: number) => void;
@@ -23,6 +25,32 @@ interface DashboardProps {
     prayerStyle: string;
     prayerFocus: string[];
     bibleTopics: string[];
+    customPlan?: {
+      prayer: {
+        title: string;
+        description: string;
+        duration: number;
+        focus: string[];
+        style: string;
+        tips: string[];
+      };
+      reading: {
+        title: string;
+        description: string;
+        duration: number;
+        topics: string[];
+        approach: string;
+        tips: string[];
+      };
+      reflection: {
+        title: string;
+        description: string;
+        duration: number;
+        method: string;
+        prompts: string[];
+        tips: string[];
+      };
+    };
   } | null;
 }
 
@@ -109,9 +137,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   // Simple test render first
   console.log('🔍 Dashboard: Attempting to render...')
   
-  // Add error boundary for rendering
-  try {
-    return (
+  return (
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden font-sans">
       {/* Osmo-inspired Minimal Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
@@ -234,111 +260,128 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         </div>
       </div>
 
-      {/* Profile Drawer - Interactive Dark */}
+      {/* Modern Profile Drawer - Limited Size */}
       {isDrawerOpen && (
-        <div className="relative z-40 bg-[var(--color-neutral-800)] backdrop-blur-xl border-b border-[var(--color-neutral-700)]/50 shadow-2xl">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6">
-            <div className="py-4 sm:py-6">
-              {/* Interactive User Info */}
-              <div className="flex items-center space-x-3 sm:space-x-4 mb-4 sm:mb-6 p-3 sm:p-4 bg-[var(--color-neutral-800)]/50 rounded-xl border border-[var(--color-neutral-700)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300">
-                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br from-[var(--color-primary-500)] to-[var(--color-info-500)] rounded-lg flex items-center justify-center text-[var(--color-neutral-50)] font-semibold hover:scale-110 transition-transform duration-300">
-                  {user?.user_metadata?.display_name?.charAt(0) || 'U'}
+        <>
+          {/* Dark Background Overlay */}
+          <div 
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
+            onClick={() => setIsDrawerOpen(false)}
+          />
+          
+          {/* Drawer Content */}
+          <div className="fixed top-16 right-4 z-50 w-80 max-w-[90vw] bg-[var(--color-neutral-800)] backdrop-blur-xl rounded-2xl border border-[var(--color-neutral-700)]/50 shadow-2xl shadow-black/50">
+            <div className="p-4">
+              
+              {/* User Info */}
+              <div className="flex items-center space-x-3 mb-4 p-3 bg-[var(--color-neutral-800)]/50 rounded-xl border border-[var(--color-neutral-700)]/50">
+                <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)] to-[var(--color-info-500)] rounded-lg flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[var(--color-neutral-50)]" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.904.732-1.636 1.636-1.636h.819L12 10.91l9.545-7.089h.819c.904 0 1.636.732 1.636 1.636z"/>
+                  </svg>
                 </div>
-                <div>
-                  <div className="text-[var(--color-neutral-50)] font-medium text-sm sm:text-base">{user?.user_metadata?.display_name || 'User'}</div>
-                  <div className="text-[var(--color-neutral-400)] text-xs sm:text-sm">{user?.email}</div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-[var(--color-neutral-50)] font-medium truncate">{user?.user_metadata?.display_name || 'User'}</div>
+                  <div className="text-[var(--color-neutral-400)] text-sm truncate">{user?.email}</div>
                 </div>
               </div>
 
-              {/* Interactive Drawer Navigation */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-3">
+              {/* Simple List */}
+              <div className="space-y-2">
                 <button
                   onClick={() => {
                     onNavigate?.('settings')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">⚙️</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Settings</span>
+                  <span className="text-lg">⚙️</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Settings</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('analytics')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-info-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-info-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">📊</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Analytics</span>
+                  <span className="text-lg">📊</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Analytics</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('history')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-success-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-success-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">📅</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">History</span>
+                  <span className="text-lg">📅</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">History</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('achievements')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">🏆</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Achievements</span>
+                  <span className="text-lg">🏆</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Achievements</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('goals')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-600)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-600)]/50"
                 >
-                  <span className="text-lg sm:text-xl">🎯</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Goals</span>
+                  <span className="text-lg">🎯</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Goals</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('notifications')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">🔔</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Notifications</span>
+                  <span className="text-lg">🔔</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Notifications</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     onNavigate?.('help')
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50"
                 >
-                  <span className="text-lg sm:text-xl">❓</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-neutral-400)]">Help</span>
+                  <span className="text-lg">❓</span>
+                  <span className="text-[var(--color-neutral-400)] font-medium">Help</span>
                 </button>
+                
                 <button
                   onClick={() => {
                     logout()
                     setIsDrawerOpen(false)
                   }}
-                  className="p-3 sm:p-4 rounded-xl bg-[var(--color-error-500)]/20 hover:bg-[var(--color-error-500)]/30 transition-all duration-300 flex flex-col items-center space-y-1 sm:space-y-2 border border-[var(--color-error-500)]/50 hover:border-[var(--color-error-500)]/40 hover:scale-105"
+                  className="w-full p-3 rounded-xl bg-[var(--color-error-500)]/20 hover:bg-[var(--color-error-500)]/30 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-error-500)]/50 hover:border-[var(--color-error-500)]/40"
                 >
-                  <span className="text-lg sm:text-xl">🚪</span>
-                  <span className="text-xs sm:text-sm font-medium text-[var(--color-warning-600)]">Logout</span>
+                  <span className="text-lg">🚪</span>
+                  <span className="text-[var(--color-warning-600)] font-medium">Logout</span>
                 </button>
               </div>
             </div>
           </div>
-        </div>
+        </>
       )}
 
-      <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
         {/* Hero Section - Osmo Style */}
         <div className="pt-8 pb-12">
@@ -362,41 +405,62 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
         </div>
 
-        {/* Main Actions - Mobile-First Responsive Grid */}
+
+
+        {/* Main Actions - Compact Responsive Grid */}
         <div className="w-full mb-16">
-          <div className="grid grid-cols-3 md:grid-cols-3 gap-2 md:gap-6">
-                        {/* Prayer Card */}
+          <div className="grid grid-cols-3 sm:grid-cols-2 lg:grid-cols-3 gap-1 md:gap-3 xl:gap-4 max-w-7xl mx-auto">
+                        {/* Personalized Prayer Card */}
             <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--color-neutral-700)]/10 hover:border-[var(--color-neutral-700)]/20 transition-all duration-300 group cursor-pointer"
-            onClick={() => {
-                   const prayerTime = userPlan?.prayerTime || 15;
+            onClick={async () => {
+              const prayerTime = userPlan?.customPlan?.prayer?.duration || userPlan?.prayerTime || 15;
+              
+              // Record session start for progress tracking
+              if (user) {
+                try {
+                  await ProgressService.recordSession({
+                    user_id: user.id,
+                    activity_type: 'prayer',
+                    duration_minutes: prayerTime,
+                    completed: false, // Will be updated to true when completed
+                    session_date: new Date().toISOString().split('T')[0],
+                    notes: userPlan?.customPlan?.prayer?.focus?.join(', ') || undefined
+                  });
+                  console.log('✅ Prayer session started and recorded');
+                } catch (error) {
+                  console.error('❌ Error recording prayer session start:', error);
+                  // Continue even if database recording fails
+                }
+              }
+              
               onNavigate?.('prayer', prayerTime);
-                 }}>
+            }}>
               {/* Prayer Images - Animated Slideshow */}
-              <div className="h-20 md:h-32 bg-gradient-to-br from-[var(--color-primary-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
-                {/* Image 1 - Person praying with peaceful expression */}
+              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-primary-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
+                {/* Image 1 - Golden light through stained glass */}
                 <img 
-                  src="https://images.unsplash.com/photo-1609234656388-0ff363894fbe?w=400&h=200&fit=crop&crop=faces"
-                  alt="Person in peaceful prayer"
-                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-500 absolute inset-0 animate-pulse"
+                  src="https://images.unsplash.com/photo-1542810634-71277d95dcbb?w=400&h=200&fit=crop&crop=center"
+                  alt="Divine golden light through stained glass"
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
                   style={{animationDuration: '4s'}}
                 />
-                {/* Image 2 - Praying hands with candle */}
+                {/* Image 2 - Angelic prayer hands with golden glow */}
                 <img 
                   src="https://images.unsplash.com/photo-1507692049790-de58290a4334?w=400&h=200&fit=crop&crop=center"
-                  alt="Praying hands with candle light"
-                  className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-all duration-700 absolute inset-0 animate-pulse"
+                  alt="Angelic prayer hands with divine light"
+                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 absolute inset-0 animate-pulse"
                   style={{animationDuration: '6s', animationDelay: '2s'}}
                 />
-                {/* Image 3 - Church prayer scene */}
+                {/* Image 3 - Heavenly clouds with light rays */}
                 <img 
-                  src="https://images.unsplash.com/photo-1605629921711-cc52d0872d1e?w=400&h=200&fit=crop&crop=center"
-                  alt="Peaceful church prayer scene"
-                  className="w-full h-full object-cover opacity-50 group-hover:opacity-70 transition-all duration-1000 absolute inset-0 animate-pulse"
+                  src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=200&fit=crop&crop=center"
+                  alt="Heavenly clouds with divine light rays"
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-1000 absolute inset-0 animate-pulse"
                   style={{animationDuration: '8s', animationDelay: '4s'}}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-3 left-3">
-                  <div className="w-8 h-8 bg-[var(--color-neutral-50)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce" style={{animationDuration: '3s'}}>
+                  <div className="w-8 h-8 bg-[var(--color-neutral-50)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '3s'}}>
                     <svg className="w-4 h-4 text-[var(--color-neutral-50)]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
@@ -404,10 +468,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 </div>
               </div>
               <div className="p-2 md:p-6">
-                <h3 className="text-sm md:text-xl font-semibold text-[var(--color-neutral-50)] mb-1 md:mb-2">Prayer</h3>
-                <p className="text-[var(--color-neutral-400)] text-xs md:text-sm mb-2 md:mb-4 hidden md:block">Begin your daily prayer and meditation</p>
+                <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
+                  My Prayer
+                </h3>
+                <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
+                  Your daily prayer practice
+                </p>
+                {userPlan?.customPlan?.prayer?.focus && (
+                  <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
+                    {userPlan.customPlan.prayer.focus.slice(0, 2).map((focus: string, index: number) => (
+                      <span key={index} className="px-1.5 py-0.5 bg-[var(--color-primary-500)]/20 text-[var(--color-primary-400)] text-xs rounded-full animate-pulse" style={{animationDelay: `${index * 0.2}s`}}>
+                        {focus}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--color-neutral-400)]">15 min</span>
+                  <span className="text-xs text-[var(--color-neutral-400)]">
+                    {userPlan?.customPlan?.prayer?.duration || userPlan?.prayerTime || 15} min
+                  </span>
                   <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[var(--color-neutral-50)]/10 flex items-center justify-center">
                     <svg className="w-2 h-2 md:w-3 md:h-3 text-[var(--color-neutral-400)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -417,45 +496,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
             </div>
 
-                        {/* Bible Reading Card */}
+                        {/* Personalized Bible Reading Card */}
             <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--color-neutral-700)]/10 hover:border-[var(--color-neutral-700)]/20 transition-all duration-300 group cursor-pointer"
-            onClick={() => {
-              const bibleTime = userPlan?.bibleTime || 20;
+            onClick={async () => {
+              const bibleTime = userPlan?.customPlan?.reading?.duration || userPlan?.bibleTime || 20;
+              
+              // Record session start for progress tracking
+              if (user) {
+                try {
+                  await ProgressService.recordSession({
+                    user_id: user.id,
+                    activity_type: 'bible',
+                    duration_minutes: bibleTime,
+                    completed: false, // Will be updated to true when completed
+                    session_date: new Date().toISOString().split('T')[0],
+                    notes: userPlan?.customPlan?.reading?.topics?.join(', ') || undefined
+                  });
+                  console.log('✅ Bible reading session started and recorded');
+                } catch (error) {
+                  console.error('❌ Error recording bible reading session start:', error);
+                  // Continue even if database recording fails
+                }
+              }
+              
               onNavigate?.('bible', bibleTime);
-                 }}>
+            }}>
               {/* Bible Images - Animated Collection */}
-              <div className="h-20 md:h-32 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-warning-600)]/20 relative overflow-hidden">
-                {/* Image 1 - Open Bible with golden light */}
-                <img 
-                  src="https://images.unsplash.com/photo-1519491050282-cf00c82424b4?w=400&h=200&fit=crop&crop=center"
-                  alt="Open Bible with golden divine light"
-                  className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '5s'}}
-                />
-                {/* Image 2 - Person reading Bible */}
-                <img 
-                  src="https://images.unsplash.com/photo-1571043733612-d5444db4e10b?w=400&h=200&fit=crop&crop=faces"
-                  alt="Person peacefully reading Bible"
-                  className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-700 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '7s', animationDelay: '2.5s'}}
-                />
-                {/* Image 3 - Bible study group */}
-                <img 
-                  src="https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=200&fit=crop&crop=center"
-                  alt="Bible study group gathering"
-                  className="w-full h-full object-cover opacity-50 group-hover:opacity-75 transition-all duration-1000 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '9s', animationDelay: '5s'}}
-                />
-                {/* Image 4 - Ancient scripture */}
+              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-warning-600)]/20 relative overflow-hidden">
+                {/* Image 1 - Ancient scrolls with divine light */}
                 <img 
                   src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop&crop=center"
-                  alt="Ancient scripture with warm candlelight"
-                  className="w-full h-full object-cover opacity-40 group-hover:opacity-70 transition-all duration-1200 absolute inset-0 animate-pulse"
+                  alt="Ancient scrolls with divine light"
+                  className="w-full h-full object-cover opacity-85 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '5s'}}
+                />
+                {/* Image 2 - Golden Bible with heavenly glow */}
+                <img 
+                  src="https://images.unsplash.com/photo-1519491050282-cf00c82424b4?w=400&h=200&fit=crop&crop=center"
+                  alt="Golden Bible with heavenly glow"
+                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '7s', animationDelay: '2.5s'}}
+                />
+                {/* Image 3 - Sacred texts with angelic light */}
+                <img 
+                  src="https://images.unsplash.com/photo-1571043733612-d5444db4e10b?w=400&h=200&fit=crop&crop=faces"
+                  alt="Sacred texts with angelic light"
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-1000 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '9s', animationDelay: '5s'}}
+                />
+                {/* Image 4 - Divine wisdom scrolls */}
+                <img 
+                  src="https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=200&fit=crop&crop=center"
+                  alt="Divine wisdom scrolls"
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-all duration-1200 absolute inset-0 animate-pulse"
                   style={{animationDuration: '11s', animationDelay: '7s'}}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-3 left-3">
-                  <div className="w-8 h-8 bg-[var(--color-warning-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce" style={{animationDuration: '4s'}}>
+                  <div className="w-8 h-8 bg-[var(--color-warning-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '4s'}}>
                     <svg className="w-4 h-4 text-[var(--color-neutral-50)]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM3 19V6h8v13H3zm18 0h-8V6h8v13zm-7-9.5h6V11h-6V9.5zm0 2.5h6v1.5h-6V12zm0 2.5h6V16h-6v-1.5z"/>
                     </svg>
@@ -463,10 +561,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 </div>
               </div>
               <div className="p-2 md:p-6">
-                <h3 className="text-sm md:text-xl font-semibold text-[var(--color-neutral-50)] mb-1 md:mb-2">Bible</h3>
-                <p className="text-[var(--color-neutral-400)] text-xs md:text-sm mb-2 md:mb-4 hidden md:block">Read and reflect on God's word</p>
+                <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
+                  My Bible Study
+                </h3>
+                <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
+                  Your scripture reading time
+                </p>
+                {userPlan?.customPlan?.reading?.topics && (
+                  <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
+                    {userPlan.customPlan.reading.topics.slice(0, 2).map((topic: string, index: number) => (
+                      <span key={index} className="px-1.5 py-0.5 bg-[var(--color-success-500)]/20 text-[var(--color-success-400)] text-xs rounded-full animate-pulse" style={{animationDelay: `${index * 0.2}s`}}>
+                        {topic}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--color-neutral-400)]">20 min</span>
+                  <span className="text-xs text-[var(--color-neutral-400)]">
+                    {userPlan?.customPlan?.reading?.duration || userPlan?.bibleTime || 20} min
+                  </span>
                   <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[var(--color-neutral-50)]/10 flex items-center justify-center">
                     <svg className="w-2 h-2 md:w-3 md:h-3 text-[var(--color-neutral-400)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -476,45 +589,64 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
             </div>
 
-                        {/* Meditation Card */}
+                        {/* Personalized Reflection Card */}
             <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--color-neutral-700)]/10 hover:border-[var(--color-neutral-700)]/20 transition-all duration-300 group cursor-pointer"
-            onClick={() => {
-              const meditationTime = userPlan?.prayerTime || 10;
-              onNavigate?.('meditation', meditationTime);
-                 }}>
+            onClick={async () => {
+              const reflectionTime = userPlan?.customPlan?.reflection?.duration || userPlan?.prayerTime || 10;
+              
+              // Record session start for progress tracking
+              if (user) {
+                try {
+                  await ProgressService.recordSession({
+                    user_id: user.id,
+                    activity_type: 'meditation',
+                    duration_minutes: reflectionTime,
+                    completed: false, // Will be updated to true when completed
+                    session_date: new Date().toISOString().split('T')[0],
+                    notes: userPlan?.customPlan?.reflection?.prompts?.join(', ') || undefined
+                  });
+                  console.log('✅ Meditation session started and recorded');
+                } catch (error) {
+                  console.error('❌ Error recording meditation session start:', error);
+                  // Continue even if database recording fails
+                }
+              }
+              
+              onNavigate?.('meditation', reflectionTime);
+            }}>
               {/* Meditation Images - Peaceful Animation */}
-              <div className="h-20 md:h-32 bg-gradient-to-br from-[var(--color-success-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
-                {/* Image 1 - Person meditating in nature */}
-                <img 
-                  src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=200&fit=crop&crop=faces"
-                  alt="Person meditating peacefully in nature"
-                  className="w-full h-full object-cover opacity-75 group-hover:opacity-90 transition-all duration-500 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '6s'}}
-                />
-                {/* Image 2 - Serene lake reflection */}
+              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-success-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
+                {/* Image 1 - Heavenly light through clouds */}
                 <img 
                   src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&fit=crop&crop=center"
-                  alt="Peaceful mountain lake reflection"
-                  className="w-full h-full object-cover opacity-55 group-hover:opacity-80 transition-all duration-700 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '8s', animationDelay: '3s'}}
+                  alt="Heavenly light breaking through clouds"
+                  className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '6s'}}
                 />
-                {/* Image 3 - Lotus and zen stones */}
-                <img 
-                  src="https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=400&h=200&fit=crop&crop=center"
-                  alt="Lotus flower and zen stones"
-                  className="w-full h-full object-cover opacity-45 group-hover:opacity-70 transition-all duration-1000 absolute inset-0 animate-pulse"
-                  style={{animationDuration: '10s', animationDelay: '6s'}}
-                />
-                {/* Image 4 - Peaceful forest path */}
+                {/* Image 2 - Divine peace and tranquility */}
                 <img 
                   src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=200&fit=crop&crop=center"
-                  alt="Peaceful forest meditation path"
-                  className="w-full h-full object-cover opacity-35 group-hover:opacity-65 transition-all duration-1200 absolute inset-0 animate-pulse"
+                  alt="Divine peace and tranquility"
+                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '8s', animationDelay: '3s'}}
+                />
+                {/* Image 3 - Angelic meditation space */}
+                <img 
+                  src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=200&fit=crop&crop=faces"
+                  alt="Angelic meditation space"
+                  className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-1000 absolute inset-0 animate-pulse"
+                  style={{animationDuration: '10s', animationDelay: '6s'}}
+                />
+                {/* Image 4 - Sacred reflection garden */}
+                <img 
+                  src="https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=400&h=200&fit=crop&crop=center"
+                  alt="Sacred reflection garden"
+                  className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-all duration-1200 absolute inset-0 animate-pulse"
                   style={{animationDuration: '12s', animationDelay: '9s'}}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-3 left-3">
-                  <div className="w-8 h-8 bg-[var(--color-success-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce" style={{animationDuration: '5s'}}>
+                  <div className="w-8 h-8 bg-[var(--color-success-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '5s'}}>
                     <svg className="w-4 h-4 text-[var(--color-neutral-50)]" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
                     </svg>
@@ -522,10 +654,25 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 </div>
               </div>
               <div className="p-2 md:p-6">
-                <h3 className="text-sm md:text-xl font-semibold text-[var(--color-neutral-50)] mb-1 md:mb-2">Meditation</h3>
-                <p className="text-[var(--color-neutral-400)] text-xs md:text-sm mb-2 md:mb-4 hidden md:block">Find peace through mindful reflection</p>
+                <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
+                  My Reflection
+                </h3>
+                <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
+                  Your spiritual reflection time
+                </p>
+                {userPlan?.customPlan?.reflection?.prompts && (
+                  <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
+                    {userPlan.customPlan.reflection.prompts.slice(0, 2).map((prompt: string, index: number) => (
+                      <span key={index} className="px-1.5 py-0.5 bg-[var(--color-warning-500)]/20 text-[var(--color-warning-400)] text-xs rounded-full animate-pulse" style={{animationDelay: `${index * 0.2}s`}}>
+                        {prompt}
+                      </span>
+                    ))}
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
-                  <span className="text-xs text-[var(--color-neutral-400)]">10 min</span>
+                  <span className="text-xs text-[var(--color-neutral-400)]">
+                    {userPlan?.customPlan?.reflection?.duration || userPlan?.prayerTime || 10} min
+                  </span>
                   <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[var(--color-neutral-50)]/10 flex items-center justify-center">
                     <svg className="w-2 h-2 md:w-3 md:h-3 text-[var(--color-neutral-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -832,74 +979,56 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
       <div className="h-24 lg:hidden"></div>
 
       {/* Weekly Progress Bot - Mobile Version (Smaller & Compact) */}
-      <div className="lg:hidden fixed bottom-32 right-3 z-40 transform scale-75 origin-bottom-right">
-      <WeeklyProgressBot position="bottom-right" showNotifications={true} />
+      <div className="lg:hidden fixed bottom-20 right-3 z-40 transform scale-75 origin-bottom-right">
+        <WeeklyProgressBot position="bottom-right" showNotifications={true} />
       </div>
 
-      {/* Mobile Navigation Tabs - Side by Side Compact */}
+
+
+      {/* Mobile Navigation Tabs - Beautiful Osmo Style */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
         <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
-          {/* Weekly Analysis Tab */}
-          <button
-            onClick={() => onNavigate?.('weekly-analysis')}
-            className="flex flex-col items-center space-y-1 group"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
-              <svg className="w-5 h-5 text-[var(--color-warning-600)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-              </svg>
-            </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">Analysis</span>
-          </button>
-          
           {/* Prayer Tab */}
           <button
             onClick={() => onNavigate?.('prayer')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
-              <svg className="w-5 h-5 text-[var(--color-primary-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-              </svg>
+              <span className="text-lg">🙏</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">Prayer</span>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">
+              Prayer
+            </span>
           </button>
           
-          {/* Community Tab */}
+          {/* Bible Tab */}
           <button
-            onClick={() => onNavigate?.('community')}
+            onClick={() => onNavigate?.('bible')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
-              <svg className="w-5 h-5 text-[var(--color-success-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <span className="text-lg">📖</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">Community</span>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">
+              Bible
+            </span>
+          </button>
+          
+          {/* Reflection Tab */}
+          <button
+            onClick={() => onNavigate?.('meditation')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
+              <span className="text-lg">✨</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
+              Reflect
+            </span>
           </button>
         </div>
       </div>
     </div>
   )
-  } catch (error) {
-    console.error('🚨 Dashboard rendering error:', error)
-    return (
-      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--color-neutral-50)] flex items-center justify-center">
-        <div className="text-center max-w-md mx-4">
-          <div className="text-6xl mb-6">🚨</div>
-          <h1 className="text-2xl font-bold mb-4">Dashboard Error</h1>
-          <p className="text-red-200 mb-4">
-            {error instanceof Error ? error.message : 'An unexpected error occurred'}
-          </p>
-          <button 
-            onClick={() => window.location.reload()} 
-            className="bg-white text-red-900 px-4 py-2 rounded"
-          >
-            Reload Dashboard
-          </button>
-        </div>
-      </div>
-    )
-  }
 }
 

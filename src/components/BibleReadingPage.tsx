@@ -4,6 +4,7 @@ import { DailyProgressReminder } from './DailyProgressReminder'
 import { bibleService, BibleVerse } from '../services/BibleService'
 import { BibleSearch } from './BibleSearch'
 import { BibleReader } from './BibleReader'
+import { ProgressService } from '../services/ProgressService'
 
 interface BibleSession {
   id: string
@@ -139,7 +140,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
   }, [selectedMinutes]);
 
   // Define completeReading function before using it in useEffect
-  const completeReading = () => {
+  const completeReading = async () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -147,7 +148,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
       clearInterval(reminderIntervalRef.current);
     }
     
-    // Save reading session (simplified)
+    // Save reading session locally
     const newSession: BibleSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -159,6 +160,25 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
     };
     setReadingSessions(prev => [newSession, ...prev]);
     localStorage.setItem('bibleSessions', JSON.stringify([newSession, ...readingSessions]));
+    
+    // Record session in database for progress tracking
+    if (user) {
+      try {
+        await ProgressService.recordSession({
+          user_id: user.id,
+          activity_type: 'bible',
+          duration_minutes: selectedMinutes,
+          completed: true,
+          completed_duration: selectedMinutes, // Full duration completed
+          session_date: new Date().toISOString().split('T')[0],
+          notes: readingFocus ? `Focus: ${readingFocus}` : undefined
+        });
+        console.log('✅ Bible reading session recorded successfully');
+      } catch (error) {
+        console.error('❌ Error recording bible reading session:', error);
+        // Continue even if database recording fails
+      }
+    }
     
     setIsReading(false);
     setReadingCompleted(true);

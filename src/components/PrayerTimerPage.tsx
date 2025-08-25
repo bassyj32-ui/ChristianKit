@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
+import { ProgressService } from '../services/ProgressService'
 
 interface PrayerSession {
   id: string
@@ -117,7 +118,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   }, [propSelectedMinutes]);
 
   // Define completePrayer function before using it in useEffect
-  const completePrayer = () => {
+  const completePrayer = async () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -125,7 +126,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
       clearInterval(reminderIntervalRef.current);
     }
     
-    // Save prayer session (simplified)
+    // Save prayer session locally
     const newSession: PrayerSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -137,6 +138,25 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     };
     setPrayerSessions(prev => [newSession, ...prev]);
     localStorage.setItem('prayerSessions', JSON.stringify([newSession, ...prayerSessions]));
+    
+    // Record session in database for progress tracking
+    if (user) {
+      try {
+        await ProgressService.recordSession({
+          user_id: user.id,
+          activity_type: 'prayer',
+          duration_minutes: selectedMinutes,
+          completed: true,
+          completed_duration: selectedMinutes, // Full duration completed
+          session_date: new Date().toISOString().split('T')[0],
+          notes: prayerFocus ? `Focus: ${prayerFocus}` : undefined
+        });
+        console.log('✅ Prayer session recorded successfully');
+      } catch (error) {
+        console.error('❌ Error recording prayer session:', error);
+        // Continue even if database recording fails
+      }
+    }
     
     setIsPraying(false);
     setPrayerCompleted(true);
@@ -414,6 +434,8 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
         )}
         </div>
       </div>
+
+
 
       {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">

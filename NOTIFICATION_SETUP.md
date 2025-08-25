@@ -1,149 +1,190 @@
-# 🔔 ChristianKit Notification System Setup Guide
+# 🔔 ChristianKit Notification System Setup
 
-## ✅ **What's Now Working**
+## 📋 **Prerequisites**
+- Supabase project with Edge Functions enabled
+- Resend account (or SendGrid/AWS SES) for email sending
+- Supabase CLI installed
 
-Your notification system has been completely upgraded with:
+## 🚀 **Step-by-Step Implementation**
 
-- **✅ Service Worker**: Push notifications and background sync
-- **✅ Daily Scheduling**: Automatic 9 AM prayer reminders
-- **✅ Settings Panel**: User-configurable notification preferences
-- **✅ Persistent Storage**: Settings saved to localStorage
-- **✅ Test Functionality**: Test notifications button
-- **✅ Enhanced UI**: Beautiful settings panel with toggles
-
-## 🔧 **Setup Steps**
-
-### 1. **Get Resend API Key (for Email)**
-
-1. Visit [https://resend.com](https://resend.com)
-2. Sign up for a free account
-3. Go to API Keys section
-4. Create a new API key
-5. Copy the API key
-
-### 2. **Create Environment File**
-
-Create a `.env` file in your project root:
-
+### **1. Deploy Database Migration**
 ```bash
-# Email Service (Resend)
-VITE_RESEND_API_KEY=re_BZghbW5b_6sE9ZvjWWYMrqgmmFaErMEo1
-
-# Supabase (if not already set)
-VITE_SUPABASE_URL=https://hrznuhcwdjnpasfnqqwp.supabase.co
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+# Run the notification tables migration
+supabase db push
 ```
 
-**Note:** The Resend API key is already provided above. Just copy it exactly as shown.
+### **2. Deploy Edge Functions**
+```bash
+# Deploy the notification functions
+supabase functions deploy send-daily-reminder
+supabase functions deploy send-email
+```
 
-### 3. **Test the System**
+### **3. Set Environment Variables**
+In your Supabase Dashboard → Settings → Edge Functions:
 
-1. **Start your app**: `npm run dev`
-2. **Enable notifications**: Click the "Enable Prayer Reminders" button
-3. **Grant permission**: Allow notifications in your browser
-4. **Test notification**: Click "🧪 Test Notification" button
-5. **Customize settings**: Adjust urgency level and frequency
+```env
+# Email Provider (Choose one)
+RESEND_API_KEY=your_resend_api_key_here
+# OR
+SENDGRID_API_KEY=your_sendgrid_api_key_here
+# OR
+AWS_ACCESS_KEY_ID=your_aws_access_key
+AWS_SECRET_ACCESS_KEY=your_aws_secret_key
+AWS_REGION=us-east-1
 
-## 🚀 **Features**
+# Supabase (auto-configured)
+SUPABASE_URL=your_project_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+```
 
-### **Daily Scheduling**
-- **9 AM Prayer Reminder**: Automatic daily notification
-- **Smart Timing**: If past 9 AM, schedules for tomorrow
-- **Persistent**: Continues working across browser sessions
+### **4. Set Up Resend (Recommended)**
 
-### **Settings Panel**
-- **Push Notifications**: Toggle on/off
-- **Email Notifications**: Toggle on/off  
-- **Urgency Level**: Gentle → Moderate → Aggressive → Ruthless
-- **Frequency**: Hourly → Daily → Constant
+1. **Get Your Resend API Key**
+   - Go to [Resend.com](https://resend.com)
+   - Sign in to your account
+   - Go to API Keys section
+   - Copy your API key (starts with `re_`)
 
-### **Service Worker**
-- **Push Notifications**: Rich notifications with actions
-- **Background Sync**: Works even when app is closed
-- **Offline Support**: Caches essential resources
+2. **Add to Supabase Environment Variables**
+   - Go to Supabase Dashboard → Settings → Edge Functions
+   - Add new environment variable:
+     - **Name**: `RESEND_API_KEY`
+     - **Value**: `re_your_api_key_here` (paste your Resend API key)
 
-## 📧 **Email System**
+3. **Verify Domain (Optional)**
+   - In Resend dashboard, you can add your domain for better deliverability
+   - For testing, you can use the default Resend domain
 
-### **How It Works**
-1. **User Activity Tracking**: Monitors prayer/bible reading
-2. **Escalating Urgency**: More missed days = more urgent emails
-3. **Beautiful Templates**: HTML emails with spiritual messaging
-4. **Smart Scheduling**: Sends emails at optimal times
+### **5. Set Up Cron Job for Daily Reminders**
+
+In Supabase Dashboard → Database → Functions:
+
+```sql
+-- Create a cron job that runs daily at 9 AM UTC
+SELECT cron.schedule(
+  'daily-spiritual-reminders',
+  '0 9 * * *',
+  'SELECT net.http_post(
+    url:=''https://your-project.supabase.co/functions/v1/send-daily-reminder'',
+    headers:=''{"Authorization": "Bearer your-service-role-key", "Content-Type": "application/json"}'',
+    body:=''{}''
+  );'
+);
+```
+
+### **6. Test the System**
+
+1. **Test Email Function**
+```bash
+# Test the send-email function
+curl -X POST https://your-project.supabase.co/functions/v1/send-email \
+  -H "Authorization: Bearer your-anon-key" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "to": "test@example.com",
+    "subject": "Test Email",
+    "html": "<h1>Test</h1>",
+    "text": "Test"
+  }'
+```
+
+2. **Test Daily Reminder**
+```bash
+# Manually trigger daily reminder
+curl -X POST https://your-project.supabase.co/functions/v1/send-daily-reminder \
+  -H "Authorization: Bearer your-anon-key"
+```
+
+## 🔧 **Configuration Options**
 
 ### **Email Templates**
-- **Gentle**: "Your daily spiritual moment awaits"
-- **Moderate**: "God is waiting for you to connect"
-- **Urgent**: "We miss you! Ready to continue?"
-- **Critical**: "Your spiritual journey needs you"
+You can customize email templates in the Edge Functions:
 
-## 🔧 **Troubleshooting**
+- **Daily Reminder**: `supabase/functions/send-daily-reminder/index.ts`
+- **Achievement Notifications**: Database trigger automatically creates these
+- **Test Emails**: `ProgressService.sendTestEmail()`
 
-### **Notifications Not Working?**
-1. Check browser permissions
-2. Ensure service worker is registered
-3. Check console for errors
-4. Verify HTTPS (required for notifications)
+### **Notification Preferences**
+Users can set:
+- **Email Enabled**: On/Off
+- **Push Enabled**: On/Off (for future mobile app)
+- **Preferred Time**: When to send daily reminders
+- **Intensity**: Gentle, Motivating, Aggressive
+- **Frequency**: Daily, Twice Daily, Hourly
 
-### **Emails Not Sending?**
-1. Verify `VITE_RESEND_API_KEY` is set
-2. Check Resend dashboard for delivery status
-3. Ensure user has granted email permission
-4. Check browser console for API errors
+### **Personalization**
+The system personalizes messages based on:
+- User's recent activity
+- Achievement progress
+- Goal completion status
+- Preferred intensity level
 
-### **Service Worker Issues?**
-1. Clear browser cache
-2. Check if `/sw.js` file exists in public folder
-3. Verify service worker registration in console
-4. Try refreshing the page
+## 📊 **Monitoring & Analytics**
 
-## 📱 **Mobile Support**
+### **Check Notification Status**
+```sql
+-- View all notifications
+SELECT * FROM user_notifications ORDER BY sent_at DESC;
 
-### **Progressive Web App**
-- **Install Prompt**: Users can install as app
-- **Offline Notifications**: Works without internet
-- **Background Sync**: Notifications when app is closed
+-- Check notification preferences
+SELECT * FROM user_notification_preferences;
 
-### **Push Notifications**
-- **Rich Actions**: "Pray Now", "Read Bible" buttons
-- **Vibration**: Haptic feedback for urgency
-- **Icon Support**: Custom notification icons
+-- View failed notifications
+SELECT * FROM user_notifications WHERE status = 'failed';
+```
 
-## 🔮 **Future Enhancements**
+### **Email Provider Analytics**
+- **SendGrid**: Dashboard shows delivery rates, bounces, etc.
+- **AWS SES**: CloudWatch metrics for email delivery
 
-### **Planned Features**
-- **Supabase Integration**: Store preferences in database
-- **Advanced Scheduling**: Custom reminder times
-- **Notification Analytics**: Track engagement metrics
-- **A/B Testing**: Test different message styles
-- **Smart Timing**: AI-powered optimal notification times
+## 🛠️ **Troubleshooting**
 
-### **Advanced Email**
-- **Personalization**: User-specific content
-- **Streak Protection**: Prevent breaking prayer streaks
-- **Community Features**: Group prayer reminders
-- **Seasonal Content**: Holiday-specific messages
+### **Common Issues**
 
-## 🎯 **Testing Checklist**
+1. **Emails Not Sending**
+   - Check SendGrid API key is correct
+   - Verify sender domain is verified
+   - Check Supabase Edge Function logs
 
-- [ ] Notifications permission granted
-- [ ] Service worker registered successfully
-- [ ] Test notification works
-- [ ] Settings panel displays correctly
-- [ ] Settings save to localStorage
-- [ ] Daily reminder scheduled
-- [ ] Email service initialized (with API key)
-- [ ] Push notifications work on mobile
+2. **Daily Reminders Not Working**
+   - Verify cron job is scheduled correctly
+   - Check Edge Function logs for errors
+   - Ensure users have notification preferences set
 
-## 🆘 **Need Help?**
+3. **Database Errors**
+   - Run `supabase db reset` to ensure migrations are applied
+   - Check RLS policies are correct
+
+### **Debug Commands**
+```bash
+# Check Edge Function logs
+supabase functions logs send-daily-reminder
+supabase functions logs send-email
+
+# Test database connection
+supabase db reset
+
+# Deploy all functions
+supabase functions deploy
+```
+
+## 🎯 **Next Steps**
+
+1. **Mobile Push Notifications** - Add Firebase/OneSignal integration
+2. **Advanced Scheduling** - Timezone support, custom schedules
+3. **Email Templates** - Beautiful HTML templates with branding
+4. **Analytics Dashboard** - Track notification engagement
+5. **A/B Testing** - Test different message styles
+
+## 📞 **Support**
 
 If you encounter issues:
-
-1. **Check Console**: Look for error messages
-2. **Verify Environment**: Ensure API keys are set
-3. **Test Permissions**: Check browser notification settings
-4. **Clear Cache**: Hard refresh or clear browser data
-5. **Check Network**: Ensure HTTPS and service worker access
+1. Check Supabase Edge Function logs
+2. Verify environment variables are set correctly
+3. Test with a simple email first
+4. Check SendGrid/AWS SES dashboard for delivery issues
 
 ---
 
-**🎉 Your notification system is now fully functional!** Users will receive beautiful, spiritual reminders that help them maintain their prayer habits and stay connected to God throughout their day.
+**🎉 Your notification system is now ready!** Users will receive personalized daily reminders and achievement notifications based on their preferences.

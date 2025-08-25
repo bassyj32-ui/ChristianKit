@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
+import { ProgressService } from '../services/ProgressService'
 
 interface MeditationSession {
   id: string
@@ -117,7 +118,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
   }, [propSelectedMinutes]);
 
   // Define completeMeditation function before using it in useEffect
-  const completeMeditation = () => {
+  const completeMeditation = async () => {
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
@@ -125,7 +126,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
       clearInterval(reminderIntervalRef.current);
     }
     
-    // Save meditation session (simplified)
+    // Save meditation session locally
     const newSession: MeditationSession = {
       id: Date.now().toString(),
       date: new Date().toISOString(),
@@ -137,6 +138,25 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
     };
     setMeditationSessions(prev => [newSession, ...prev]);
     localStorage.setItem('meditationSessions', JSON.stringify([newSession, ...meditationSessions]));
+    
+    // Record session in database for progress tracking
+    if (user) {
+      try {
+        await ProgressService.recordSession({
+          user_id: user.id,
+          activity_type: 'meditation',
+          duration_minutes: selectedMinutes,
+          completed: true,
+          completed_duration: selectedMinutes, // Full duration completed
+          session_date: new Date().toISOString().split('T')[0],
+          notes: meditationFocus ? `Focus: ${meditationFocus}` : undefined
+        });
+        console.log('✅ Meditation session recorded successfully');
+      } catch (error) {
+        console.error('❌ Error recording meditation session:', error);
+        // Continue even if database recording fails
+      }
+    }
     
     setIsMeditating(false);
     setMeditationCompleted(true);
