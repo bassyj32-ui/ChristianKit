@@ -1,16 +1,50 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { paddleService, PaddlePlan } from '../services/paddleService'
 
 export const SubscriptionPage: React.FC = () => {
   const { user } = useSupabaseAuth()
   const [showFreeRequest, setShowFreeRequest] = useState(false)
   const [freeRequestReason, setFreeRequestReason] = useState('')
   const [freeRequestSubmitted, setFreeRequestSubmitted] = useState(false)
+  const [plans, setPlans] = useState<PaddlePlan[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+  const [selectedPlan, setSelectedPlan] = useState<PaddlePlan | null>(null)
 
-  const handleProUpgrade = () => {
-    // Redirect to Payooer payment link
-    const payooerLink = `https://payooer.com/request-money/${user?.id || 'user'}`
-    window.open(payooerLink, '_blank')
+  useEffect(() => {
+    loadPlans()
+  }, [])
+
+  const loadPlans = async () => {
+    try {
+      const availablePlans = await paddleService.getPlans()
+      setPlans(availablePlans)
+      // Set yearly plan as default selected
+      const yearlyPlan = availablePlans.find(plan => plan.interval === 'year')
+      if (yearlyPlan) {
+        setSelectedPlan(yearlyPlan)
+      }
+    } catch (error) {
+      console.error('Failed to load plans:', error)
+    }
+  }
+
+  const handleProUpgrade = async (plan: PaddlePlan) => {
+    if (!user?.email) {
+      alert('Please log in to subscribe')
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const checkoutUrl = await paddleService.createCheckout(plan, user.email)
+      window.open(checkoutUrl, '_blank')
+    } catch (error) {
+      console.error('Failed to create checkout:', error)
+      alert('Failed to create checkout. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleFreeRequest = () => {
@@ -64,34 +98,37 @@ export const SubscriptionPage: React.FC = () => {
         </div>
 
         {/* Plans Container */}
-        <div className="grid md:grid-cols-2 gap-8 mb-12">
+        <div className="grid md:grid-cols-3 gap-8 mb-12">
           
-          {/* Pro Plan - Featured */}
+          {/* Yearly Pro Plan - Featured */}
           <div className="relative">
             <div className="osmo-card p-8 transform hover:scale-105 transition-all duration-300">
               {/* Popular Badge */}
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] px-6 py-2 rounded-full text-sm font-bold shadow-lg border border-[var(--accent-primary)]/50">
-                  ⭐ MOST POPULAR
+                  ⭐ BEST VALUE
                 </span>
               </div>
               
               {/* Plan Header */}
               <div className="text-center mb-8">
                 <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] bg-clip-text text-transparent">
-                  Pro Plan
+                  Pro Yearly
                 </h2>
-                <p className="text-[var(--text-secondary)] text-lg">Unlock everything</p>
+                <p className="text-[var(--text-secondary)] text-lg">Unlock everything & save 17%</p>
               </div>
 
               {/* Pricing - Prominent Display */}
               <div className="text-center mb-8">
                 <div className="mb-2">
-                  <span className="text-5xl font-bold text-[var(--text-primary)]">$2.50</span>
-                  <span className="text-2xl text-[var(--text-secondary)]">/month</span>
+                  <span className="text-5xl font-bold text-[var(--text-primary)]">$30</span>
+                  <span className="text-2xl text-[var(--text-secondary)]">/year</span>
                 </div>
                 <div className="text-[var(--text-secondary)] text-lg font-semibold">
-                  Billed annually at <span className="text-[var(--text-primary)] font-bold">$30/year</span>
+                  Just <span className="text-[var(--text-primary)] font-bold">$2.50/month</span> when billed yearly
+                </div>
+                <div className="text-green-400 text-sm font-semibold mt-2">
+                  💰 Save $6/year vs monthly billing
                 </div>
               </div>
 
@@ -144,12 +181,104 @@ export const SubscriptionPage: React.FC = () => {
 
               {/* CTA Button */}
               <button
-                onClick={handleProUpgrade}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/40 transform hover:-translate-y-1 border border-amber-500/30"
+                onClick={() => selectedPlan && handleProUpgrade(selectedPlan)}
+                disabled={isLoading || !selectedPlan}
+                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/40 transform hover:-translate-y-1 border border-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                🚀 Upgrade to Pro Now
+                {isLoading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Processing...
+                  </div>
+                ) : (
+                  '🚀 Get Pro Yearly - $30/year'
+                )}
               </button>
             </div>
+          </div>
+
+          {/* Monthly Pro Plan */}
+          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)]">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Pro Monthly</h2>
+              <p className="text-[var(--text-secondary)] text-lg">Flexible monthly billing</p>
+            </div>
+
+            {/* Pricing */}
+            <div className="text-center mb-8">
+              <div className="mb-2">
+                <span className="text-5xl font-bold text-[var(--text-primary)]">$3</span>
+                <span className="text-2xl text-[var(--text-secondary)]">/month</span>
+              </div>
+              <div className="text-[var(--text-tertiary)] text-lg">
+                Billed monthly
+              </div>
+            </div>
+
+            {/* Features List */}
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center gap-3">
+                <span className="text-green-400 text-xl">✓</span>
+                <span>Everything in Free</span>
+              </div>
+              
+              {/* PREMIUM FEATURES */}
+              <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-amber-400 text-xl">⭐</span>
+                  <span className="text-amber-100 font-semibold">📧 Daily Re-Engagement System</span>
+                </div>
+                <p className="text-slate-300 text-sm ml-6">Uplifting daily messages & encouraging reminders to stay consistent</p>
+              </div>
+              
+              <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-amber-400 text-xl">⭐</span>
+                  <span className="text-amber-100 font-semibold">📊 Weekly Progress Tracking</span>
+                </div>
+                <p className="text-slate-300 text-sm ml-6">Detailed analytics, insights & progress visualization</p>
+              </div>
+              
+              <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-amber-400 text-xl">⭐</span>
+                  <span className="text-amber-100 font-semibold">🎯 Monthly Habit Builder</span>
+                </div>
+                <p className="text-slate-300 text-sm ml-6">Focus on one spiritual habit each month (e.g., "Fear of God")</p>
+              </div>
+              
+              <div className="border-l-4 border-amber-400 pl-4 py-2 bg-amber-500/10 rounded-r-lg">
+                <div className="flex items-center gap-3 mb-2">
+                  <span className="text-amber-400 text-xl">⭐</span>
+                  <span className="text-amber-100 font-semibold">🙏 Community Prayer Requests</span>
+                </div>
+                <p className="text-slate-300 text-sm ml-6">Special prayer posts with "I Prayed" button for encouragement</p>
+              </div>
+
+              <div className="flex items-center gap-3">
+                <span className="text-green-400 text-xl">✓</span>
+                <span>Premium support</span>
+              </div>
+            </div>
+
+            {/* CTA Button */}
+            <button
+              onClick={() => {
+                const monthlyPlan = plans.find(plan => plan.interval === 'month')
+                if (monthlyPlan) handleProUpgrade(monthlyPlan)
+              }}
+              disabled={isLoading}
+              className="w-full bg-slate-700 text-slate-200 py-4 px-6 rounded-2xl font-semibold text-lg hover:bg-slate-600 transition-all duration-300 border border-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isLoading ? (
+                <div className="flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                  Processing...
+                </div>
+              ) : (
+                '💳 Get Pro Monthly - $3/month'
+              )}
+            </button>
           </div>
 
           {/* Free Plan */}
@@ -301,7 +430,7 @@ export const SubscriptionPage: React.FC = () => {
                 How does the yearly payment work?
               </h4>
               <p className="text-slate-300">
-                You pay $30 once per year, which works out to just $2.50 per month.
+                You pay $30 once per year, which works out to just $2.50 per month - saving you $6 compared to monthly billing!
               </p>
             </div>
             

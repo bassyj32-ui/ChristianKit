@@ -22,10 +22,18 @@ import { FloatingAuthTab } from './components/FloatingAuthTab'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useSupabaseAuth, SupabaseAuthProvider } from './components/SupabaseAuthProvider'
+import { AnalyticsProvider } from './components/AnalyticsProvider'
 
 const AppContent: React.FC = () => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
+  
+  // Get user subscription status for analytics
+  const getUserSubscription = () => {
+    if (!user) return 'free';
+    // You can enhance this later to check actual subscription status
+    return 'free'; // Default to free for now
+  };
   const { mode } = useThemeMode()
   const [activeTab, setActiveTab] = useState('prayer') // Default to prayer page as the first page
   const [selectedMinutes, setSelectedMinutes] = useState(10)
@@ -65,6 +73,11 @@ const AppContent: React.FC = () => {
       isFirstTimeUser,
       error
     })
+    
+    // Track app load for analytics
+    if (!loading) {
+      console.log('🎯 App loaded, GA4 should be tracking...')
+    }
   }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser, error])
 
   // Check if user should see trial expired message
@@ -321,18 +334,24 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* PWA Install Prompt - Top of screen */}
-      <PWAInstallPrompt />
-      
-      {/* Floating Auth Tab - Below PWA prompt */}
-      <FloatingAuthTab className="top-28" />
-      
-      {/* Main Content */}
-      <div className="flex-1">
-        {renderContent()}
+    <AnalyticsProvider 
+      userId={user?.id}
+      userEmail={user?.email}
+      userSubscription={getUserSubscription()}
+    >
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
+        {/* PWA Install Prompt - Top of screen */}
+        <PWAInstallPrompt />
+        
+        {/* Floating Auth Tab - Below PWA prompt */}
+        <FloatingAuthTab className="top-28" />
+        
+        {/* Main Content */}
+        <div className="flex-1">
+          {renderContent()}
+        </div>
       </div>
-    </div>
+    </AnalyticsProvider>
   )
 }
 

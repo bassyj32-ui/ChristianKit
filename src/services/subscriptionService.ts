@@ -1,4 +1,5 @@
 import { supabase } from '../utils/supabase'
+import { paddleService } from './paddleService'
 
 export interface UserSubscription {
   tier: 'free' | 'pro'
