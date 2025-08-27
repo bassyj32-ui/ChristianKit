@@ -40,8 +40,15 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Test Supabase connection first
       console.log('🔐 SupabaseAuthProvider: Testing connection...')
       
+      // Add timeout to prevent infinite loading
+      const timeoutId = setTimeout(() => {
+        console.warn('⚠️ SupabaseAuthProvider: Loading timeout, forcing completion')
+        setLoading(false)
+      }, 10000) // 10 second timeout
+      
       // Get initial session
       supabase.auth.getSession().then(({ data: { session }, error }) => {
+        clearTimeout(timeoutId) // Clear timeout on success
         if (error) {
           console.error('❌ Supabase session error:', error)
           setError(error.message)
@@ -52,6 +59,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         }
         setLoading(false)
       }).catch(err => {
+        clearTimeout(timeoutId) // Clear timeout on error
         console.error('❌ Supabase session fetch failed:', err)
         setError(err.message)
         setLoading(false)
@@ -75,30 +83,28 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       } = supabase.auth.onAuthStateChange(async (_event, session) => {
         console.log('🔄 Auth state changed:', _event, session?.user?.email)
         
-        // Create user profile when they first sign in
+        // Create user profile when they first sign in (non-blocking)
         if (_event === 'SIGNED_IN' && session?.user && supabase) {
-          try {
-            console.log('👤 Creating user profile for:', session.user.email)
-            
-            const { error } = await supabase
-              .from('user_profiles')
-              .upsert({
-                id: session.user.id,
-                email: session.user.email,
-                full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
-                avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
-              }, {
-                onConflict: 'id'
-              })
-            
-            if (error) {
-              console.error('❌ Profile creation error:', error)
-            } else {
-              console.log('✅ User profile created/updated successfully')
-            }
-          } catch (profileError) {
-            console.error('❌ Profile creation failed:', profileError)
-          }
+          console.log('👤 Creating user profile for:', session.user.email)
+          
+          // Create profile in background without blocking auth flow
+          supabase
+            .from('user_profiles')
+            .upsert({
+              id: session.user.id,
+              email: session.user.email,
+              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+              avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
+            }, {
+              onConflict: 'id'
+            })
+            .then(({ error }) => {
+              if (error) {
+                console.error('❌ Profile creation error:', error)
+              } else {
+                console.log('✅ User profile created/updated successfully')
+              }
+            })
         }
         
         setSession(session)
