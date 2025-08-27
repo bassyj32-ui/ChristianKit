@@ -17,16 +17,37 @@ export default function AuthCallback() {
         console.log('🔐 AuthCallback: Processing OAuth callback...')
         console.log('🔐 Current URL:', window.location.href)
 
+        // Check both query parameters (standard OAuth flow) and hash parameters
+        const urlParams = new URLSearchParams(window.location.search)
         const hashParams = new URLSearchParams(window.location.hash.substring(1))
+        
+        console.log('🔐 URL params:', Object.fromEntries(urlParams))
         console.log('🔐 Hash params:', Object.fromEntries(hashParams))
 
-        if (hashParams.has('access_token')) {
-          const access_token = hashParams.get('access_token') || ''
-          const refresh_token = hashParams.get('refresh_token') || ''
+        let access_token = ''
+        let refresh_token = ''
+
+        // Try query params first (standard OAuth flow)
+        if (urlParams.has('access_token') || urlParams.has('refresh_token')) {
+          access_token = urlParams.get('access_token') || ''
+          refresh_token = urlParams.get('refresh_token') || ''
+          console.log('🔐 Found tokens in URL params')
+        }
+        // Fallback to hash params
+        else if (hashParams.has('access_token') || hashParams.has('refresh_token')) {
+          access_token = hashParams.get('access_token') || ''
+          refresh_token = hashParams.get('refresh_token') || ''
+          console.log('🔐 Found tokens in hash params')
+        }
+
+        if (access_token && refresh_token) {
+          setStatus('Setting up your session...')
+          const { error } = await supabase.auth.setSession({ access_token, refresh_token })
           
-          if (access_token && refresh_token) {
-            setStatus('Setting up your session...')
-            await supabase.auth.setSession({ access_token, refresh_token })
+          if (error) {
+            console.error('❌ Session setup error:', error)
+            setStatus('Session setup failed. Redirecting...')
+          } else {
             console.log('✅ Session set successfully')
             setStatus('Authentication complete! Redirecting...')
           }

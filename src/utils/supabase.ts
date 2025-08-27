@@ -27,7 +27,16 @@ export const supabase = supabaseUrl && supabaseAnonKey
       auth: {
         autoRefreshToken: true,
         persistSession: true,
-        detectSessionInUrl: true
+        detectSessionInUrl: true,
+        flowType: 'pkce'
+      },
+      db: {
+        schema: 'public'
+      },
+      global: {
+        headers: {
+          'X-Client-Info': 'christian-kit'
+        }
       }
     })
   : null

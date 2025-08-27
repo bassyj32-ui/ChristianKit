@@ -72,8 +72,35 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Listen for auth changes
       const {
         data: { subscription },
-      } = supabase.auth.onAuthStateChange((_event, session) => {
+      } = supabase.auth.onAuthStateChange(async (_event, session) => {
         console.log('🔄 Auth state changed:', _event, session?.user?.email)
+        
+        // Create user profile when they first sign in
+        if (_event === 'SIGNED_IN' && session?.user && supabase) {
+          try {
+            console.log('👤 Creating user profile for:', session.user.email)
+            
+            const { error } = await supabase
+              .from('user_profiles')
+              .upsert({
+                id: session.user.id,
+                email: session.user.email,
+                full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+                avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
+              }, {
+                onConflict: 'id'
+              })
+            
+            if (error) {
+              console.error('❌ Profile creation error:', error)
+            } else {
+              console.log('✅ User profile created/updated successfully')
+            }
+          } catch (profileError) {
+            console.error('❌ Profile creation failed:', profileError)
+          }
+        }
+        
         setSession(session)
         setUser(session?.user ?? null)
         setLoading(false)
