@@ -3,7 +3,7 @@ import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PrayerTimerPage } from './components/PrayerTimerPage'
 import { Dashboard } from './components/Dashboard'
-import { CommunitySection } from './components/CommunitySection'
+import { CommunityPage } from './components/CommunityPage'
 import { JournalPage } from './components/JournalPage'
 import { StorePage } from './components/StorePage'
 import { SubscriptionPage } from './components/SubscriptionPage'
@@ -19,6 +19,7 @@ import { MeditationPage } from './components/MeditationPage'
 import AuthCallback from './pages/AuthCallback'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { FloatingAuthTab } from './components/FloatingAuthTab'
+import { SunriseSunsetPrayer } from './components/SunriseSunsetPrayer'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useSupabaseAuth, SupabaseAuthProvider } from './components/SupabaseAuthProvider'
@@ -211,8 +212,8 @@ const AppContent: React.FC = () => {
             />
           )
         case 'community':
-          console.log('🔍 Rendering CommunitySection')
-          return <CommunitySection />
+          console.log('🔍 Rendering CommunityPage')
+          return <CommunityPage />
         case 'journal':
           console.log('🔍 Rendering JournalPage')
           return <JournalPage />
@@ -270,6 +271,9 @@ const AppContent: React.FC = () => {
               isFirstTimeUser={determineIsFirstTimeUser()}
             />
           )
+        case 'sunrise-prayer':
+          console.log('🔍 Rendering SunriseSunsetPrayer')
+          return <SunriseSunsetPrayer />
         default:
           console.log('🔍 Rendering default PrayerTimerPage')
           return (

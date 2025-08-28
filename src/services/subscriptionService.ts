@@ -10,6 +10,7 @@ export interface UserSubscription {
     weeklyProgressTracking: boolean
     monthlyHabitBuilder: boolean
     communityPrayerRequests: boolean
+    communityFeatures: boolean
     premiumSupport: boolean
   }
 }
@@ -110,6 +111,7 @@ class SubscriptionService {
         weeklyProgressTracking: 'Advanced Weekly Progress Tracking',
         monthlyHabitBuilder: 'Monthly Habit Builder',
         communityPrayerRequests: 'Community Prayer Requests',
+        communityFeatures: 'Advanced Community Features',
         premiumSupport: 'Premium Support'
       }
 
@@ -217,6 +219,7 @@ class SubscriptionService {
       weeklyProgressTracking: false,
       monthlyHabitBuilder: false,
       communityPrayerRequests: false,
+      communityFeatures: false,
       premiumSupport: false
     }
   }
@@ -227,6 +230,7 @@ class SubscriptionService {
       weeklyProgressTracking: true,
       monthlyHabitBuilder: true,
       communityPrayerRequests: true,
+      communityFeatures: true,
       premiumSupport: true
     }
   }

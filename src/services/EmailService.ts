@@ -1,7 +1,6 @@
 // Email Integration Service for ChristianKit
 // Sends daily re-engagement emails to keep users spiritually active
 
-import { Resend } from 'resend';
 import { User } from '@supabase/supabase-js';
 
 export interface EmailTemplate {
@@ -21,17 +20,16 @@ export interface EmailSchedule {
 }
 
 class EmailService {
-  private resend: Resend | null = null;
+  private brevoApiKey: string | null = null;
 
   constructor() {
-    // Use Resend for reliable email delivery
-    const apiKey = import.meta.env.VITE_RESEND_API_KEY;
+    // Use Brevo for reliable email delivery
+    this.brevoApiKey = import.meta.env.VITE_BREVO_API_KEY || null;
     
-    if (apiKey) {
-      this.resend = new Resend(apiKey);
-      console.log('✅ Resend email service initialized');
+    if (this.brevoApiKey) {
+      console.log('✅ Brevo email service initialized');
     } else {
-      console.warn('⚠️ VITE_RESEND_API_KEY not found. Email functionality will be disabled.');
+      console.warn('⚠️ VITE_BREVO_API_KEY not found. Email functionality will be disabled.');
     }
   }
 
@@ -50,31 +48,87 @@ class EmailService {
    */
   async sendDailyReEngagementEmail(schedule: EmailSchedule): Promise<boolean> {
     try {
-      if (!this.resend) {
-        console.warn('⚠️ Resend service not initialized');
+      if (!this.brevoApiKey) {
+        console.warn('⚠️ Brevo service not initialized');
         return false;
       }
 
       const template = this.selectEmailTemplate(schedule);
       
-      const result = await this.resend.emails.send({
-        from: 'ChristianKit <onboarding@resend.dev>',
+      const result = await this.sendEmail({
         to: schedule.email,
         subject: template.subject,
-        html: this.generateEmailHTML(template, schedule),
+        html: template.content,
+        text: this.stripHTML(template.content)
       });
 
-      if (result.data) {
-        console.log(`📧 Re-engagement email sent to ${schedule.email}`, result.data);
+      if (result) {
+        console.log(`📧 Re-engagement email sent to ${schedule.email}`);
         return true;
       } else {
-        console.error('Failed to send email:', result.error);
+        console.error('Failed to send email');
         return false;
       }
     } catch (error) {
       console.error('Email service error:', error);
       return false;
     }
+  }
+
+  /**
+   * Send email using Brevo API
+   */
+  async sendEmail(emailContent: { to: string; subject: string; html: string; text: string }): Promise<boolean> {
+    try {
+      if (!this.brevoApiKey) {
+        console.warn('⚠️ Brevo API key not found - email will be logged instead');
+        // Log the email content for development/testing
+        console.log('📧 Email would be sent:', {
+          to: emailContent.to,
+          subject: emailContent.subject,
+          html: emailContent.html.substring(0, 100) + '...'
+        });
+        return true; // Return true so the app continues working
+      }
+
+      const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'api-key': this.brevoApiKey
+        },
+        body: JSON.stringify({
+          sender: {
+            name: 'ChristianKit',
+            email: 'noreply@christiankit.com'
+          },
+          to: [{ email: emailContent.to }],
+          subject: emailContent.subject,
+          htmlContent: emailContent.html,
+          textContent: emailContent.text
+        })
+      });
+
+      if (response.ok) {
+        console.log('✅ Email sent successfully via Brevo');
+        return true;
+      } else {
+        const errorData = await response.json();
+        console.error('❌ Brevo API error:', errorData);
+        return false;
+      }
+    } catch (error) {
+      console.error('❌ Error sending email via Brevo:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Strip HTML tags for text version
+   */
+  private stripHTML(html: string): string {
+    return html.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
   }
 
   /**
@@ -359,4 +413,7 @@ export const emailService = {
     return emailServiceInstance;
   }
 };
+
+// Export the class for direct instantiation
+export { EmailService };
 export default EmailService;

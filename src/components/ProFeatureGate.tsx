@@ -2,7 +2,7 @@ import React from 'react'
 import { subscriptionService, ProFeatureCheck } from '../services/subscriptionService'
 
 interface ProFeatureGateProps {
-  feature: 'dailyReEngagement' | 'weeklyProgressTracking' | 'monthlyHabitBuilder' | 'communityPrayerRequests' | 'premiumSupport'
+  feature: 'dailyReEngagement' | 'weeklyProgressTracking' | 'monthlyHabitBuilder' | 'communityPrayerRequests' | 'premiumSupport' | 'communityFeatures'
   children: React.ReactNode
   fallback?: React.ReactNode
   showUpgradePrompt?: boolean
@@ -59,6 +59,11 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
       name: 'Community Prayer Requests',
       emoji: '🙏',
       description: 'Share prayer requests and encourage others with the "I Prayed" feature.'
+    },
+    communityFeatures: {
+      name: 'Advanced Community Features',
+      emoji: '👥',
+      description: 'Join private groups, attend premium events, access community analytics, and use moderation tools.'
     },
     premiumSupport: {
       name: 'Premium Support',

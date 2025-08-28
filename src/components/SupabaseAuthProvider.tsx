@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '../utils/supabase'
+import { emailAutomationService } from '../services/emailAutomationService'
+import { reminderAutomationService } from '../services/reminderAutomationService'
 
 interface AuthContextType {
   user: User | null
@@ -98,11 +100,33 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
             }, {
               onConflict: 'id'
             })
-            .then(({ error }) => {
+            .then(async ({ error }) => {
               if (error) {
                 console.error('❌ Profile creation error:', error)
               } else {
                 console.log('✅ User profile created/updated successfully')
+                
+                // Send welcome email (non-blocking)
+                if (session.user.email) {
+                  try {
+                    await emailAutomationService.sendWelcomeEmail(
+                      session.user.id,
+                      session.user.email,
+                      session.user.user_metadata?.full_name || session.user.user_metadata?.name
+                    )
+                    console.log('✅ Welcome email sent successfully')
+                  } catch (emailError) {
+                    console.error('❌ Welcome email failed:', emailError)
+                  }
+                }
+                
+                // Create default reminder schedule (non-blocking)
+                try {
+                  await reminderAutomationService.createDefaultReminderSchedule(session.user.id)
+                  console.log('✅ Default reminder schedule created')
+                } catch (reminderError) {
+                  console.error('❌ Reminder schedule creation failed:', reminderError)
+                }
               }
             })
         }

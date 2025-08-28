@@ -192,10 +192,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 <span>Home</span>
               </button>
               <button
+                onClick={() => onNavigate?.('analysis')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+              >
+                <span>📊</span>
+                <span>Analysis</span>
+              </button>
+              <button
                 onClick={() => onNavigate?.('prayer')}
                 className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
               >
-                <span>✨</span>
+                <span>🙏</span>
                 <span>Prayer</span>
               </button>
               <button
@@ -204,20 +211,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               >
                 <span>👥</span>
                 <span>Community</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('bible')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>📖</span>
-                <span>Bible</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('meditation')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>🧘</span>
-                <span>Meditation</span>
               </button>
               <button
                 onClick={() => onNavigate?.('subscription')}
@@ -985,45 +978,45 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
 
 
 
-      {/* Mobile Navigation Tabs - Beautiful Osmo Style */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
+      {/* Main Navigation Tabs - Beautiful Osmo Style */}
+      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
         <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
+          {/* Analysis Tab */}
+          <button
+            onClick={() => onNavigate?.('analysis')}
+            className="flex flex-col items-center space-y-1 group"
+          >
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
+              <span className="text-lg">📊</span>
+            </div>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">
+              Analysis
+            </span>
+          </button>
+          
           {/* Prayer Tab */}
           <button
             onClick={() => onNavigate?.('prayer')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
               <span className="text-lg">🙏</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">
               Prayer
             </span>
           </button>
           
-          {/* Bible Tab */}
+          {/* Community Tab */}
           <button
-            onClick={() => onNavigate?.('bible')}
-            className="flex flex-col items-center space-y-1 group"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
-              <span className="text-lg">📖</span>
-            </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">
-              Bible
-            </span>
-          </button>
-          
-          {/* Reflection Tab */}
-          <button
-            onClick={() => onNavigate?.('meditation')}
+            onClick={() => onNavigate?.('community')}
             className="flex flex-col items-center space-y-1 group"
           >
             <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
-              <span className="text-lg">✨</span>
+              <span className="text-lg">👥</span>
             </div>
             <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
-              Reflect
+              Community
             </span>
           </button>
         </div>
