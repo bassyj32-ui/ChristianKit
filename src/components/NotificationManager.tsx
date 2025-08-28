@@ -1,7 +1,7 @@
 // Notification Manager - Controls aggressive user re-engagement
 import React, { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
-import EmailService from '../services/EmailService';
+import { EmailService } from '../services/EmailService';
 import { notificationScheduler } from '../services/NotificationScheduler';
 
 interface NotificationManagerProps {

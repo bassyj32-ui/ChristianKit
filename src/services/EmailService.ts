@@ -19,7 +19,7 @@ export interface EmailSchedule {
   streak: number;
 }
 
-class EmailService {
+export class EmailService {
   private brevoApiKey: string | null = null;
 
   constructor() {
@@ -414,6 +414,5 @@ export const emailService = {
   }
 };
 
-// Export the class for direct instantiation
-export { EmailService };
+// Default export for backward compatibility
 export default EmailService;

@@ -242,26 +242,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     }
   };
 
-  const resetPrayer = () => {
-    // Clear existing intervals
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-    if (reminderIntervalRef.current) {
-      clearInterval(reminderIntervalRef.current);
-    }
-    
-    // Reset state
-    setTimeRemaining(selectedMinutes * 60);
-    setPrayerCompleted(false);
-    setShowReminder(false);
-    
-    // Force restart by briefly setting isPraying to false then true
-    setIsPraying(false);
-    setTimeout(() => {
-      setIsPraying(true);
-    }, 10);
-  };
+
 
   const handleTimeSelect = (minutes: number) => {
     setSelectedMinutes(minutes);
@@ -441,6 +422,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
       <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
           <div className="flex items-center space-x-2 sm:space-x-1">
+            {/* Community Tab */}
+            <button
+              onClick={() => onNavigate?.('community')}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            >
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">👥</span>
+              <span className="text-sm font-medium">Community</span>
+            </button>
+            
             {/* Home Tab */}
             <button
               onClick={() => {
@@ -461,24 +451,6 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
             >
               <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏠</span>
               <span className="text-sm font-medium">Home</span>
-            </button>
-            
-            {/* Restart Tab */}
-            <button
-              onClick={resetPrayer}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🔄</span>
-              <span className="text-sm font-medium">Restart</span>
-            </button>
-            
-            {/* Share Tab */}
-            <button
-              onClick={() => onNavigate?.('community')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🌟</span>
-              <span className="text-sm font-medium">Share</span>
             </button>
           </div>
         </div>

@@ -1,5 +1,5 @@
 // Notification Scheduler - Aggressive User Re-engagement System
-import EmailService from './EmailService';
+import { EmailService } from './EmailService';
 
 export interface UserActivity {
   userId: string;

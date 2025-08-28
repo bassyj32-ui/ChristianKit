@@ -1,6 +1,6 @@
 import { supabase } from '../utils/supabase'
 import { emailService } from './EmailService'
-import { userService } from './userService'
+import { UserService } from './userService'
 
 export interface EmailTrigger {
   id: string
@@ -127,20 +127,21 @@ export class EmailAutomationService {
             <p>Open ChristianKit to see all your achievements.</p>
             <p>Blessings,<br>The ChristianKit Team</p>
           </div>
-        `
+        `,
+        text: `🎉 Achievement Unlocked: ${achievementName}! Congratulations! You've earned a new achievement in ChristianKit. ${achievementDescription}. Keep up the great work on your spiritual journey! Open ChristianKit to see all your achievements. Blessings, The ChristianKit Team`
       }
 
       const result = await this.emailService.sendEmail(emailContent)
       
-      if (result.success) {
+      if (result) {
         console.log('✅ Achievement email sent successfully')
         await this.logEmailSent(userId, 'achievement', 'sent')
       } else {
-        console.error('❌ Achievement email failed:', result.error)
-        await this.logEmailSent(userId, 'achievement', 'failed', result.error)
+        console.error('❌ Achievement email failed')
+        await this.logEmailSent(userId, 'achievement', 'failed', 'Email service returned false')
       }
       
-      return result
+      return { success: result, error: result ? undefined : 'Email service returned false' }
     } catch (error) {
       console.error('❌ Error sending achievement email:', error)
       await this.logEmailSent(userId, 'achievement', 'failed', error instanceof Error ? error.message : 'Unknown error')
@@ -174,20 +175,21 @@ export class EmailAutomationService {
             <p>Open ChristianKit to continue your journey.</p>
             <p>Blessings,<br>The ChristianKit Team</p>
           </div>
-        `
+        `,
+        text: `📊 Your Weekly ChristianKit Report. Hi ${userName || 'there'}! Here's your weekly spiritual journey summary: Prayer Sessions: ${weeklyStats?.prayerSessions || 0}, Bible Reading: ${weeklyStats?.bibleMinutes || 0} minutes, Meditation: ${weeklyStats?.meditationMinutes || 0} minutes, Achievements: ${weeklyStats?.achievements || 0} unlocked. Keep up the great work! Your spiritual growth is inspiring. Open ChristianKit to continue your journey. Blessings, The ChristianKit Team`
       }
 
       const result = await this.emailService.sendEmail(emailContent)
       
-      if (result.success) {
+      if (result) {
         console.log('✅ Weekly report sent successfully')
         await this.logEmailSent(userId, 'weekly_report', 'sent')
       } else {
-        console.error('❌ Weekly report failed:', result.error)
-        await this.logEmailSent(userId, 'weekly_report', 'failed', result.error)
+        console.error('❌ Weekly report failed')
+        await this.logEmailSent(userId, 'weekly_report', 'failed', 'Email service returned false')
       }
       
-      return result
+      return { success: result, error: result ? undefined : 'Email service returned false' }
     } catch (error) {
       console.error('❌ Error sending weekly report:', error)
       await this.logEmailSent(userId, 'weekly_report', 'failed', error instanceof Error ? error.message : 'Unknown error')
