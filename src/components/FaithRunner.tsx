@@ -186,7 +186,7 @@ const FaithRunner: React.FC = () => {
   useEffect(() => {
     const loadChallenges = async () => {
       try {
-        const challenges = await checkDailyChallenges([]);
+        const challenges = await checkDailyChallenges(dailyChallenges, { distance: 0, score: 0, blessings: 0, level: 0 });
         setDailyChallenges(challenges);
       } catch (error) {
         console.error('Failed to load daily challenges:', error);
@@ -249,7 +249,17 @@ const FaithRunner: React.FC = () => {
   };
 
   const addParticles = (x: number, y: number, type: string) => {
-    const newParticles = [];
+    const newParticles: Array<{
+      x: number;
+      y: number;
+      vx: number;
+      vy: number;
+      life: number;
+      maxLife: number;
+      type: string;
+      color: string;
+    }> = [];
+    
     for (let i = 0; i < 8; i++) {
       newParticles.push({
         x,
@@ -748,37 +758,132 @@ const FaithRunner: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-4">
-      {/* Game Canvas */}
-      <canvas
-        ref={canvasRef}
-        width={800}
-        height={600}
-        className="border-2 border-amber-400 rounded-2xl shadow-2xl"
-        onTouchStart={handleTouch}
-        style={{ touchAction: 'none' }}
-      />
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Animated Background Elements - Osmo Theme */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {/* Floating orbs */}
+        <div className="absolute top-20 left-10 w-32 h-32 bg-gradient-to-br from-amber-400/20 to-yellow-500/20 rounded-full blur-3xl animate-pulse" />
+        <div className="absolute top-40 right-20 w-24 h-24 bg-gradient-to-br from-blue-400/20 to-purple-500/20 rounded-full blur-2xl animate-bounce" />
+        <div className="absolute bottom-40 left-1/4 w-40 h-40 bg-gradient-to-br from-green-400/20 to-teal-500/20 rounded-full blur-3xl animate-pulse" />
+        
+        {/* Animated grid pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 bg-gradient-to-r from-amber-400/10 via-transparent to-yellow-500/10" />
+          <div className="absolute inset-0 bg-gradient-to-b from-blue-400/10 via-transparent to-purple-500/10" />
+        </div>
+      </div>
+
+      {/* Game Canvas - Mobile Responsive */}
+      <div className="relative w-full max-w-4xl mx-auto">
+        <canvas
+          ref={canvasRef}
+          width={800}
+          height={600}
+          className="w-full h-auto max-h-[70vh] border-2 border-amber-400/50 rounded-3xl shadow-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 backdrop-blur-sm"
+          onTouchStart={handleTouch}
+          style={{ touchAction: 'none' }}
+        />
+        
+        {/* Game Overlay - Mobile Optimized */}
+        <div className="absolute top-4 left-4 right-4 flex flex-col sm:flex-row justify-between items-start space-y-2 sm:space-y-0">
+          {/* Score Display */}
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-3 border border-amber-400/30">
+            <div className="text-amber-400 text-sm font-medium">Score</div>
+            <div className="text-white text-xl font-bold">{gameState.score}</div>
+          </div>
+          
+          {/* Level Display */}
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-3 border border-blue-400/30">
+            <div className="text-blue-400 text-sm font-medium">Level</div>
+            <div className="text-white text-xl font-bold">{gameState.level}</div>
+          </div>
+          
+          {/* Health Bar */}
+          <div className="bg-black/40 backdrop-blur-xl rounded-2xl p-3 border border-green-400/30">
+            <div className="text-green-400 text-sm font-medium">Health</div>
+            <div className="w-20 h-2 bg-gray-700 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-green-400 to-emerald-500 rounded-full transition-all duration-300"
+                style={{ width: `${(gameState.health / gameState.maxHealth) * 100}%` }}
+              />
+            </div>
+          </div>
+        </div>
+        
+        {/* Combo Display */}
+        {gameState.combo > 0 && (
+          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+            <div className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-6 py-3 rounded-2xl font-bold text-3xl animate-bounce">
+              {gameState.combo}x Combo!
+            </div>
+          </div>
+        )}
+      </div>
       
-      {/* Game Controls */}
-      <div className="mt-6 flex space-x-4">
-        <button
-          onClick={jump}
-          className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
-        >
-          🦘 Jump
-        </button>
-        <button
-          onClick={pauseGame}
-          className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
-        >
-          {gameState.isPaused ? '▶️ Resume' : '⏸️ Pause'}
-        </button>
-        <button
-          onClick={resetGame}
-          className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
-        >
-          🔄 Reset
-        </button>
+      {/* Game Controls - Mobile First */}
+      <div className="mt-6 w-full max-w-4xl mx-auto">
+        {/* Touch Controls for Mobile */}
+        <div className="grid grid-cols-3 gap-3 sm:hidden mb-4">
+          <button
+            onClick={jump}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white p-4 rounded-2xl font-bold text-lg shadow-2xl active:scale-95 transition-transform touch-manipulation"
+          >
+            🦘 Jump
+          </button>
+          <button
+            onClick={pauseGame}
+            className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white p-4 rounded-2xl font-bold text-lg shadow-2xl active:scale-95 transition-transform touch-manipulation"
+          >
+            {gameState.isPaused ? '▶️' : '⏸️'}
+          </button>
+          <button
+            onClick={resetGame}
+            className="bg-gradient-to-r from-red-500 to-pink-600 text-white p-4 rounded-2xl font-bold text-lg shadow-2xl active:scale-95 transition-transform touch-manipulation"
+          >
+            🔄
+          </button>
+        </div>
+        
+        {/* Desktop Controls */}
+        <div className="hidden sm:flex justify-center space-x-4">
+          <button
+            onClick={jump}
+            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-2xl"
+          >
+            🦘 Jump
+          </button>
+          <button
+            onClick={pauseGame}
+            className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-2xl"
+          >
+            {gameState.isPaused ? '▶️ Resume' : '⏸️ Pause'}
+          </button>
+          <button
+            onClick={resetGame}
+            className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-2xl"
+          >
+            🔄 Reset
+          </button>
+        </div>
+        
+        {/* Abilities Display - Mobile Responsive */}
+        <div className="mt-6 bg-black/30 backdrop-blur-2xl rounded-3xl p-4 border border-amber-400/30">
+          <h3 className="text-lg font-bold text-amber-400 mb-3 text-center">⚡ Active Abilities</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
+            {gameState.unlockedAbilities.map(ability => (
+              <div key={ability} className={`p-2 rounded-xl border text-center text-xs ${
+                gameState.currentAbility === ability 
+                  ? 'bg-amber-400/30 border-amber-400 text-amber-200' 
+                  : 'bg-blue-800/30 border-blue-500/50 text-blue-200'
+              }`}>
+                <div className="capitalize">{ability.replace('-', ' ')}</div>
+                {gameState.currentAbility === ability && (
+                  <div className="text-amber-400 text-xs">Active</div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
       
       {/* Prayer Prompts */}
@@ -786,23 +891,25 @@ const FaithRunner: React.FC = () => {
         <PrayerPromptModal key={prompt.id} prompt={prompt} />
       ))}
       
-      {/* Pause Menu */}
+      {/* Pause Menu - Enhanced Osmo Theme */}
       {gameState.isPaused && !prayerPrompts.some(p => p.isActive) && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-40">
-          <div className="bg-gradient-to-br from-blue-900 to-purple-900 p-8 rounded-3xl border-2 border-amber-400 text-center">
-            <h3 className="text-2xl font-bold text-white mb-6">Game Paused</h3>
-            <button
-              onClick={pauseGame}
-              className="bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform mr-4"
-            >
-              Resume
-            </button>
-            <button
-              onClick={resetGame}
-              className="bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-xl font-bold hover:scale-105 transition-transform"
-            >
-              Reset
-            </button>
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-xl flex items-center justify-center z-40 p-4">
+          <div className="bg-gradient-to-br from-slate-800/90 via-slate-700/90 to-slate-800/90 p-8 rounded-3xl border-2 border-amber-400/50 backdrop-blur-2xl shadow-2xl max-w-md w-full">
+            <h3 className="text-2xl font-bold text-white mb-6 text-center">⏸️ Game Paused</h3>
+            <div className="space-y-4">
+              <button
+                onClick={pauseGame}
+                className="w-full bg-gradient-to-r from-amber-400 to-yellow-500 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-lg"
+              >
+                ▶️ Resume
+              </button>
+              <button
+                onClick={resetGame}
+                className="w-full bg-gradient-to-r from-red-500 to-pink-600 text-white px-6 py-3 rounded-2xl font-bold hover:scale-105 transition-transform shadow-lg"
+              >
+                🔄 Reset
+              </button>
+            </div>
           </div>
         </div>
       )}
