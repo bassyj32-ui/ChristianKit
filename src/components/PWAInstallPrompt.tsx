@@ -207,6 +207,23 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
           </div>
         </div>
 
+        {/* Debug info for troubleshooting */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-4 p-3 bg-blue-900/30 rounded-lg border border-blue-600/50">
+            <details className="text-xs text-blue-200">
+              <summary className="cursor-pointer hover:text-blue-100">🔧 Debug Info</summary>
+              <div className="mt-2 space-y-1">
+                <div>Service Worker: {'serviceWorker' in navigator ? '✅' : '❌'}</div>
+                <div>HTTPS: {window.location.protocol === 'https:' ? '✅' : '❌'}</div>
+                <div>Manifest: {document.querySelector('link[rel="manifest"]') ? '✅' : '❌'}</div>
+                <div>Icons: {document.querySelector('link[rel="icon"]') ? '✅' : '❌'}</div>
+                <div>Standalone: {window.matchMedia('(display-mode: standalone)').matches ? '✅' : '❌'}</div>
+                <div>Deferred Prompt: {deferredPrompt ? '✅' : '❌'}</div>
+              </div>
+            </details>
+          </div>
+        )}
+
         {/* Animated bottom accent line */}
         <div className="absolute bottom-0 left-6 right-6 h-1 bg-gradient-to-r from-transparent via-amber-400 to-transparent opacity-60 animate-pulse" />
         
