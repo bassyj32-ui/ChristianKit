@@ -163,10 +163,21 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Show login page if no user
+  // Show prayer timer page as the first page, regardless of user status
+  // Users can access the app immediately without signing in
   if (!user) {
     return (
-      <LoginPage />
+      <PrayerTimerPage 
+        onNavigate={handleNavigate}
+        onStartQuestionnaire={() => {
+          console.log('onStartQuestionnaire called from no user case')
+          setShowQuestionnaire(true)
+        }}
+        onTimerComplete={handleTimerComplete}
+        userPlan={userPlan}
+        selectedMinutes={selectedMinutes}
+        isFirstTimeUser={true}
+      />
     )
   }
 
