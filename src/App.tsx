@@ -1,37 +1,48 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PrayerTimerPage } from './components/PrayerTimerPage'
-import { Dashboard } from './components/Dashboard'
-import { CommunityPage } from './components/CommunityPage'
-import { FaithRunner } from './components/FaithRunner'
-import { JournalPage } from './components/JournalPage'
-import { StorePage } from './components/StorePage'
-import { SubscriptionPage } from './components/SubscriptionPage'
-import { SettingsPage } from './components/SettingsPage'
-import { PrayerHistory } from './components/PrayerHistory'
-import { PrayerSettings } from './components/PrayerSettings'
-import { BibleTracker } from './components/BibleTracker'
-import { OsmoLandingPage } from './components/OsmoLandingPage'
-import { UserQuestionnaire } from './components/UserQuestionnaire'
-import { LoginPage } from './components/LoginPage'
-import { BibleReadingPage } from './components/BibleReadingPage'
-import { MeditationPage } from './components/MeditationPage'
-import AuthCallback from './pages/AuthCallback'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { FloatingAuthTab } from './components/FloatingAuthTab'
-import { SunriseSunsetPrayer } from './components/SunriseSunsetPrayer'
-
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { useSupabaseAuth, SupabaseAuthProvider } from './components/SupabaseAuthProvider'
 import { AnalyticsProvider } from './components/AnalyticsProvider'
+
+// Lazy load heavy components to reduce main bundle size
+const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
+const CommunityPage = lazy(() => import('./components/CommunityPage').then(module => ({ default: module.CommunityPage })))
+const FaithRunner = lazy(() => import('./components/FaithRunner'))
+const JournalPage = lazy(() => import('./components/JournalPage').then(module => ({ default: module.JournalPage })))
+const StorePage = lazy(() => import('./components/StorePage').then(module => ({ default: module.StorePage })))
+const SubscriptionPage = lazy(() => import('./components/SubscriptionPage').then(module => ({ default: module.SubscriptionPage })))
+const SettingsPage = lazy(() => import('./components/SettingsPage').then(module => ({ default: module.SettingsPage })))
+const PrayerHistory = lazy(() => import('./components/PrayerHistory').then(module => ({ default: module.PrayerHistory })))
+const PrayerSettings = lazy(() => import('./components/PrayerSettings').then(module => ({ default: module.PrayerSettings })))
+const BibleTracker = lazy(() => import('./components/BibleTracker').then(module => ({ default: module.BibleTracker })))
+const OsmoLandingPage = lazy(() => import('./components/OsmoLandingPage').then(module => ({ default: module.OsmoLandingPage })))
+const UserQuestionnaire = lazy(() => import('./components/UserQuestionnaire').then(module => ({ default: module.UserQuestionnaire })))
+const LoginPage = lazy(() => import('./components/LoginPage').then(module => ({ default: module.LoginPage })))
+const BibleReadingPage = lazy(() => import('./components/BibleReadingPage').then(module => ({ default: module.BibleReadingPage })))
+const MeditationPage = lazy(() => import('./components/MeditationPage').then(module => ({ default: module.MeditationPage })))
+const AuthCallback = lazy(() => import('./pages/AuthCallback'))
+const SunriseSunsetPrayer = lazy(() => import('./components/SunriseSunsetPrayer').then(module => ({ default: module.SunriseSunsetPrayer })))
+
+// Loading component for lazy-loaded components
+const LoadingSpinner = () => (
+  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mx-auto mb-4"></div>
+      <p className="text-amber-400 text-lg">Loading...</p>
+    </div>
+  </div>
+)
 
 const AppContent: React.FC = () => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const { user, loading, signOut: logout, signInWithGoogle } = useSupabaseAuth();
   
   // Get user subscription status for analytics
-  const getUserSubscription = () => {
+  const getUserSubscription = (): 'free' | 'pro' => {
     if (!user) return 'free';
     // You can enhance this later to check actual subscription status
     return 'free'; // Default to free for now
@@ -207,77 +218,131 @@ const AppContent: React.FC = () => {
         case 'dashboard':
           console.log('🔍 Rendering Dashboard')
           return (
-            <Dashboard 
-              onNavigate={(page) => setActiveTab(page)}
-              userPlan={userPlan}
-            />
+            <Suspense fallback={<LoadingSpinner />}>
+              <Dashboard 
+                onNavigate={(page) => setActiveTab(page)}
+                userPlan={userPlan}
+              />
+            </Suspense>
           )
         case 'community':
           console.log('🔍 Rendering CommunityPage')
-          return <CommunityPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <CommunityPage />
+            </Suspense>
+          )
         case 'faith-runner':
           console.log('🔍 Rendering FaithRunner')
-          return <FaithRunner />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <FaithRunner />
+            </Suspense>
+          )
         case 'journal':
           console.log('🔍 Rendering JournalPage')
-          return <JournalPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <JournalPage />
+            </Suspense>
+          )
         case 'store':
           console.log('🔍 Rendering StorePage')
-          return <StorePage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <StorePage />
+            </Suspense>
+          )
         case 'subscription':
           console.log('🔍 Rendering SubscriptionPage')
-          return <SubscriptionPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <SubscriptionPage />
+            </Suspense>
+          )
         case 'settings':
           console.log('🔍 Rendering SettingsPage')
-          return <SettingsPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <SettingsPage />
+            </Suspense>
+          )
         case 'history':
           console.log('🔍 Rendering PrayerHistory')
-          return <PrayerHistory />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <PrayerHistory />
+            </Suspense>
+          )
         case 'prayer-settings':
           console.log('🔍 Rendering PrayerSettings')
-          return <PrayerSettings />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <PrayerSettings />
+            </Suspense>
+          )
         case 'bible-tracker':
           console.log('🔍 Rendering BibleTracker')
-          return <BibleTracker />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <BibleTracker />
+            </Suspense>
+          )
         case 'osmo-landing':
           console.log('🔍 Rendering OsmoLandingPage')
-          return <OsmoLandingPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <OsmoLandingPage />
+            </Suspense>
+          )
         case 'login':
           console.log('🔍 Rendering LoginPage')
-          return <LoginPage />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <LoginPage />
+            </Suspense>
+          )
         case 'bible':
           console.log('🔍 Rendering BibleReadingPage')
           return (
-            <BibleReadingPage 
-              onNavigate={handleNavigate}
-              onStartQuestionnaire={() => {
-                console.log('onStartQuestionnaire called from bible case')
-                setShowQuestionnaire(true)
-              }}
-              onTimerComplete={handleTimerComplete}
-              userPlan={userPlan}
-              selectedMinutes={selectedMinutes}
-              isFirstTimeUser={determineIsFirstTimeUser()}
-            />
+            <Suspense fallback={<LoadingSpinner />}>
+              <BibleReadingPage 
+                onNavigate={handleNavigate}
+                onStartQuestionnaire={() => {
+                  console.log('onStartQuestionnaire called from bible case')
+                  setShowQuestionnaire(true)
+                }}
+                onTimerComplete={handleTimerComplete}
+                userPlan={userPlan}
+                selectedMinutes={selectedMinutes}
+                isFirstTimeUser={determineIsFirstTimeUser()}
+              />
+            </Suspense>
           )
         case 'meditation':
           console.log('🔍 Rendering MeditationPage')
           return (
-            <MeditationPage 
-              onNavigate={handleNavigate}
-              onStartQuestionnaire={() => {
-                console.log('onStartQuestionnaire called from meditation case')
-                setShowQuestionnaire(true)
-              }}
-              onTimerComplete={handleTimerComplete}
-              userPlan={userPlan}
-              selectedMinutes={selectedMinutes}
-              isFirstTimeUser={determineIsFirstTimeUser()}
-            />
+            <Suspense fallback={<LoadingSpinner />}>
+              <MeditationPage 
+                onNavigate={handleNavigate}
+                onStartQuestionnaire={() => {
+                  console.log('onStartQuestionnaire called from meditation case')
+                  setShowQuestionnaire(true)
+                }}
+                onTimerComplete={handleTimerComplete}
+                userPlan={userPlan}
+                selectedMinutes={selectedMinutes}
+                isFirstTimeUser={determineIsFirstTimeUser()}
+              />
+            </Suspense>
           )
         case 'sunrise-prayer':
           console.log('🔍 Rendering SunriseSunsetPrayer')
-          return <SunriseSunsetPrayer />
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <SunriseSunsetPrayer />
+            </Suspense>
+          )
         default:
           console.log('🔍 Rendering default PrayerTimerPage')
           return (
