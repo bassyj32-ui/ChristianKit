@@ -431,6 +431,15 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
               <span className="text-sm font-medium">Community</span>
             </button>
             
+            {/* Faith Runner Tab */}
+            <button
+              onClick={() => onNavigate?.('faith-runner')}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            >
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏃‍♂️</span>
+              <span className="text-sm font-medium">Runner</span>
+            </button>
+            
             {/* Home Tab */}
             <button
               onClick={() => {

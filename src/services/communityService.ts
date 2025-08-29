@@ -64,7 +64,7 @@ export const getTrendingPosts = async (limit: number = 50): Promise<CommunityPos
         trendingScore: (post.amens_count || 0) * 3 + (post.prayers_count || 0) * 2 + (post.loves_count || 0)
       }))
       .sort((a: any, b: any) => (b.trendingScore || 0) - (a.trendingScore || 0));
-  } catch (error) {
+    } catch (error) {
     console.error('Error fetching trending posts:', error);
     return [];
   }
@@ -104,7 +104,7 @@ export const createPost = async (postData: {
     if (error) throw error;
 
     return post;
-  } catch (error) {
+    } catch (error) {
     console.error('Error creating post:', error);
     return null;
   }
@@ -167,7 +167,7 @@ export const addPostInteraction = async (
 
       return true;
     }
-  } catch (error) {
+    } catch (error) {
     console.error('Error adding interaction:', error);
     return false;
   }
@@ -203,7 +203,7 @@ export const addPrayer = async (postId: string, content: string): Promise<Prayer
       .eq('id', postId);
 
     return prayer;
-  } catch (error) {
+    } catch (error) {
     console.error('Error adding prayer:', error);
     return null;
   }
@@ -230,7 +230,7 @@ export const getPostPrayers = async (postId: string): Promise<Prayer[]> => {
       author_name: prayer.author_name || 'Anonymous',
       author_avatar: prayer.author_avatar || '👤'
     }));
-  } catch (error) {
+    } catch (error) {
     console.error('Error fetching prayers:', error);
     return [];
   }
@@ -252,7 +252,7 @@ export const getTrendingHashtags = async (limit: number = 20): Promise<Array<{ta
 
     if (error) throw error;
     return hashtags || [];
-  } catch (error) {
+    } catch (error) {
     console.error('Error fetching trending hashtags:', error);
     return [];
   }
@@ -305,3 +305,62 @@ export const subscribeToPrayers = (callback: (payload: any) => void) => {
     )
     .subscribe();
 };
+
+// Test database connection and table structure
+export const testDatabaseConnection = async (): Promise<{ success: boolean; message: string; details?: any }> => {
+  try {
+    if (!supabase) {
+      return { success: false, message: 'Supabase client not initialized' }
+    }
+    
+    console.log('🔧 Testing database connection...')
+    
+    // Test 1: Check if we can connect to the database
+    const { data: testData, error: testError } = await supabase
+      .from('posts')
+      .select('count')
+      .limit(1)
+    
+    if (testError) {
+      console.error('❌ Database connection test failed:', testError)
+      return { 
+        success: false, 
+        message: `Database connection failed: ${testError.message}`,
+        details: testError
+      }
+    }
+    
+    console.log('✅ Database connection successful')
+    
+    // Test 2: Check table structure
+    const { data: posts, error: postsError } = await supabase
+      .from('posts')
+      .select('*')
+      .limit(1)
+    
+    if (postsError) {
+      console.error('❌ Posts table query failed:', postsError)
+      return { 
+        success: false, 
+        message: `Posts table query failed: ${postsError.message}`,
+        details: postsError
+      }
+    }
+    
+    console.log('✅ Posts table accessible, structure:', posts)
+    
+    return { 
+      success: true, 
+      message: 'Database connection and table structure are working correctly',
+      details: { postsCount: posts?.length || 0 }
+    }
+    
+  } catch (error) {
+    console.error('❌ Database test error:', error)
+    return { 
+      success: false, 
+      message: `Database test error: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      details: error
+    }
+  }
+}

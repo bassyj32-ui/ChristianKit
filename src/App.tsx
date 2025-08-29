@@ -4,6 +4,7 @@ import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PrayerTimerPage } from './components/PrayerTimerPage'
 import { Dashboard } from './components/Dashboard'
 import { CommunityPage } from './components/CommunityPage'
+import { FaithRunner } from './components/FaithRunner'
 import { JournalPage } from './components/JournalPage'
 import { StorePage } from './components/StorePage'
 import { SubscriptionPage } from './components/SubscriptionPage'
@@ -153,8 +154,8 @@ const AppContent: React.FC = () => {
           <div className="w-24 h-24 sm:w-32 sm:h-32 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-2xl sm:rounded-3xl flex items-center justify-center mb-6 mx-auto shadow-2xl shadow-amber-500/25 animate-pulse">
             <span className="text-4xl sm:text-6xl font-bold text-white">✝</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">Loading ChristianKit...</h1>
-          <p className="text-[var(--text-secondary)] text-base sm:text-lg">Please wait while we initialize the app</p>
+          <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">Let's start praying</h1>
+          <p className="text-[var(--text-secondary)] text-base sm:text-lg">Setting up your prayer environment...</p>
         </div>
       </div>
     )
@@ -214,6 +215,9 @@ const AppContent: React.FC = () => {
         case 'community':
           console.log('🔍 Rendering CommunityPage')
           return <CommunityPage />
+        case 'faith-runner':
+          console.log('🔍 Rendering FaithRunner')
+          return <FaithRunner />
         case 'journal':
           console.log('🔍 Rendering JournalPage')
           return <JournalPage />
@@ -348,10 +352,10 @@ const AppContent: React.FC = () => {
         <PWAInstallPrompt />
         
         {/* Floating Auth Tab - Below PWA prompt */}
-        <FloatingAuthTab className="top-28" />
+        <FloatingAuthTab className="top-32" />
         
         {/* Main Content */}
-        <div className="flex-1">
+        <div className="flex-1 pt-32">
           {renderContent()}
         </div>
       </div>

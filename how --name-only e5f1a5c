@@ -1,0 +1,3 @@
+[33me5f1a5c[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m Community: Supabase real-time integration, auth + profiles, EmailService export fix, Osmo UI updates, docs and SQL schema
+[33m6aa9bfb[m 🚀 Major Update: Complete PWA System + Community Features + Navigation Overhaul
+[33m41ed51a[m Fix infinite loading issue in SupabaseAuthProvider - Remove blocking profile creation logic - Add timeout to prevent infinite loading - Make profile creation non-blocking for auth flow
