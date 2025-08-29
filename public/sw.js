@@ -1,13 +1,14 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v1';
+const CACHE_NAME = 'christiankit-v2';
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/static/js/bundle.js',
-  '/static/css/main.css'
+  '/icon-192x192.png',
+  '/icon-512x512.png',
+  '/icon-72x72.png'
 ];
 
 // Install event - cache essential files
@@ -43,6 +44,62 @@ self.addEventListener('activate', (event) => {
       console.log('✅ Service Worker activated successfully');
       return self.clients.claim();
     })
+  );
+});
+
+// Fetch event - serve from cache when offline
+self.addEventListener('fetch', (event) => {
+  // Skip non-GET requests
+  if (event.request.method !== 'GET') return;
+
+  // Skip chrome-extension requests
+  if (event.request.url.startsWith('chrome-extension://')) return;
+
+  // Skip analytics and external requests
+  if (event.request.url.includes('google-analytics.com') || 
+      event.request.url.includes('googletagmanager.com') ||
+      event.request.url.includes('doubleclick.net')) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => {
+        // Return cached version if available
+        if (response) {
+          console.log('📦 Serving from cache:', event.request.url);
+          return response;
+        }
+
+        // Clone the request
+        const fetchRequest = event.request.clone();
+
+        return fetch(fetchRequest).then(
+          (response) => {
+            // Check if we received a valid response
+            if (!response || response.status !== 200 || response.type !== 'basic') {
+              return response;
+            }
+
+            // Clone the response
+            const responseToCache = response.clone();
+
+            // Cache the response
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return response;
+          }
+        );
+      })
+      .catch(() => {
+        // If both cache and network fail, show offline page
+        if (event.request.destination === 'document') {
+          return caches.match('/index.html');
+        }
+      })
   );
 });
 
@@ -100,33 +157,31 @@ self.addEventListener('push', (event) => {
         self.registration.showNotification('ChristianKit Reminder', fallbackOptions)
       );
     }
+  } else {
+    // No data, show default notification
+    const defaultOptions = {
+      body: 'Time for your daily spiritual practice',
+      icon: '/icon-192x192.png',
+      badge: '/icon-72x72.png',
+      vibrate: [200, 100, 200],
+      data: { url: '/' }
+    };
+    
+    event.waitUntil(
+      self.registration.showNotification('ChristianKit Reminder', defaultOptions)
+    );
   }
 });
 
 // Notification click event
 self.addEventListener('notificationclick', (event) => {
-  console.log('👆 Notification clicked:', event);
+  console.log('📱 Notification clicked:', event);
   
   event.notification.close();
   
-  if (event.action === 'open' || event.action === undefined) {
+  if (event.action === 'open') {
     event.waitUntil(
-      clients.matchAll({ type: 'window', includeUncontrolled: true })
-        .then((clientList) => {
-          // Check if app is already open
-          for (const client of clientList) {
-            if (client.url.includes(self.location.origin) && 'focus' in client) {
-              client.focus();
-              return;
-            }
-          }
-          
-          // Open new window if app is not open
-          if (clients.openWindow) {
-            const url = event.notification.data?.url || '/';
-            return clients.openWindow(url);
-          }
-        })
+      clients.openWindow(event.notification.data.url || '/')
     );
   }
 });
@@ -135,81 +190,19 @@ self.addEventListener('notificationclick', (event) => {
 self.addEventListener('sync', (event) => {
   console.log('🔄 Background sync event:', event);
   
-  if (event.tag === 'daily-reminder-sync') {
+  if (event.tag === 'prayer-sync') {
     event.waitUntil(
-      // Sync reminder data when connection returns
-      syncReminderData()
+      // Handle prayer data sync
+      console.log('🔄 Syncing prayer data...')
     );
   }
 });
 
-// Fetch event - handle offline functionality
-self.addEventListener('fetch', (event) => {
-  if (event.request.method === 'GET') {
-    event.respondWith(
-      caches.match(event.request)
-        .then((response) => {
-          // Return cached version if available
-          if (response) {
-            return response;
-          }
-          
-          // Fetch from network and cache
-          return fetch(event.request)
-            .then((response) => {
-              // Don't cache if not a valid response
-              if (!response || response.status !== 200 || response.type !== 'basic') {
-                return response;
-              }
-              
-              // Clone the response
-              const responseToCache = response.clone();
-              
-              caches.open(CACHE_NAME)
-                .then((cache) => {
-                  cache.put(event.request, responseToCache);
-                });
-              
-              return response;
-            });
-        })
-    );
-  }
-});
-
-// Function to sync reminder data
-async function syncReminderData() {
-  try {
-    console.log('🔄 Syncing reminder data...');
-    
-    // Get all clients
-    const clients = await self.clients.matchAll();
-    
-    // Send message to main app to sync data
-    clients.forEach((client) => {
-      client.postMessage({
-        type: 'SYNC_REMINDER_DATA',
-        timestamp: new Date().toISOString()
-      });
-    });
-    
-    console.log('✅ Reminder data synced');
-  } catch (error) {
-    console.error('❌ Error syncing reminder data:', error);
-  }
-}
-
-// Message event - handle communication with main app
+// Message event for communication with main thread
 self.addEventListener('message', (event) => {
   console.log('📨 Message received in service worker:', event.data);
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
   }
-  
-  if (event.data && event.data.type === 'GET_VERSION') {
-    event.ports[0].postMessage({ version: CACHE_NAME });
-  }
 });
-
-console.log('🚀 ChristianKit Service Worker loaded successfully');

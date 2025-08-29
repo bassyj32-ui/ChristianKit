@@ -85,7 +85,7 @@ export const CommunityPage: React.FC = () => {
         content: 'This is a test post to check if the database is working! 🧪',
         category: 'general',
         hashtags: []
-      })
+      }, user) // Pass the current user
       
       if (testPost) {
         console.log('✅ Test post successful:', testPost)

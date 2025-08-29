@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { useAuth } from './AuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
 import { ProgressService } from '../services/ProgressService'
 
@@ -33,7 +33,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   selectedMinutes: propSelectedMinutes,
   isFirstTimeUser = false 
 }) => {
-  const { user, signInWithGoogle } = useSupabaseAuth();
+  const { user, signInWithGoogle } = useAuth();
   console.log('PrayerTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
@@ -143,7 +143,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     if (user) {
       try {
         await ProgressService.recordSession({
-          user_id: user.id,
+          user_id: user.uid,
           activity_type: 'prayer',
           duration_minutes: selectedMinutes,
           completed: true,
@@ -318,7 +318,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
           <div className="text-center mb-2 mt-16 sm:hidden">
             <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 mx-3 shadow-lg">
               <p className="text-base font-black text-white leading-tight">
-                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black text-lg">Dear Jesus</span>, <span className="font-black text-white drop-shadow-lg">thank You for listening to me right now</span>
+                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black text-lg">Let's pray for {selectedMinutes} minutes</span>
               </p>
             </div>
           </div>
@@ -375,7 +375,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
               <div className="absolute left-[-140px] sm:left-[-160px] lg:left-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
                 <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px] shadow-lg">
                   <p className="text-sm sm:text-base font-black text-white leading-tight">
-                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Dear Jesus</span>, <span className="font-black text-white drop-shadow-lg">thank You for listening to me right now</span>
+                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Let's pray for {selectedMinutes} minutes</span>
                   </p>
                 </div>
               </div>
@@ -431,13 +431,13 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
               <span className="text-sm font-medium">Community</span>
             </button>
             
-            {/* Faith Runner Tab */}
+            {/* Bible Quest Tab */}
             <button
               onClick={() => onNavigate?.('faith-runner')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
-              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">🏃‍♂️</span>
-              <span className="text-sm font-medium">Runner</span>
+              <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">📖</span>
+              <span className="text-sm font-medium">Bible Quest</span>
             </button>
             
             {/* Home Tab */}

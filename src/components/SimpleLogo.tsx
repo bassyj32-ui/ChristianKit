@@ -30,7 +30,7 @@ export const SimpleLogo: React.FC<SimpleLogoProps> = ({
       <div className={`w-${size} h-${size} bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-xl flex items-center justify-center shadow-lg`}>
         <span className="text-[var(--text-inverse)] text-lg font-bold">✝️</span>
       </div>
-      <span className={`text-[var(--text-primary)] font-bold ${textSize}`}>ChristianKit</span>
+      <span className={`text-[var(--text-primary)] font-bold ${textSizes[size]}`}>ChristianKit</span>
     </div>
   )
 };

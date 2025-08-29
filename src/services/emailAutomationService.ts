@@ -1,5 +1,5 @@
 import { supabase } from '../utils/supabase'
-import { emailService } from './EmailService'
+import { EmailService } from './EmailService'
 import { UserService } from './userService'
 
 export interface EmailTrigger {
@@ -14,7 +14,7 @@ export interface EmailTrigger {
 }
 
 export class EmailAutomationService {
-  private emailService = emailService.getInstance()
+  private emailService = EmailService.getInstance()
   private supabase = supabase
 
   /**

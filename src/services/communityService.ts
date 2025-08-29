@@ -70,19 +70,25 @@ export const getTrendingPosts = async (limit: number = 50): Promise<CommunityPos
   }
 };
 
-// Create a new post
+// Create a new post - Updated to work with current auth system
 export const createPost = async (postData: {
   content: string;
   category: CommunityPost['category'];
   hashtags?: string[];
-}): Promise<CommunityPost | null> => {
+}, currentUser?: any): Promise<CommunityPost | null> => {
   try {
     if (!supabase) {
       console.warn('Supabase client not initialized');
       return null;
     }
     
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use passed user or try to get from Supabase auth
+    let user = currentUser;
+    if (!user) {
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+      user = supabaseUser;
+    }
+    
     if (!user) throw new Error('User not authenticated');
 
     // Extract hashtags from content
@@ -92,7 +98,7 @@ export const createPost = async (postData: {
     const { data: post, error } = await supabase
       .from('posts')
       .insert({
-        author_id: user.id,
+        author_id: user.id || user.uid, // Handle both Supabase and mock auth user IDs
         content: postData.content,
         category: postData.category,
         hashtags,
@@ -110,10 +116,11 @@ export const createPost = async (postData: {
   }
 };
 
-// Add interaction (amen or love)
+// Add interaction (amen or love) - Updated to work with current auth system
 export const addPostInteraction = async (
   postId: string, 
-  interactionType: 'amen' | 'love'
+  interactionType: 'amen' | 'love',
+  currentUser?: any
 ): Promise<boolean> => {
   try {
     if (!supabase) {
@@ -121,7 +128,13 @@ export const addPostInteraction = async (
       return false;
     }
     
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use passed user or try to get from Supabase auth
+    let user = currentUser;
+    if (!user) {
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+      user = supabaseUser;
+    }
+    
     if (!user) throw new Error('User not authenticated');
 
     // Check if interaction already exists
@@ -129,7 +142,7 @@ export const addPostInteraction = async (
       .from('post_interactions')
       .select()
       .eq('post_id', postId)
-      .eq('user_id', user.id)
+      .eq('user_id', user.id || user.uid)
       .eq('interaction_type', interactionType)
       .single();
 
@@ -154,7 +167,7 @@ export const addPostInteraction = async (
         .from('post_interactions')
         .insert({
           post_id: postId,
-          user_id: user.id,
+          user_id: user.id || user.uid,
           interaction_type: interactionType
         });
 
@@ -173,22 +186,28 @@ export const addPostInteraction = async (
   }
 };
 
-// Add prayer (comment)
-export const addPrayer = async (postId: string, content: string): Promise<Prayer | null> => {
+// Add prayer (comment) - Updated to work with current auth system
+export const addPrayer = async (postId: string, content: string, currentUser?: any): Promise<Prayer | null> => {
   try {
     if (!supabase) {
       console.warn('Supabase client not initialized');
       return null;
     }
     
-    const { data: { user } } = await supabase.auth.getUser();
+    // Use passed user or try to get from Supabase auth
+    let user = currentUser;
+    if (!user) {
+      const { data: { user: supabaseUser } } = await supabase.auth.getUser();
+      user = supabaseUser;
+    }
+    
     if (!user) throw new Error('User not authenticated');
 
     const { data: prayer, error } = await supabase
       .from('prayers')
       .insert({
         post_id: postId,
-        author_id: user.id,
+        author_id: user.id || user.uid,
         content
       })
       .select()
@@ -199,11 +218,11 @@ export const addPrayer = async (postId: string, content: string): Promise<Prayer
     // Increase prayers count on post
     await supabase
       .from('posts')
-      .update({ prayers_count: (prayer.prayers_count || 0) + 1 })
+      .update({ prayers_count: (await supabase.from('posts').select('prayers_count').eq('id', postId).single()).data?.prayers_count + 1 })
       .eq('id', postId);
 
     return prayer;
-    } catch (error) {
+  } catch (error) {
     console.error('Error adding prayer:', error);
     return null;
   }

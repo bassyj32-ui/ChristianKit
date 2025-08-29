@@ -11,8 +11,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
   const [showInstallPrompt, setShowInstallPrompt] = useState(false);
   const [isInstalled, setIsInstalled] = useState(false);
   const [isDismissed, setIsDismissed] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isVisible, setIsVisible] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+  const [installMethod, setInstallMethod] = useState<'native' | 'manual' | 'none'>('none');
 
   useEffect(() => {
     // Check if PWA is already installed
@@ -20,18 +20,47 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
       if (window.matchMedia('(display-mode: standalone)').matches || 
           (window.navigator as any).standalone === true) {
         setIsInstalled(true);
+        console.log('✅ PWA is already installed');
+      } else {
+        console.log('📱 PWA is not installed yet');
+      }
+    };
+
+    // Check PWA eligibility
+    const checkPWAEligibility = () => {
+      const hasServiceWorker = 'serviceWorker' in navigator;
+      const hasManifest = !!document.querySelector('link[rel="manifest"]');
+      const hasIcons = !!document.querySelector('link[rel="icon"]');
+      const isHTTPS = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
+      
+      console.log('🔍 PWA Eligibility Check:', {
+        hasServiceWorker,
+        hasManifest,
+        hasIcons,
+        isHTTPS
+      });
+
+      if (hasServiceWorker && hasManifest && hasIcons && isHTTPS) {
+        setCanInstall(true);
+        console.log('✅ PWA is eligible for installation');
+      } else {
+        setCanInstall(false);
+        console.log('❌ PWA is not eligible for installation');
       }
     };
 
     // Listen for beforeinstallprompt event
     const handleBeforeInstallPrompt = (e: Event) => {
+      console.log('🎯 beforeinstallprompt event fired!', e);
       e.preventDefault();
       setDeferredPrompt(e);
+      setInstallMethod('native');
       setShowInstallPrompt(true);
     };
 
     // Listen for appinstalled event
     const handleAppInstalled = () => {
+      console.log('🎉 PWA installation completed!');
       setIsInstalled(true);
       setShowInstallPrompt(false);
       onInstall?.();
@@ -39,6 +68,7 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
 
     // Check initial state
     checkInstallation();
+    checkPWAEligibility();
 
     // Add event listeners
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -48,75 +78,91 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
     const dismissed = localStorage.getItem('pwa-banner-dismissed');
     if (dismissed) {
       setIsDismissed(true);
+      console.log('🚫 PWA banner was previously dismissed');
     }
 
-    // Show immediately when app loads (no delay)
-    if (!isInstalled && !isDismissed) {
+    // Show prompt if eligible and not dismissed
+    if (canInstall && !isInstalled && !isDismissed) {
       setShowInstallPrompt(true);
-      // Add slight delay for smooth animation
-      setTimeout(() => setIsVisible(true), 100);
     }
 
     return () => {
       window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, [onInstall, isInstalled, isDismissed]);
+  }, [onInstall, isInstalled, isDismissed, canInstall]);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) {
-      // If no deferred prompt, show a message
-      alert('PWA installation prompt not available. This usually means the app is already installed or not eligible for installation.');
-      return;
-    }
-
-    try {
-      // Show the install prompt
-      deferredPrompt.prompt();
-
-      // Wait for the user to respond to the prompt
-      const { outcome } = await deferredPrompt.userChoice;
-
-      if (outcome === 'accepted') {
-        console.log('✅ PWA installation accepted');
-        setIsInstalled(true);
+    console.log('🚀 Install button clicked');
+    
+    if (deferredPrompt && installMethod === 'native') {
+      try {
+        // Show the native install prompt
+        deferredPrompt.prompt();
+        
+        // Wait for the user to respond to the prompt
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('User choice:', outcome);
+        
+        if (outcome === 'accepted') {
+          console.log('✅ User accepted the install prompt');
+        } else {
+          console.log('❌ User dismissed the install prompt');
+        }
+        
+        // Clear the deferred prompt
+        setDeferredPrompt(null);
         setShowInstallPrompt(false);
-        onInstall?.();
-      } else {
-        console.log('❌ PWA installation declined');
+      } catch (error) {
+        console.error('Error showing install prompt:', error);
+        // Fallback to manual instructions
+        showManualInstallInstructions();
       }
-
-      // Clear the deferred prompt
-      setDeferredPrompt(null);
-    } catch (error) {
-      console.error('Error during PWA installation:', error);
+    } else {
+      // Show manual install instructions
+      showManualInstallInstructions();
     }
   };
 
+  const showManualInstallInstructions = () => {
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid = /Android/.test(navigator.userAgent);
+    
+    let message = 'To install this app, look for the install option in your browser menu.';
+    
+    if (isIOS) {
+      message = 'To install: tap the share button, then "Add to Home Screen"';
+    } else if (isAndroid) {
+      message = 'To install: tap the menu button, then "Install app"';
+    }
+    
+    alert(message);
+  };
+
   const handleDismiss = () => {
+    console.log('🚫 PWA banner dismissed');
+    setShowInstallPrompt(false);
     setIsDismissed(true);
     localStorage.setItem('pwa-banner-dismissed', 'true');
   };
 
-  // Don't show if PWA is already installed or user dismissed
-  if (isInstalled || isDismissed || !showInstallPrompt) {
+  // Don't show if already installed, dismissed, or not eligible
+  if (isInstalled || isDismissed || !showInstallPrompt || !canInstall) {
     return null;
   }
 
   return (
     <div 
       className={`fixed top-0 left-0 right-0 z-[9999] transform transition-all duration-700 ease-out ${
-        isVisible ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
+        showInstallPrompt ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0'
       }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
     >
       {/* Background overlay for better visibility */}
       <div className="absolute inset-0 bg-gradient-to-b from-blue-900/95 to-blue-800/95 backdrop-blur-xl" />
       
       {/* Animated border glow */}
       <div className={`absolute inset-0 bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 rounded-b-3xl transition-all duration-700 ${
-        isHovered ? 'opacity-100' : 'opacity-60'
+        showInstallPrompt ? 'opacity-100' : 'opacity-60'
       }`} style={{ filter: 'blur(20px)' }} />
       
       {/* Main banner container */}
@@ -219,6 +265,8 @@ export const PWAInstallPrompt: React.FC<PWAInstallPromptProps> = ({
                 <div>Icons: {document.querySelector('link[rel="icon"]') ? '✅' : '❌'}</div>
                 <div>Standalone: {window.matchMedia('(display-mode: standalone)').matches ? '✅' : '❌'}</div>
                 <div>Deferred Prompt: {deferredPrompt ? '✅' : '❌'}</div>
+                <div>Can Install: {canInstall ? '✅' : '❌'}</div>
+                <div>Install Method: {installMethod}</div>
               </div>
             </details>
           </div>
