@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from './AuthProvider'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { pushNotificationService } from '../services/pushNotificationService'
 
 interface NotificationPreferences {
@@ -12,7 +12,7 @@ interface NotificationPreferences {
 }
 
 export const PushNotificationSettings: React.FC = () => {
-  const { user } = useAuth()
+  const { user } = useSupabaseAuth()
   const [preferences, setPreferences] = useState<NotificationPreferences>({
     prayerReminders: true,
     communityUpdates: true,
@@ -101,10 +101,7 @@ export const PushNotificationSettings: React.FC = () => {
     setMessage('Sending test notification...')
     
     try {
-      const success = await pushNotificationService.sendDailyMotivation(
-        user.uid,
-        'This is a test notification from ChristianKit! 🙏✨'
-      )
+      const success = await pushNotificationService.sendTestNotification()
       
       if (success) {
         setMessage('✅ Test notification sent successfully!')
@@ -124,7 +121,7 @@ export const PushNotificationSettings: React.FC = () => {
     setMessage('Unsubscribing from push notifications...')
     
     try {
-      await pushNotificationService.unsubscribe()
+      await pushNotificationService.unsubscribeFromPushNotifications()
       setPreferences(prev => ({ ...prev, pushEnabled: false }))
       setFcmToken(null)
       setPermissionStatus('denied')

@@ -581,22 +581,24 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
                 </div>
               </div>
               
-              {/* Test Buttons */}
-              <div className="space-y-2">
-                <button
-                  onClick={showDailyReminder}
-                  className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
-                >
-                  🧪 Test Notification
-                </button>
-                
-                <button
-                  onClick={testEmailService}
-                  className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
-                >
-                  📧 Test Email
-                </button>
-              </div>
+              {/* Test Buttons - Development Only */}
+              {import.meta.env.DEV && (
+                <div className="space-y-2">
+                  <button
+                    onClick={showDailyReminder}
+                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+                  >
+                    🧪 Test Notification
+                  </button>
+                  
+                  <button
+                    onClick={testEmailService}
+                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
+                  >
+                    📧 Test Email
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

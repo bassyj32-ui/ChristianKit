@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useAuth } from './AuthProvider'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
 import { ProgressService } from '../services/ProgressService'
 
@@ -33,7 +33,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   selectedMinutes: propSelectedMinutes,
   isFirstTimeUser = false 
 }) => {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle } = useSupabaseAuth();
   console.log('PrayerTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
@@ -143,7 +143,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
     if (user) {
       try {
         await ProgressService.recordSession({
-          user_id: user.uid,
+          user_id: user.id,
           activity_type: 'prayer',
           duration_minutes: selectedMinutes,
           completed: true,
@@ -409,7 +409,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
 
           {/* Reminder - Osmo Style */}
           {showReminder && (
-            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-xl border border-white/20 text-white px-6 py-4 rounded-2xl shadow-xl z-50 max-w-sm text-center">
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-xl border border-white/20 text-white px-6 py-4 rounded-2xl shadow-xl z-40 max-w-sm text-center">
               <p className="text-sm font-medium">{focusReminders[currentReminderIndex]}</p>
           </div>
         )}
@@ -419,7 +419,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
 
 
       {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-50">
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[60] pointer-events-auto">
         <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
           <div className="flex items-center space-x-2 sm:space-x-1">
             {/* Community Tab */}
@@ -433,7 +433,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
             
             {/* Bible Quest Tab */}
             <button
-              onClick={() => onNavigate?.('faith-runner')}
+              onClick={() => onNavigate?.('runner')}
               className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
             >
               <span className="text-xl sm:text-lg group-hover:scale-110 transition-transform duration-300">📖</span>
@@ -447,8 +447,13 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
                 console.log('isFirstTimeUser:', isFirstTimeUser)
                 console.log('onStartQuestionnaire function:', onStartQuestionnaire)
                 console.log('onNavigate function:', onNavigate)
+                console.log('localStorage hasCompletedQuestionnaire:', localStorage.getItem('hasCompletedQuestionnaire'))
                 
-                if (isFirstTimeUser) {
+                // Check if user has already completed questionnaire in localStorage
+                const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
+                console.log('localStorage hasCompletedQuestionnaire:', hasCompleted)
+                
+                if (isFirstTimeUser && !hasCompleted) {
                   console.log('Starting questionnaire...')
                   onStartQuestionnaire?.();
                 } else {

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useAuth } from './AuthProvider';
+import { useSupabaseAuth } from './SupabaseAuthProvider';
 
 interface FloatingAuthTabProps {
   className?: string;
@@ -7,7 +7,7 @@ interface FloatingAuthTabProps {
 }
 
 export const FloatingAuthTab: React.FC<FloatingAuthTabProps> = ({ className = '', position = 'left' }) => {
-  const { user, signInWithGoogle } = useAuth();
+  const { user, signInWithGoogle } = useSupabaseAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {

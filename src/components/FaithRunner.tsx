@@ -72,12 +72,54 @@ const BibleQuest: React.FC = () => {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const challenges = await checkDailyChallenges(dailyChallenges, { score: player.faithPoints, level: player.level });
+        const challenges = await checkDailyChallenges(dailyChallenges, { score: player.faithPoints, level: player.level, distance: 0, blessings: 0 });
         setDailyChallenges(challenges);
-        const scores = await saveGameScore({ score: player.faithPoints, userId: 'anonymous', level: player.level });
-        setLeaderboard(scores);
+        
+        // Try to save game score, but don't fail if table doesn't exist
+        try {
+          const scores = await saveGameScore({ 
+            score: player.faithPoints, 
+            user_id: 'anonymous', 
+            level: player.level,
+            distance: 0,
+            blessings: 0,
+            duration: 0,
+            game_type: 'faith-runner'
+          });
+          if (scores) {
+            setLeaderboard([scores]);
+          } else {
+            setLeaderboard([]);
+          }
+        } catch (gameError) {
+          console.warn('Game score saving failed (table may not exist):', gameError);
+          // Set a default leaderboard to prevent crashes
+          setLeaderboard([
+            { 
+              user_id: 'Anonymous', 
+              score: 0, 
+              level: 1, 
+              distance: 0,
+              blessings: 0,
+              duration: 0,
+              game_type: 'faith-runner'
+            }
+          ]);
+        }
       } catch (error) {
         console.error('Failed to load data:', error);
+        // Ensure leaderboard is always initialized
+        setLeaderboard([
+          { 
+            user_id: 'Anonymous', 
+            score: 0, 
+            level: 1, 
+            distance: 0,
+            blessings: 0,
+            duration: 0,
+            game_type: 'faith-runner'
+          }
+        ]);
       }
     };
     loadData();
@@ -207,7 +249,7 @@ const BibleQuest: React.FC = () => {
           <div className="space-y-1 sm:space-y-2">
             {leaderboard.slice(0, 5).map((score, index) => (
               <div key={index} className="text-blue-200 text-xs sm:text-sm flex justify-between items-center">
-                <span className="truncate">{score.userId}</span>
+                <span className="truncate">{score.user_id}</span>
                 <span className="font-semibold">{score.score} pts</span>
               </div>
             ))}

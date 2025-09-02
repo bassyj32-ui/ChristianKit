@@ -38,10 +38,13 @@ Your Supabase authentication was working, but users couldn't store data because:
 ### **Step 2: Verify Tables Created**
 
 After running the script, you should see:
-- 4 tables created: `user_profiles`, `user_sessions`, `user_achievements`, `user_goals`
+- **Core tables**: `user_profiles`, `user_sessions`, `user_achievements`, `user_goals`
+- **Community tables**: `posts`, `prayers`, `post_interactions`, `hashtags`, `followers`, `notifications`
 - All tables have Row Level Security enabled
 - Proper indexes for performance
 - RLS policies for data access control
+- Automatic triggers for count updates
+- Trending posts view
 
 ### **Step 3: Test Authentication**
 
@@ -125,6 +128,21 @@ console.log('Session created:', session)
 ### **Check User Profiles:**
 ```sql
 SELECT * FROM user_profiles ORDER BY created_at DESC;
+```
+
+### **Check Community Tables:**
+```sql
+-- Check posts
+SELECT COUNT(*) as post_count FROM posts;
+
+-- Check prayers (comments)
+SELECT COUNT(*) as prayer_count FROM prayers;
+
+-- Check interactions
+SELECT COUNT(*) as interaction_count FROM post_interactions;
+
+-- Check trending posts
+SELECT * FROM trending_posts LIMIT 5;
 ```
 
 ### **Check User Sessions:**

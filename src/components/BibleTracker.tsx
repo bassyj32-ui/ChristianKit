@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from './AuthProvider'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 
 interface BibleReading {
   id: string
@@ -28,7 +28,7 @@ interface ReadingPlan {
 }
 
 export const BibleTracker: React.FC = () => {
-  const { user } = useAuth()
+  const { user } = useSupabaseAuth()
   const [readings, setReadings] = useState<BibleReading[]>([])
   const [readingPlans, setReadingPlans] = useState<ReadingPlan[]>([])
   const [activeTab, setActiveTab] = useState<'tracker' | 'plans' | 'memorization' | 'notes'>('tracker')

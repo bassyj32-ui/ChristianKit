@@ -165,3 +165,5 @@ COMMENT ON TABLE scheduled_notifications IS 'Notifications scheduled for future 
 COMMENT ON TABLE user_notifications IS 'Log of all notifications sent to users';
 COMMENT ON TABLE notification_templates IS 'Reusable notification message templates';
  
+
+

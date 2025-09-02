@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useAuth } from './AuthProvider'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { dataExportService } from '../services/dataExportService'
 import { reminderService } from '../services/reminderService'
 import { SyncStatus } from './SyncStatus'
@@ -22,7 +22,7 @@ interface Settings {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { user, logout } = useAuth()
+  const { user, signOut } = useSupabaseAuth()
   const [activeTab, setActiveTab] = useState('account')
   const [importFile, setImportFile] = useState<File | null>(null)
   const [isExporting, setIsExporting] = useState(false)
@@ -105,7 +105,7 @@ export const SettingsPage: React.FC = () => {
   }
 
   const handleLogout = () => {
-    logout()
+    signOut()
   }
 
   const tabs = [

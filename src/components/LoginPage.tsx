@@ -1,9 +1,9 @@
 import React from 'react';
-import { useAuth } from './AuthProvider';
+import { useSupabaseAuth } from './SupabaseAuthProvider';
 import { SimpleLogo } from './SimpleLogo';
 
 export const LoginPage: React.FC = () => {
-  const { signInWithGoogle, loading } = useAuth();
+  const { signInWithGoogle, loading } = useSupabaseAuth();
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex items-center justify-center">
