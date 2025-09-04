@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
-import { supabase } from '../utils/supabase'
+
 import { cloudDataService } from '../services/cloudDataService'
 import { CommunityPrayerRequests } from './CommunityPrayerRequests'
 import { ProFeatureGate } from './ProFeatureGate'
@@ -73,7 +73,7 @@ export const CommunitySection: React.FC = () => {
   const { user } = useSupabaseAuth()
   const [animateIn, setAnimateIn] = useState(false)
   const [hoveredPost, setHoveredPost] = useState<string | null>(null)
-  const [posts, setPosts] = useState<CommunityPost[]>(initialPosts)
+  const [posts, setPosts] = useState<CommunityPost[]>([])
   const [activeTab, setActiveTab] = useState<'trending' | 'latest' | 'following'>('trending')
   const [newPostContent, setNewPostContent] = useState('')
   const [showCommentInput, setShowCommentInput] = useState<string | null>(null)
@@ -109,23 +109,23 @@ export const CommunitySection: React.FC = () => {
     if (!user) return
 
     try {
-      const { data, error } = await supabase
-        .from('post_likes')
-        .upsert({ 
-          post_id: postId, 
-          user_id: user.id 
-        })
-      
-      if (error) throw error
-      
       // Update local state
       setPosts(prevPosts => 
-        prevPosts.map(post => 
-          post.id === postId 
-            ? { ...post, likes: [...post.likes, user.id] }
-            : post
-        )
+        prevPosts.map(post => {
+          if (post.id === postId) {
+            const isLiked = post.likes.includes(user.id)
+            return {
+              ...post,
+              likes: isLiked 
+                ? post.likes.filter(id => id !== user.id)
+                : [...post.likes, user.id]
+            }
+          }
+          return post
+        })
       )
+      
+      // TODO: Update in cloud database
     } catch (error) {
       console.error('Error liking post:', error)
     }
@@ -135,14 +135,6 @@ export const CommunitySection: React.FC = () => {
     if (!user) return
     
     try {
-      const { error } = await supabase
-        .from('post_likes')
-        .delete()
-        .eq('post_id', postId)
-        .eq('user_id', user.id)
-      
-      if (error) throw error
-      
       // Update local state
       setPosts(prevPosts => 
         prevPosts.map(post => 
@@ -151,6 +143,8 @@ export const CommunitySection: React.FC = () => {
             : post
         )
       )
+      
+      // TODO: Update in cloud database
     } catch (error) {
       console.error('Error unliking post:', error)
     }
@@ -160,31 +154,23 @@ export const CommunitySection: React.FC = () => {
     if (!user || !newComment.trim()) return
     
     try {
-      const { data, error } = await supabase
-        .from('post_comments')
-        .insert({
-          post_id: postId,
-          user_id: user.id,
-          content: newComment.trim()
-        })
-      
-      if (error) throw error
-      
       // Update local state
+      const newCommentObj = {
+        id: Date.now().toString(),
+        content: newComment.trim(),
+        authorId: user.id,
+        authorName: user.user_metadata?.display_name || 'Anonymous',
+        authorAvatar: user.user_metadata?.avatar_url || '👤',
+        timestamp: Date.now(),
+        likes: []
+      }
+      
       setPosts(prevPosts => 
         prevPosts.map(post => 
           post.id === postId 
             ? { 
                 ...post, 
-                comments: [...post.comments, {
-                  id: data[0].id,
-                  authorId: user.id,
-                  authorName: user.user_metadata?.display_name || 'User',
-                  authorAvatar: user.user_metadata?.avatar_url || '👤',
-                  content: newComment.trim(),
-                  timestamp: Date.now(),
-                  likes: []
-                }]
+                comments: [...post.comments, newCommentObj]
               }
             : post
         )
@@ -224,6 +210,8 @@ export const CommunitySection: React.FC = () => {
       await cloudDataService.saveCommunityPost(user, {
         id: newPost.id,
         content: newPost.content,
+        authorName: newPost.authorName,
+        authorAvatar: newPost.authorAvatar,
         hashtags: newPost.hashtags,
         likes: newPost.likes,
         comments: newPost.comments,
@@ -278,8 +266,6 @@ export const CommunitySection: React.FC = () => {
   // Load posts from cloud on component mount
   useEffect(() => {
     const loadPostsFromCloud = async () => {
-      if (!user) return
-
       try {
         const cloudPosts = await cloudDataService.getCommunityPosts()
         if (cloudPosts.length > 0) {
@@ -288,16 +274,16 @@ export const CommunitySection: React.FC = () => {
             id: post.id,
             content: post.content,
             authorId: post.userId,
-            authorName: user.user_metadata?.display_name || 'Anonymous',
-            authorAvatar: user.user_metadata?.avatar_url || '👤',
+            authorName: post.authorName || 'Anonymous',
+            authorAvatar: post.authorAvatar || '👤',
             timestamp: post.timestamp?.toDate?.()?.getTime() || Date.now(),
             likes: post.likes || [],
             comments: post.comments?.map(comment => ({
               id: comment.id,
               content: comment.content,
               authorId: comment.authorId,
-              authorName: user.user_metadata?.display_name || 'Anonymous',
-              authorAvatar: user.user_metadata?.avatar_url || '👤',
+              authorName: comment.authorName || 'Anonymous',
+              authorAvatar: comment.authorAvatar || '👤',
               timestamp: comment.timestamp?.toDate?.()?.getTime() || Date.now(),
               likes: []
             })) || [],
@@ -311,11 +297,12 @@ export const CommunitySection: React.FC = () => {
       } catch (error) {
         console.error('Error loading posts from cloud:', error)
         // Fall back to local posts
+        setPosts(initialPosts)
       }
     }
 
     loadPostsFromCloud()
-  }, [user])
+  }, [])
 
   const trendingTopics = [
     { tag: '#MorningPrayer', count: '2.4K posts', trending: true },

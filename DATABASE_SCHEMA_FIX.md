@@ -125,3 +125,8 @@ The database schema now includes:
 Your ChristianKit platform now has a complete, secure, and performant database schema ready for community features!
 
 
+
+
+
+
+

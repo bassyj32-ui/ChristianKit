@@ -1,13 +1,20 @@
 import React, { useState, useEffect, Suspense, lazy } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
-import { PrayerTimerPage } from './components/PrayerTimerPage'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { FloatingAuthTab } from './components/FloatingAuthTab'
+import { PersistentNavigation } from './components/PersistentNavigation'
+import { UnifiedTimerPage } from './components/UnifiedTimerPage'
+import { OfflineIndicator } from './components/OfflineIndicator'
+import { UserProfile } from './components/UserProfile'
+import { GameLeaderboard } from './components/GameLeaderboard'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SupabaseAuthProvider, useSupabaseAuth } from './components/SupabaseAuthProvider'
 import { AnalyticsProvider } from './components/AnalyticsProvider'
+import { useAppStore } from './store/appStore'
+import { authService } from './services/authService'
+import { cloudSyncService } from './services/cloudSyncService'
 
 // Lazy load heavy components to reduce main bundle size
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
@@ -69,6 +76,20 @@ const AppContent: React.FC = () => {
   const { user, loading, signOut, signInWithGoogle } = useSupabaseAuth();
   const location = useLocation();
   
+  // Use centralized state management
+  const { 
+    activeTab, 
+    setActiveTab, 
+    userPlan, 
+    setUserPlan, 
+    showQuestionnaire, 
+    setShowQuestionnaire, 
+    isFirstTimeUser, 
+    setIsFirstTimeUser,
+    isLoading,
+    setLoading
+  } = useAppStore();
+  
   // Get user subscription status for analytics
   const getUserSubscription = (): 'free' | 'pro' => {
     if (!user) return 'free';
@@ -76,11 +97,7 @@ const AppContent: React.FC = () => {
     return 'free'; // Default to free for now
   };
   
-  const [activeTab, setActiveTab] = useState('prayer') // Default to prayer page as the first page
   const [selectedMinutes, setSelectedMinutes] = useState(10)
-  const [showQuestionnaire, setShowQuestionnaire] = useState(false)
-  const [userPlan, setUserPlan] = useState<any>(null)
-  const [isFirstTimeUser, setIsFirstTimeUser] = useState(true)
   const [error, setError] = useState<string | null>(null)
   
   // Trial period management hooks
@@ -137,6 +154,39 @@ const AppContent: React.FC = () => {
     return false
   }
 
+  // Initialize services
+  useEffect(() => {
+    const initializeServices = async () => {
+      try {
+        setLoading(true)
+        
+        // Initialize auth service
+        const authUser = await authService.initialize()
+        if (authUser) {
+          useAppStore.getState().setUser(authUser)
+        }
+        
+        // Initialize cloud sync
+        await cloudSyncService.initialize()
+        
+        // Set up auth state listener
+        authService.onAuthStateChange((user) => {
+          useAppStore.getState().setUser(user)
+          if (user) {
+            cloudSyncService.initialize()
+          }
+        })
+        
+      } catch (error) {
+        console.error('Service initialization error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    
+    initializeServices()
+  }, [setLoading])
+
   // Handle navigation between tabs
   const handleNavigate = (tab: string) => {
     console.log('🔄 Navigating to:', tab)
@@ -152,7 +202,7 @@ const AppContent: React.FC = () => {
   }
 
   // Show loading state
-  if (loading) {
+  if (loading || isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
         <div className="text-center">
@@ -188,14 +238,10 @@ const AppContent: React.FC = () => {
   // Show prayer timer page as the first page for signed-out users, but allow tab navigation away
   if (!user && activeTab === 'prayer') {
     return (
-      <PrayerTimerPage 
+      <UnifiedTimerPage 
+        timerType="prayer"
         onNavigate={handleNavigate}
-        onStartQuestionnaire={() => {
-          console.log('onStartQuestionnaire called from no user case')
-          setShowQuestionnaire(true)
-        }}
         onTimerComplete={handleTimerComplete}
-        userPlan={userPlan}
         selectedMinutes={selectedMinutes}
         isFirstTimeUser={determineIsFirstTimeUser()} // Check localStorage properly
       />
@@ -308,9 +354,13 @@ const AppContent: React.FC = () => {
           )
         case 'meditation':
           return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <MeditationPage />
-            </Suspense>
+            <UnifiedTimerPage 
+              timerType="meditation"
+              onNavigate={handleNavigate}
+              onTimerComplete={handleTimerComplete}
+              selectedMinutes={selectedMinutes}
+              isFirstTimeUser={determineIsFirstTimeUser()}
+            />
           )
         case 'sunrise-sunset':
           return (
@@ -318,16 +368,36 @@ const AppContent: React.FC = () => {
               <SunriseSunsetPrayer />
             </Suspense>
           )
+        case 'profile':
+          return <UserProfile />
+        case 'leaderboard':
+          return <GameLeaderboard />
+        case 'prayer':
+          return (
+            <UnifiedTimerPage 
+              timerType="prayer"
+              onNavigate={handleNavigate}
+              onTimerComplete={handleTimerComplete}
+              selectedMinutes={selectedMinutes}
+              isFirstTimeUser={determineIsFirstTimeUser()}
+            />
+          )
+        case 'bible':
+          return (
+            <UnifiedTimerPage 
+              timerType="bible"
+              onNavigate={handleNavigate}
+              onTimerComplete={handleTimerComplete}
+              selectedMinutes={selectedMinutes}
+              isFirstTimeUser={determineIsFirstTimeUser()}
+            />
+          )
         default:
           return (
-            <PrayerTimerPage 
+            <UnifiedTimerPage 
+              timerType="prayer"
               onNavigate={handleNavigate}
-              onStartQuestionnaire={() => {
-                console.log('onStartQuestionnaire called from default case')
-                setShowQuestionnaire(true)
-              }}
               onTimerComplete={handleTimerComplete}
-              userPlan={userPlan}
               selectedMinutes={selectedMinutes}
               isFirstTimeUser={determineIsFirstTimeUser()}
             />
@@ -385,10 +455,19 @@ const AppContent: React.FC = () => {
           </div>
         )}
         
+        {/* Offline Indicator */}
+        <OfflineIndicator />
+        
         {/* Main Content */}
-        <div className="flex-1 pt-32">
+        <div className="flex-1 pt-32 pb-20 lg:pb-0 lg:pl-64">
           {renderContent()}
         </div>
+        
+        {/* Persistent Navigation */}
+        <PersistentNavigation 
+          activeTab={activeTab} 
+          onNavigate={handleNavigate} 
+        />
       </div>
     </AnalyticsProvider>
   )

@@ -2,6 +2,7 @@ import {
   doc, 
   setDoc, 
   getDoc, 
+  getDocs,
   collection, 
   addDoc, 
   updateDoc, 
@@ -14,7 +15,7 @@ import {
   Timestamp 
 } from 'firebase/firestore'
 import { db } from '../config/firebase'
-import { User } from 'firebase/auth'
+import { User } from '@supabase/supabase-js'
 
 interface CloudData {
   userId: string
@@ -61,6 +62,8 @@ interface ReadingPlan extends CloudData {
 interface CommunityPost extends CloudData {
   id: string
   content: string
+  authorName: string
+  authorAvatar: string
   hashtags: string[]
   likes: string[]
   comments: Array<{
@@ -68,6 +71,7 @@ interface CommunityPost extends CloudData {
     content: string
     authorId: string
     authorName: string
+    authorAvatar: string
     timestamp: any
   }>
   timestamp: any
@@ -109,20 +113,20 @@ class CloudDataService {
   // Generic function to get user document reference
   private getUserDoc(user: User, collectionName: string, docId?: string) {
     if (docId) {
-      return doc(db, 'users', user.uid, collectionName, docId)
+      return doc(db, 'users', user.id, collectionName, docId)
     }
-    return doc(db, 'users', user.uid, collectionName, 'data')
+    return doc(db, 'users', user.id, collectionName, 'data')
   }
 
   // Generic function to get user collection reference
   private getUserCollection(user: User, collectionName: string) {
-    return collection(db, 'users', user.uid, collectionName)
+    return collection(db, 'users', user.id, collectionName)
   }
 
   // Initialize user data structure
   async initializeUser(user: User): Promise<void> {
     try {
-      const userDoc = doc(db, 'users', user.uid)
+      const userDoc = doc(db, 'users', user.id)
       const userData = {
         email: user.email,
         displayName: user.displayName || user.email?.split('@')[0] || 'User',
@@ -144,7 +148,7 @@ class CloudDataService {
     try {
       const sessionData: PrayerSession = {
         ...session,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -177,7 +181,7 @@ class CloudDataService {
     try {
       const readingData: BibleReading = {
         ...reading,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -210,7 +214,7 @@ class CloudDataService {
     try {
       const planData: ReadingPlan = {
         ...plan,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -243,7 +247,7 @@ class CloudDataService {
     try {
       const postData: CommunityPost = {
         ...post,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -263,7 +267,7 @@ class CloudDataService {
         orderBy('timestamp', 'desc')
       )
       
-      const snapshot = await getDoc(q)
+      const snapshot = await getDocs(q)
       return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as CommunityPost))
     } catch (error) {
       console.error('Error getting community posts:', error)
@@ -276,7 +280,7 @@ class CloudDataService {
     try {
       const planData: UserPlan = {
         ...plan,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -306,7 +310,7 @@ class CloudDataService {
     try {
       const settingsData: UserSettings = {
         ...settings,
-        userId: user.uid,
+        userId: user.id,
         lastUpdated: serverTimestamp(),
         version: this.VERSION
       }
@@ -343,7 +347,7 @@ class CloudDataService {
       callback(sessions)
     })
     
-    this.listeners[`prayerSessions_${user.uid}`] = unsubscribe
+    this.listeners[`prayerSessions_${user.id}`] = unsubscribe
     return unsubscribe
   }
 
@@ -358,7 +362,7 @@ class CloudDataService {
       callback(readings)
     })
     
-    this.listeners[`bibleReadings_${user.uid}`] = unsubscribe
+    this.listeners[`bibleReadings_${user.id}`] = unsubscribe
     return unsubscribe
   }
 
@@ -453,7 +457,7 @@ class CloudDataService {
   getSyncStatus(user: User): Promise<{ lastSync: Date | null; dataCount: number }> {
     return new Promise(async (resolve) => {
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid))
+        const userDoc = await getDoc(doc(db, 'users', user.id))
         if (userDoc.exists()) {
           const data = userDoc.data()
           resolve({
