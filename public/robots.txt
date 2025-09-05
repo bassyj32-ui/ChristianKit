@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://christiankit.app/sitemap.xml
+
+# Disallow admin and private areas
+Disallow: /admin/
+Disallow: /api/
+Disallow: /_next/
+Disallow: /private/

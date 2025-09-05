@@ -10,6 +10,7 @@ import { ProFeatureGate } from './ProFeatureGate'
 import { BibleReadingPage } from './BibleReadingPage'
 import { MeditationPage } from './MeditationPage'
 import { FloatingAuthTab } from './FloatingAuthTab'
+import { ReferralSystem } from './ReferralSystem'
 
 import { prayerService } from '../services/prayerService'
 import { subscriptionService } from '../services/subscriptionService'
@@ -64,7 +65,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
     meditation: 0
   })
   const [loading, setLoading] = useState(true)
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false)
   const { user, signOut: logout } = useSupabaseAuth()
 
   useEffect(() => {
@@ -167,222 +167,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         <div className="absolute top-3/5 right-1/4 w-1 h-1 bg-[var(--color-success-500)]/80 rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '0.5s'}}></div>
       </div>
 
-      {/* App Bar - Osmo Style */}
-      <div className="relative z-50 bg-[var(--color-neutral-800)] backdrop-blur-xl border-b border-[var(--color-neutral-700)] shadow-lg sticky top-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6">
-          <div className="flex items-center justify-between h-14 sm:h-16">
-            {/* Osmo-style Logo */}
-            <div className="flex items-center space-x-2 sm:space-x-3 group">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--color-warning-500)] to-[var(--color-warning-600)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-[var(--color-warning-500)]/25">
-                <span className="text-[var(--color-neutral-50)] font-bold text-xs sm:text-sm">✝</span>
-              </div>
-              <div className="text-base sm:text-lg font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
-                <span className="bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] bg-clip-text text-transparent">Christian</span>
-                <span className="text-[var(--color-neutral-50)]">Kit</span>
-              </div>
-            </div>
 
-            {/* Desktop Navigation */}
-            <div className="hidden lg:flex items-center space-x-3">
-              <button
-                onClick={() => onNavigate?.('dashboard')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-50)] bg-[var(--color-neutral-800)] hover:bg-[var(--color-neutral-700)] border border-[var(--color-neutral-700)] hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>🏠</span>
-                <span>Home</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('analysis')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>📊</span>
-                <span>Analysis</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('prayer')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>🙏</span>
-                <span>Prayer</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('community')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
-              >
-                <span>👥</span>
-                <span>Community</span>
-              </button>
-              <button
-                onClick={() => onNavigate?.('subscription')}
-                className="px-4 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-[var(--color-warning-500)]/25"
-              >
-                <span>⭐</span>
-                <span>Pro</span>
-              </button>
-              <button
-                onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                className="px-4 py-2 rounded-xl font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-gradient-to-r hover:from-[var(--color-neutral-800)] hover:to-[var(--color-neutral-700)] border border-[var(--color-neutral-700)]/60 hover:border-[var(--color-neutral-600)]/40 transition-all duration-300 flex items-center space-x-2 hover:scale-105 shadow-lg"
-              >
-                <span>👤</span>
-                <span>Profile</span>
-                <span className={`transform transition-transform duration-300 ${isDrawerOpen ? 'rotate-180' : ''}`}>▼</span>
-              </button>
-            </div>
-
-            {/* Mobile Right Side - Pro Button + Menu */}
-            <div className="lg:hidden flex items-center space-x-2">
-              {/* Pro Button */}
-              <button
-                onClick={() => onNavigate?.('subscription')}
-                className="px-3 py-2 rounded-xl text-[var(--color-warning-500)] bg-gradient-to-r from-[var(--color-warning-600)]/20 to-[var(--color-warning-500)]/20 border border-[var(--color-warning-500)]/40 hover:border-[var(--color-warning-600)]/60 transition-all duration-300 hover:scale-105 group shadow-lg"
-              >
-                <span className="text-sm font-medium">⭐ Pro</span>
-              </button>
-              
-              {/* Mobile Menu Button */}
-              <button 
-                onClick={() => setIsDrawerOpen(!isDrawerOpen)}
-                className="p-2 rounded-xl text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-gradient-to-r hover:from-[var(--color-neutral-800)] hover:to-[var(--color-neutral-700)] border border-[var(--color-neutral-700)] transition-all duration-300 hover:scale-105 shadow-lg"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Modern Profile Drawer - Limited Size */}
-      {isDrawerOpen && (
-        <>
-          {/* Dark Background Overlay */}
-          <div 
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-            onClick={() => setIsDrawerOpen(false)}
-          />
-          
-          {/* Drawer Content */}
-          <div className="fixed top-16 right-4 z-50 w-80 max-w-[90vw] bg-[var(--color-neutral-800)] backdrop-blur-xl rounded-2xl border border-[var(--color-neutral-700)]/50 shadow-2xl shadow-black/50">
-            <div className="p-4">
-              
-              {/* User Info */}
-              <div className="flex items-center space-x-3 mb-4 p-3 bg-[var(--color-neutral-800)]/50 rounded-xl border border-[var(--color-neutral-700)]/50">
-                <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)] to-[var(--color-info-500)] rounded-lg flex items-center justify-center">
-                  <svg className="w-5 h-5 text-[var(--color-neutral-50)]" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-.904.732-1.636 1.636-1.636h.819L12 10.91l9.545-7.089h.819c.904 0 1.636.732 1.636 1.636z"/>
-                  </svg>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="text-[var(--color-neutral-50)] font-medium truncate">{user?.user_metadata?.display_name || 'User'}</div>
-                  <div className="text-[var(--color-neutral-400)] text-sm truncate">{user?.email}</div>
-                </div>
-              </div>
-
-              {/* Simple List */}
-              <div className="space-y-2">
-                <button
-                  onClick={() => {
-                    onNavigate?.('settings')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50"
-                >
-                  <span className="text-lg">⚙️</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Settings</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('analytics')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-info-500)]/50"
-                >
-                  <span className="text-lg">📊</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Analytics</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('history')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-success-500)]/50"
-                >
-                  <span className="text-lg">📅</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">History</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('achievements')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50"
-                >
-                  <span className="text-lg">🏆</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Achievements</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('goals')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-600)]/50"
-                >
-                  <span className="text-lg">🎯</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Goals</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('notifications')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-warning-500)]/50"
-                >
-                  <span className="text-lg">🔔</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Notifications</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    onNavigate?.('help')
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-neutral-800)]/50 hover:bg-[var(--color-neutral-700)]/70 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-primary-500)]/50"
-                >
-                  <span className="text-lg">❓</span>
-                  <span className="text-[var(--color-neutral-400)] font-medium">Help</span>
-                </button>
-                
-                <button
-                  onClick={() => {
-                    logout()
-                    setIsDrawerOpen(false)
-                  }}
-                  className="w-full p-3 rounded-xl bg-[var(--color-error-500)]/20 hover:bg-[var(--color-error-500)]/30 transition-all duration-300 flex items-center space-x-3 border border-[var(--color-error-500)]/50 hover:border-[var(--color-error-500)]/40"
-                >
-                  <span className="text-lg">🚪</span>
-                  <span className="text-[var(--color-warning-600)] font-medium">Logout</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
 
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
         
         {/* Hero Section - Osmo Style */}
         <div className="pt-8 pb-12">
           <div className="text-center max-w-4xl mx-auto">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-[var(--color-neutral-800)]/10 border border-[var(--color-neutral-700)]/10 backdrop-blur-sm mb-6">
-              <span className="text-[var(--color-warning-500)] mr-2">⭐</span>
-              <span className="text-sm font-medium text-[var(--color-neutral-400)]">Your daily spiritual growth continues</span>
-            </div>
             
                         <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-[var(--color-neutral-50)]">
               Grow{' '}
@@ -398,7 +189,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
         </div>
 
-
+        {/* Referral System */}
+        <div className="mb-8">
+          <ReferralSystem />
+        </div>
 
         {/* Main Actions - Compact Responsive Grid */}
         <div className="w-full mb-16">
@@ -979,7 +773,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
 
 
       {/* Main Navigation Tabs - Beautiful Osmo Style */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
         <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
           {/* Analysis Tab */}
           <button

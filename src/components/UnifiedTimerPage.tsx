@@ -1,355 +1,476 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
+import { SharePrayerSession } from './SharePrayerSession'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
-import { useAppStore, PrayerSession, BibleSession, MeditationSession } from '../store/appStore'
+import { DailyProgressReminder } from './DailyProgressReminder'
+import { ProgressService } from '../services/ProgressService'
+
+interface PrayerSession {
+  id: string
+  date: string
+  duration: number
+  focus: string
+  mood: string
+  message: string
+  completed: boolean
+}
 
 interface UnifiedTimerPageProps {
   timerType: 'prayer' | 'bible' | 'meditation'
-  onNavigate?: (tab: string) => void
-  onTimerComplete?: () => void
-  selectedMinutes?: number
-  isFirstTimeUser?: boolean
+  onNavigate?: (page: string) => void;
+  onStartQuestionnaire?: () => void;
+  onTimerComplete?: () => void;
+  userPlan?: {
+    prayerTime: number;
+    prayerFocus: string[];
+  } | null;
+  selectedMinutes?: number;
+  isFirstTimeUser?: boolean;
 }
 
 export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({ 
   timerType,
   onNavigate, 
+  onStartQuestionnaire, 
   onTimerComplete, 
+  userPlan, 
   selectedMinutes: propSelectedMinutes,
   isFirstTimeUser = false 
 }) => {
-  const { user, signInWithGoogle } = useSupabaseAuth()
-  const { addPrayerSession, addBibleSession, addMeditationSession, userPlan } = useAppStore()
+  const { user, signInWithGoogle } = useSupabaseAuth();
+  console.log('UnifiedTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
   
-  const [selectedMinutes, setSelectedMinutes] = useState(propSelectedMinutes || 10)
-  const [timeRemaining, setTimeRemaining] = useState((propSelectedMinutes || 10) * 60)
-  const [isActive, setIsActive] = useState(timerType === 'prayer') // Prayer starts active, others paused
-  const [completed, setCompleted] = useState(false)
-  const [message, setMessage] = useState("")
-  const [focus, setFocus] = useState("")
-  const [mood, setMood] = useState("")
+  const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
+  const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
+  const [isPraying, setIsPraying] = useState(true) // Start with timer running automatically
+  const [prayerCompleted, setPrayerCompleted] = useState(false)
+  const [prayerMessage, setPrayerMessage] = useState("Lord Jesus, I'm here with You now to talk about...")
+  const [prayerFocus, setPrayerFocus] = useState("")
+  const [prayerMood, setPrayerMood] = useState("")
   const [currentReminderIndex, setCurrentReminderIndex] = useState(0)
   const [showReminder, setShowReminder] = useState(false)
+  const [prayerSessions, setPrayerSessions] = useState<PrayerSession[]>([])
+  const [focusReminders, setFocusReminders] = useState<string[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0)
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0)
-  
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const reminderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Timer-specific configurations
-  const timerConfig = {
-    prayer: {
-      title: 'Prayer Time',
-      icon: '🙏',
-      color: 'from-amber-400 to-yellow-500',
-      message: "Lord Jesus, I'm here with You now to talk about...",
-      encouragingTitles: [
-        "Find Peace", "Trust in Him", "Be Still", "Pray Without Ceasing",
-        "Cast Your Cares", "Walk by Faith", "Rejoice Always", "Give Thanks"
-      ],
-      encouragingSubtitles: [
-        "In His presence", "He is faithful", "And know He is God",
-        "In every moment", "On Him", "Not by sight", "In all circumstances", "In everything"
-      ],
-      focusReminders: [
-        "What are you grateful for today?",
-        "Who needs your prayers right now?",
-        "What is weighing on your heart?",
-        "How has God blessed you recently?",
-        "What do you need God's guidance for?"
-      ]
-    },
-    bible: {
-      title: 'Bible Reading',
-      icon: '📖',
-      color: 'from-blue-400 to-indigo-500',
-      message: "Lord Jesus, I'm here with You now to read Your Word...",
-      encouragingTitles: [
-        "His Word", "Truth", "Light", "Wisdom",
-        "Guidance", "Comfort", "Hope", "Life"
-      ],
-      encouragingSubtitles: [
-        "Is a lamp", "Will set you free", "Shines in darkness", "From above",
-        "For your path", "In times of need", "Never fails", "Abundant life"
-      ],
-      focusReminders: [
-        "What verse speaks to you today?",
-        "How does this apply to your life?",
-        "What is God teaching you?",
-        "How can you live this out?",
-        "What questions do you have?"
-      ]
-    },
-    meditation: {
-      title: 'Meditation',
-      icon: '🧘',
-      color: 'from-green-400 to-emerald-500',
-      message: "Lord Jesus, I'm here with You now to find peace...",
-      encouragingTitles: [
-        "Find Peace", "Trust in Him", "Be Still", "Meditate on Him",
-        "Cast Your Cares", "Walk by Faith", "Rejoice Always", "Give Thanks"
-      ],
-      encouragingSubtitles: [
-        "In His presence", "He is faithful", "And know He is God",
-        "Day and night", "On Him", "Not by sight", "In all circumstances", "In everything"
-      ],
-      focusReminders: [
-        "Breathe in God's peace",
-        "Release your worries to Him",
-        "Focus on His love for you",
-        "Listen for His voice",
-        "Rest in His presence"
-      ]
+  // Encouraging titles and subtitles for slideshow
+  const encouragingTitles = [
+    "Find Peace",
+    "Trust in Him",
+    "Be Still",
+    "Pray Without Ceasing",
+    "Cast Your Cares",
+    "Walk by Faith",
+    "Rejoice Always",
+    "Give Thanks"
+  ]
+
+  const encouragingSubtitles = [
+    "In His presence",
+    "He is faithful",
+    "Know He is God",
+    "In every moment",
+    "He cares for you",
+    "Not by sight",
+    "In all circumstances",
+    "In everything"
+  ]
+
+  // Scripture verses and references
+  const scriptureVerses = [
+    "Be still, and know that I am God",
+    "Cast your cares on the Lord",
+    "Pray without ceasing",
+    "Trust in the Lord with all your heart",
+    "Rejoice always, pray continually",
+    "Walk by faith, not by sight",
+    "Give thanks in all circumstances",
+    "The Lord is my shepherd"
+  ]
+
+  const scriptureReferences = [
+    "Psalm 46:10",
+    "1 Peter 5:7",
+    "1 Thessalonians 5:17",
+    "Proverbs 3:5",
+    "1 Thessalonians 5:16-17",
+    "2 Corinthians 5:7",
+    "1 Thessalonians 5:18",
+    "Psalm 23:1"
+  ]
+
+  // Load prayer sessions from localStorage (simplified)
+  useEffect(() => {
+    const saved = localStorage.getItem('prayerSessions')
+    if (saved) {
+      setPrayerSessions(JSON.parse(saved))
     }
-  }
+  }, [])
 
-  const config = timerConfig[timerType]
-
-  // Initialize message
+  // Update timer when prop changes
   useEffect(() => {
-    setMessage(config.message)
-  }, [timerType, config.message])
+    if (propSelectedMinutes && propSelectedMinutes > 0) {
+      console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
+      setSelectedMinutes(propSelectedMinutes);
+      setTimeRemaining(propSelectedMinutes * 60);
+    }
+  }, [propSelectedMinutes]);
 
-  // Timer logic
-  useEffect(() => {
-    if (isActive && timeRemaining > 0) {
-      intervalRef.current = setInterval(() => {
-        setTimeRemaining((time) => {
-          if (time <= 1) {
-            setIsActive(false)
-            setCompleted(true)
-            onTimerComplete?.()
-            return 0
-          }
-          return time - 1
-        })
-      }, 1000)
-    } else {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+  // Define completePrayer function before using it in useEffect
+  const completePrayer = async () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    if (reminderIntervalRef.current) {
+      clearInterval(reminderIntervalRef.current);
+    }
+    
+    // Save prayer session locally
+    const newSession: PrayerSession = {
+      id: Date.now().toString(),
+      date: new Date().toISOString(),
+      duration: selectedMinutes,
+      focus: prayerFocus,
+      mood: prayerMood,
+      message: prayerMessage,
+      completed: true
+    };
+    setPrayerSessions(prev => [newSession, ...prev]);
+    localStorage.setItem('prayerSessions', JSON.stringify([newSession, ...prayerSessions]));
+    
+    // Record session in database for progress tracking
+    if (user) {
+      try {
+        await ProgressService.recordSession({
+          user_id: user.id,
+          activity_type: 'prayer',
+          duration_minutes: selectedMinutes,
+          completed: true,
+          completed_duration: selectedMinutes, // Full duration completed
+          session_date: new Date().toISOString().split('T')[0],
+          notes: prayerFocus ? `Focus: ${prayerFocus}` : undefined
+        });
+        console.log('✅ Prayer session recorded successfully');
+      } catch (error) {
+        console.error('❌ Error recording prayer session:', error);
+        // Continue even if database recording fails
       }
+    }
+    
+    setIsPraying(false);
+    setPrayerCompleted(true);
+    setShowReminder(false);
+    
+    // Call timer completion handler
+    onTimerComplete?.();
+  };
+
+  useEffect(() => {
+    // Start timer immediately when component mounts
+    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
+    
+    if (isPraying && timeRemaining > 0) {
+      intervalRef.current = setInterval(() => {
+        setTimeRemaining(prev => {
+          if (prev <= 1) {
+            completePrayer();
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
     }
 
     return () => {
       if (intervalRef.current) {
-        clearInterval(intervalRef.current)
+        clearInterval(intervalRef.current);
       }
-    }
-  }, [isActive, timeRemaining, onTimerComplete])
+    };
+  }, [isPraying, selectedMinutes]);
 
-  // Reminder system
+  // Start reminder interval
   useEffect(() => {
-    if (isActive && timeRemaining > 0) {
+    if (isPraying && timeRemaining > 0) {
       reminderIntervalRef.current = setInterval(() => {
-        setCurrentReminderIndex((prev) => (prev + 1) % config.focusReminders.length)
-        setShowReminder(true)
-        setTimeout(() => setShowReminder(false), 3000)
-      }, 30000) // Every 30 seconds
+        setShowReminder(true);
+        setTimeout(() => setShowReminder(false), 3000);
+        setCurrentReminderIndex(prev => (prev + 1) % focusReminders.length);
+      }, 30000); // Show reminder every 30 seconds
     }
 
     return () => {
       if (reminderIntervalRef.current) {
-        clearInterval(reminderIntervalRef.current)
+        clearInterval(reminderIntervalRef.current);
       }
-    }
-  }, [isActive, timeRemaining, config.focusReminders.length])
+    };
+  }, [isPraying, timeRemaining, focusReminders.length]);
 
-  // Title slideshow
+  // Set focus reminders based on user plan
   useEffect(() => {
-    const titleInterval = setInterval(() => {
-      setCurrentTitleIndex((prev) => (prev + 1) % config.encouragingTitles.length)
-    }, 5000)
-
-    return () => clearInterval(titleInterval)
-  }, [config.encouragingTitles.length])
-
-  // Handle timer completion
-  const handleComplete = useCallback(() => {
-    const sessionData = {
-      id: `${timerType}-${Date.now()}`,
-      date: new Date().toISOString(),
-      duration: selectedMinutes,
-      focus,
-      mood,
-      completed: true,
-      notes: message
-    }
-
-    // Add session to store
-    if (timerType === 'prayer') {
-      addPrayerSession(sessionData as PrayerSession)
-    } else if (timerType === 'bible') {
-      addBibleSession(sessionData as BibleSession)
-    } else if (timerType === 'meditation') {
-      addMeditationSession(sessionData as MeditationSession)
-    }
-
-    setCompleted(true)
-    onTimerComplete?.()
-  }, [timerType, selectedMinutes, focus, mood, message, addPrayerSession, addBibleSession, addMeditationSession, onTimerComplete])
-
-  // Format time
-  const formatTime = (seconds: number): string => {
-    const mins = Math.floor(seconds / 60)
-    const secs = seconds % 60
-    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
-  }
-
-  // Handle start/pause
-  const toggleTimer = () => {
-    if (completed) {
-      // Reset timer
-      setTimeRemaining(selectedMinutes * 60)
-      setCompleted(false)
-      setIsActive(true)
+    if (userPlan?.prayerFocus) {
+      setFocusReminders(userPlan.prayerFocus);
     } else {
-      setIsActive(!isActive)
+      setFocusReminders([
+        "Thank God for His love and grace",
+        "Ask for guidance in your daily decisions",
+        "Pray for your family and friends",
+        "Seek forgiveness and renewal",
+        "Express gratitude for your blessings"
+      ]);
     }
-  }
+  }, [userPlan]);
 
-  // Handle time change
-  const handleTimeChange = (minutes: number) => {
-    setSelectedMinutes(minutes)
-    setTimeRemaining(minutes * 60)
-    setIsActive(false)
-    setCompleted(false)
-  }
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const startPrayer = () => {
+    setIsPraying(true);
+    setPrayerCompleted(false);
+    setTimeRemaining(selectedMinutes * 60);
+  };
+
+  const pausePrayer = () => {
+    setIsPraying(false);
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+  };
+
+  const handleTimeSelect = (minutes: number) => {
+    setSelectedMinutes(minutes);
+    setTimeRemaining(minutes * 60);
+    setIsPraying(true); // Start timer automatically when time is selected
+    setPrayerCompleted(false);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-      {/* Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-yellow-300/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
-      </div>
-
-      {/* Header */}
-      <div className="relative z-10 bg-black/20 backdrop-blur-2xl border-b border-yellow-400/20">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-          <div className="text-center">
-            <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-              {config.icon} {config.title}
-            </h1>
-            <p className="text-slate-300 text-sm sm:text-lg">
-              {config.encouragingTitles[currentTitleIndex]} - {config.encouragingSubtitles[currentTitleIndex]}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="relative z-10 max-w-4xl mx-auto px-4 py-8">
+    <div className="h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white relative overflow-hidden">
+      
+      {/* Background with subtle patterns - Much darker Osmo-inspired */}
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-black to-gray-800 pointer-events-none">
+        {/* Subtle gradient overlays - Very subtle */}
+        <div className="absolute inset-0 bg-gradient-to-r from-amber-400/5 via-transparent to-amber-400/5"></div>
         
-        {/* Timer Display */}
-        <div className="text-center mb-8">
-          <div className="relative inline-block">
-            <div className={`w-64 h-64 rounded-full bg-gradient-to-r ${config.color} flex items-center justify-center shadow-2xl`}>
-              <div className="text-center">
-                <div className="text-4xl font-bold text-white mb-2">
-                  {formatTime(timeRemaining)}
-                </div>
-                <div className="text-white/80 text-sm">
-                  {completed ? 'Completed!' : isActive ? 'In Progress' : 'Paused'}
-                </div>
-              </div>
-            </div>
-            
-            {/* Progress Ring */}
-            <svg className="absolute inset-0 w-64 h-64 transform -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                stroke="rgba(255,255,255,0.2)"
-                strokeWidth="2"
-                fill="none"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r="45"
-                stroke="white"
-                strokeWidth="2"
-                fill="none"
-                strokeDasharray={`${2 * Math.PI * 45}`}
-                strokeDashoffset={`${2 * Math.PI * 45 * (1 - (selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60))}`}
-                className="transition-all duration-1000"
-              />
-            </svg>
-          </div>
-        </div>
+        {/* Floating particles - More subtle */}
+        <div className="absolute top-1/4 left-1/4 w-2 h-2 bg-amber-400/20 rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
+        <div className="absolute top-1/3 right-1/4 w-1.5 h-1.5 bg-amber-400/15 rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-1 h-1 bg-amber-400/10 rounded-full animate-bounce" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
+      </div>
 
-        {/* Controls */}
-        <div className="text-center mb-8">
-          <button
-            onClick={toggleTimer}
-            className={`px-8 py-4 rounded-2xl font-bold text-lg transition-all duration-300 shadow-xl hover:shadow-2xl transform hover:scale-105 ${
-              completed
-                ? 'bg-green-500 hover:bg-green-600 text-white'
-                : isActive
-                ? 'bg-red-500 hover:bg-red-600 text-white'
-                : `bg-gradient-to-r ${config.color} text-white hover:opacity-90`
-            }`}
-          >
-            {completed ? '🔄 Restart' : isActive ? '⏸️ Pause' : '▶️ Start'}
-          </button>
-        </div>
+      {/* Main Timer Content */}
+      <div className="flex flex-col items-center justify-center h-screen px-4 py-4 pb-24 relative z-10">
 
-        {/* Time Selection */}
-        <div className="text-center mb-8">
-          <div className="flex justify-center space-x-2 mb-4">
-            {[5, 10, 15, 20, 30].map((minutes) => (
+        {/* Time Selection Bar - Osmo Style */}
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
+          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
+            <div className="flex items-center space-x-1">
+            {/* 5 Minutes Tab */}
               <button
-                key={minutes}
-                onClick={() => handleTimeChange(minutes)}
-                className={`px-4 py-2 rounded-xl font-medium transition-all duration-300 ${
-                  selectedMinutes === minutes
-                    ? `bg-gradient-to-r ${config.color} text-white`
-                    : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                onClick={() => handleTimeSelect(5)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  selectedMinutes === 5
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
+                    : 'text-white hover:bg-white/10'
                 }`}
               >
-                {minutes}m
+                5 min
               </button>
-            ))}
+              
+            {/* 10 Minutes Tab */}
+              <button
+                onClick={() => handleTimeSelect(10)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  selectedMinutes === 10
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                10 min
+              </button>
+              
+            {/* 30 Minutes Tab */}
+              <button
+                onClick={() => handleTimeSelect(30)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  selectedMinutes === 30
+                    ? 'bg-amber-400 text-[var(--text-inverse)] shadow-lg shadow-amber-400/25'
+                    : 'text-white hover:bg-white/10'
+                }`}
+              >
+                30 min
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Focus Input */}
-        <div className="max-w-2xl mx-auto mb-8">
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder={`What's on your heart for ${timerType}?`}
-            className="w-full p-4 bg-black/20 border border-yellow-400/30 rounded-2xl text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-yellow-400 text-base min-h-[100px] transition-all duration-300"
-            rows={3}
-          />
-        </div>
-
-        {/* Reminder */}
-        {showReminder && (
-          <div className="text-center mb-8">
-            <div className="bg-yellow-400/20 border border-yellow-400/40 rounded-2xl p-4 max-w-2xl mx-auto">
-              <p className="text-yellow-400 font-medium">
-                💭 {config.focusReminders[currentReminderIndex]}
+        {/* Osmo-Style Timer Display */}
+        <div className="text-center w-full relative z-10 pt-2">
+          
+          {/* Mobile-First Prayer Message Above Timer - Bigger and Closer to App Bar */}
+          <div className="text-center mb-2 mt-16 sm:hidden">
+            <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 mx-3 shadow-lg">
+              <p className="text-base font-black text-white leading-tight">
+                <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black text-lg">Let's pray for {selectedMinutes} minutes</span>
               </p>
             </div>
           </div>
-        )}
+          
+          {/* Timer Container - Optimized for Mobile Visibility */}
+          <div className="relative flex items-center justify-center mb-4 w-full px-4 sm:px-40 lg:px-48 xl:px-56">
+            
+            {/* Timer Circle with Enhanced Bold Design - Bigger for Attention */}
+            <div className="relative w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] lg:w-[450px] lg:h-[450px] xl:w-[500px] xl:h-[500px]">
+              
+              {/* Enhanced Background Circle */}
+              <div className="absolute inset-0 bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-full shadow-2xl"></div>
+              
+              {/* Progress Ring Animation - Bolder Design */}
+              <svg className="absolute inset-0 w-full h-full transform -rotate-90" viewBox="0 0 100 100">
+                {/* Background Track - Bolder */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="rgba(255, 255, 255, 0.2)"
+                  strokeWidth="4"
+                />
+                {/* Animated Progress Arc - Bolder and More Visible */}
+                <circle
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke="#fbbf24"
+                  strokeWidth="6"
+                  strokeDasharray={`${2 * Math.PI * 45}`}
+                  strokeDashoffset={`${2 * Math.PI * 45 * (1 - (selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60))}`}
+                  strokeLinecap="round"
+                  className="transition-all duration-1000 ease-out drop-shadow-lg"
+                  filter="drop-shadow(0 0 12px rgba(251, 191, 36, 0.6))"
+                />
+              </svg>
+              
+              {/* Center Display - Timer & Percentage - Much Bigger Text */}
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="text-center">
+                  <div className="text-6xl sm:text-7xl lg:text-8xl xl:text-9xl font-black text-white mb-1 drop-shadow-2xl">
+                    {formatTime(timeRemaining)}
+                  </div>
+                  <div className="text-amber-400 text-lg sm:text-3xl lg:text-4xl font-bold">
+                  {Math.round(((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100)}%
+                  </div>
+                </div>
+              </div>
 
-        {/* Navigation */}
-        {onNavigate && (
-          <div className="text-center">
-            <button
-              onClick={() => onNavigate('dashboard')}
-              className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-3 rounded-xl font-medium transition-all duration-300"
-            >
-              🏠 Back to Dashboard
-            </button>
+              {/* Left Side - Prayer Message (Hidden on Mobile) */}
+              <div className="absolute left-[-140px] sm:left-[-160px] lg:left-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
+                <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px] shadow-lg">
+                  <p className="text-sm sm:text-base font-black text-white leading-tight">
+                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Let's pray for {selectedMinutes} minutes</span>
+                  </p>
+                </div>
+              </div>
+
+              {/* Right Side - Prayer Time Title (Hidden on Mobile) */}
+              <div className="absolute right-[-140px] sm:right-[-160px] lg:right-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px]">
+                  <div className="text-2xl sm:text-3xl font-black text-white mb-2">
+                    Prayer Time
+                  </div>
+                  <div className="text-lg sm:text-xl font-bold text-amber-400">
+                    {selectedMinutes} min
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile-First Prayer Time Below Timer */}
+          <div className="text-center mt-3 sm:hidden">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 mx-4">
+              <div className="text-base font-black text-white mb-1">
+                Prayer Time
+              </div>
+              <div className="text-sm font-bold text-amber-400">
+                {selectedMinutes} min
+              </div>
+            </div>
+          </div>
+
+          {/* Reminder - Osmo Style */}
+          {showReminder && (
+            <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 bg-white/10 backdrop-blur-xl border border-white/20 text-white px-6 py-4 rounded-2xl shadow-xl z-40 max-w-sm text-center">
+              <p className="text-sm font-medium">{focusReminders[currentReminderIndex]}</p>
           </div>
         )}
+        </div>
+      </div>
+
+      {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
+      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[60] pointer-events-auto">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
+          <div className="flex items-center space-x-2 sm:space-x-1">
+            {/* Community Tab */}
+            <button
+              onClick={() => onNavigate?.('community')}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            >
+              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H16c-.8 0-1.54.37-2.01.99L12 11l-1.99-2.01A2.5 2.5 0 0 0 8 8H5.46c-.8 0-1.54.37-2.01.99L1 15.5V22h2v-6h2.5l2.5 7.5h2L10 16h4l1.5 7.5h2L18 16h2v6h2zM12 7.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5z"/>
+              </svg>
+              <span className="text-sm font-medium">Community</span>
+            </button>
+            
+            {/* Bible Quest Tab */}
+            <button
+              onClick={() => onNavigate?.('runner')}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            >
+              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M17.5 2c.83 0 1.5.67 1.5 1.5v17c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-17c0-.83.67-1.5 1.5-1.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
+              </svg>
+              <span className="text-sm font-medium">Bible Quest</span>
+            </button>
+            
+            {/* Home Tab */}
+            <button
+              onClick={() => {
+                console.log('Home tab clicked!')
+                console.log('isFirstTimeUser:', isFirstTimeUser)
+                console.log('onStartQuestionnaire function:', onStartQuestionnaire)
+                console.log('onNavigate function:', onNavigate)
+                console.log('localStorage hasCompletedQuestionnaire:', localStorage.getItem('hasCompletedQuestionnaire'))
+                
+                // Check if user has already completed questionnaire in localStorage
+                const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
+                console.log('localStorage hasCompletedQuestionnaire:', hasCompleted)
+                
+                if (isFirstTimeUser && !hasCompleted) {
+                  console.log('Starting questionnaire...')
+                  onStartQuestionnaire?.();
+                } else {
+                  console.log('Navigating to home...')
+                  onNavigate?.('home');
+                }
+              }}
+              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
+            >
+              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+              </svg>
+              <span className="text-sm font-medium">Home</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};

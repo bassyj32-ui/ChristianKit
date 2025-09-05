@@ -15,11 +15,13 @@ import { AnalyticsProvider } from './components/AnalyticsProvider'
 import { useAppStore } from './store/appStore'
 import { authService } from './services/authService'
 import { cloudSyncService } from './services/cloudSyncService'
+import { useSEO } from './hooks/useSEO'
 
 // Lazy load heavy components to reduce main bundle size
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
 const CommunityPage = lazy(() => import('./components/CommunityPage').then(module => ({ default: module.CommunityPage })))
 const BibleQuest = lazy(() => import('./components/FaithRunner'))
+const BlogPage = lazy(() => import('./components/BlogPage').then(module => ({ default: module.BlogPage })))
 const JournalPage = lazy(() => import('./components/JournalPage').then(module => ({ default: module.JournalPage })))
 const StorePage = lazy(() => import('./components/StorePage').then(module => ({ default: module.StorePage })))
 const SubscriptionPage = lazy(() => import('./components/SubscriptionPage').then(module => ({ default: module.SubscriptionPage })))
@@ -75,6 +77,9 @@ const AppContent: React.FC = () => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
   const { user, loading, signOut, signInWithGoogle } = useSupabaseAuth();
   const location = useLocation();
+  
+  // SEO optimization
+  useSEO();
   
   // Use centralized state management
   const { 
@@ -277,7 +282,8 @@ const AppContent: React.FC = () => {
   const renderContent = () => {
     try {
       switch (activeTab) {
-        case 'dashboard':
+        case 'home':
+        case 'dashboard': // Keep backward compatibility
           return (
             <Suspense fallback={<LoadingSpinner />}>
               <Dashboard 
@@ -372,6 +378,17 @@ const AppContent: React.FC = () => {
           return <UserProfile />
         case 'leaderboard':
           return <GameLeaderboard />
+        case 'analysis':
+          return (
+            <Suspense fallback={<LoadingSpinner />}>
+              <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold mb-4">Analysis</h1>
+                  <p className="text-gray-400">Coming soon...</p>
+                </div>
+              </div>
+            </Suspense>
+          )
         case 'prayer':
           return (
             <UnifiedTimerPage 
@@ -392,6 +409,8 @@ const AppContent: React.FC = () => {
               isFirstTimeUser={determineIsFirstTimeUser()}
             />
           )
+        case 'blog':
+          return <BlogPage />
         default:
           return (
             <UnifiedTimerPage 
@@ -459,7 +478,7 @@ const AppContent: React.FC = () => {
         <OfflineIndicator />
         
         {/* Main Content */}
-        <div className="flex-1 pt-32 pb-20 lg:pb-0 lg:pl-64">
+        <div className="flex-1 pt-20 pb-20 lg:pb-0 lg:pt-20">
           {renderContent()}
         </div>
         
