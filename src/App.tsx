@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy } from 'react'
+import React, { useState, useEffect } from 'react'
 import { Routes, Route, Link, useLocation } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
@@ -39,41 +39,6 @@ const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 const SunriseSunsetPrayer = lazy(() => import('./components/SunriseSunsetPrayer').then(module => ({ default: module.SunriseSunsetPrayer })))
 const SearchInterface = lazy(() => import('./components/SearchInterface').then(module => ({ default: module.SearchInterface })))
 
-// Enhanced loading component with progress
-const LoadingSpinner = ({ message = "Loading..." }: { message?: string }) => (
-  <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-    <div className="text-center max-w-md mx-auto px-6">
-      {/* Animated Christian cross icon */}
-      <div className="relative mb-6">
-        <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-2xl">
-          <span className="text-3xl text-white">✝️</span>
-        </div>
-        {/* Pulsing ring */}
-        <div className="absolute inset-0 rounded-full border-4 border-amber-400/30 animate-ping"></div>
-      </div>
-
-      {/* Loading text with typing animation */}
-      <div className="mb-4">
-        <p className="text-amber-400 text-xl font-semibold mb-2">{message}</p>
-        <div className="flex justify-center space-x-1">
-          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce"></div>
-          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
-          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
-        </div>
-      </div>
-
-      {/* Loading progress bar */}
-      <div className="w-full bg-slate-700 rounded-full h-2 mb-4">
-        <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
-      </div>
-
-      {/* Inspirational quote */}
-      <p className="text-slate-400 text-sm italic">
-        "Be patient, for the Lord is working behind the scenes"
-      </p>
-    </div>
-  </div>
-)
 
 // Main App component with providers
 const App: React.FC = () => {
@@ -85,11 +50,7 @@ const App: React.FC = () => {
             <Route path="/auth/callback" element={<AuthCallback />} />
             <Route
               path="/search"
-              element={
-                <Suspense fallback={<LoadingSpinner />}>
-                  <SearchInterface />
-                </Suspense>
-              }
+              element={<SearchInterface />}
             />
             <Route path="*" element={<AppContent />} />
           </Routes>
@@ -102,24 +63,22 @@ const App: React.FC = () => {
 // AppContent component - must be defined inside both ThemeProvider and SupabaseAuthProvider contexts
 const AppContent: React.FC = () => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
-  const { user, loading, signOut, signInWithGoogle } = useSupabaseAuth();
+  const { user, signOut, signInWithGoogle } = useSupabaseAuth();
   const location = useLocation();
   
   // SEO optimization
   useSEO();
   
   // Use centralized state management
-  const { 
-    activeTab, 
-    setActiveTab, 
-    userPlan, 
-    setUserPlan, 
-    showQuestionnaire, 
-    setShowQuestionnaire, 
-    isFirstTimeUser, 
-    setIsFirstTimeUser,
-    isLoading,
-    setLoading
+  const {
+    activeTab,
+    setActiveTab,
+    userPlan,
+    setUserPlan,
+    showQuestionnaire,
+    setShowQuestionnaire,
+    isFirstTimeUser,
+    setIsFirstTimeUser
   } = useAppStore();
   
   // Get user subscription status for analytics
@@ -183,17 +142,15 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const initializeServices = async () => {
       try {
-        setLoading(true)
-        
         // Initialize auth service
         const authUser = await authService.initialize()
         if (authUser) {
           useAppStore.getState().setUser(authUser)
         }
-        
+
         // Initialize cloud sync
         await cloudSyncService.initialize()
-        
+
         // Set up auth state listener
         authService.onAuthStateChange((user) => {
           useAppStore.getState().setUser(user)
@@ -201,16 +158,14 @@ const AppContent: React.FC = () => {
             cloudSyncService.initialize()
           }
         })
-        
+
       } catch (error) {
         console.error('Service initialization error:', error)
-      } finally {
-        setLoading(false)
       }
     }
-    
+
     initializeServices()
-  }, [setLoading])
+  }, [])
 
   // Handle navigation between tabs
   const handleNavigate = (tab: string) => {
@@ -226,18 +181,6 @@ const AppContent: React.FC = () => {
     // You can add logic here for when prayer timer finishes
   }
 
-  // Show loading state
-  if (loading || isLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mx-auto mb-4"></div>
-          <h1 className="text-2xl sm:text-3xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">Let's start praying</h1>
-          <p className="text-slate-300 text-base sm:text-lg">Setting up your prayer environment...</p>
-        </div>
-      </div>
-    )
-  }
 
   // Show trial expired message if needed
   if (showTrialExpired) {
@@ -305,79 +248,33 @@ const AppContent: React.FC = () => {
         case 'home':
         case 'dashboard': // Keep backward compatibility
           return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <Dashboard 
-                userPlan={userPlan}
-              />
-            </Suspense>
+            <Dashboard
+              userPlan={userPlan}
+            />
           )
         case 'community':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <CommunityPage />
-            </Suspense>
-          )
+          return <CommunityPage />
         case 'runner':
         case 'faith-runner': // accept alias and route to the same view
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-                              <BibleQuest />
-            </Suspense>
-          )
+          return <BibleQuest />
         case 'journal':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <JournalPage />
-            </Suspense>
-          )
+          return <JournalPage />
         case 'store':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <StorePage />
-            </Suspense>
-          )
+          return <StorePage />
         case 'subscription':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <SubscriptionPage />
-            </Suspense>
-          )
+          return <SubscriptionPage />
         case 'settings':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <SettingsPage />
-            </Suspense>
-          )
+          return <SettingsPage />
         case 'prayer-history':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <PrayerHistory />
-            </Suspense>
-          )
+          return <PrayerHistory />
         case 'prayer-settings':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <PrayerSettings />
-            </Suspense>
-          )
+          return <PrayerSettings />
         case 'bible-tracker':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <BibleTracker />
-            </Suspense>
-          )
+          return <BibleTracker />
         case 'osmo-landing':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <OsmoLandingPage />
-            </Suspense>
-          )
+          return <OsmoLandingPage />
         case 'bible-reading':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <BibleReadingPage />
-            </Suspense>
-          )
+          return <BibleReadingPage />
         case 'meditation':
           return (
             <UnifiedTimerPage 
@@ -389,11 +286,7 @@ const AppContent: React.FC = () => {
             />
           )
         case 'sunrise-sunset':
-          return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <SunriseSunsetPrayer />
-            </Suspense>
-          )
+          return <SunriseSunsetPrayer />
         case 'profile':
           return <UserProfile />
         case 'leaderboard':

@@ -93,7 +93,6 @@ export interface AppState {
   user: User | null
   userPlan: UserPlan | null
   isAuthenticated: boolean
-  isLoading: boolean
   
   // Navigation
   activeTab: string
@@ -114,7 +113,6 @@ export interface AppState {
   setUser: (user: User | null) => void
   setUserPlan: (plan: UserPlan | null) => void
   setActiveTab: (tab: string) => void
-  setLoading: (loading: boolean) => void
   
   // Data Actions
   addPrayerSession: (session: PrayerSession) => void
@@ -140,7 +138,6 @@ export const useAppStore = create<AppState>()(
       user: null,
       userPlan: null,
       isAuthenticated: false,
-      isLoading: false,
       
       activeTab: 'prayer',
       previousTab: 'prayer',
@@ -162,12 +159,10 @@ export const useAppStore = create<AppState>()(
       
       setUserPlan: (plan) => set({ userPlan: plan }),
       
-      setActiveTab: (tab) => set((state) => ({ 
+      setActiveTab: (tab) => set((state) => ({
         previousTab: state.activeTab,
-        activeTab: tab 
+        activeTab: tab
       })),
-      
-      setLoading: (loading) => set({ isLoading: loading }),
       
       // Data Actions
       addPrayerSession: (session) => set((state) => ({
@@ -257,4 +252,3 @@ export const usePrayerSessions = () => useAppStore((state) => state.prayerSessio
 export const useBibleSessions = () => useAppStore((state) => state.bibleSessions)
 export const useMeditationSessions = () => useAppStore((state) => state.meditationSessions)
 export const useGameScores = () => useAppStore((state) => state.gameScores)
-export const useIsLoading = () => useAppStore((state) => state.isLoading)

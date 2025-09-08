@@ -7,7 +7,6 @@ import { reminderAutomationService } from '../services/reminderAutomationService
 interface AuthContextType {
   user: User | null
   session: Session | null
-  loading: boolean
   signInWithGoogle: () => Promise<void>
   signOut: () => Promise<void>
 }
@@ -25,7 +24,6 @@ export const useSupabaseAuth = () => {
 export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
-  const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -34,7 +32,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     // Check if Supabase is available
     if (!supabase) {
       console.warn('⚠️ SupabaseAuthProvider: Supabase client not available. Running in demo mode.')
-      setLoading(false)
       return
     }
     
@@ -42,15 +39,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Test Supabase connection first
       console.log('🔐 SupabaseAuthProvider: Testing connection...')
       
-      // Add timeout to prevent infinite loading
-      const timeoutId = setTimeout(() => {
-        console.warn('⚠️ SupabaseAuthProvider: Loading timeout, forcing completion')
-        setLoading(false)
-      }, 10000) // 10 second timeout
       
       // Get initial session
       supabase.auth.getSession().then(({ data: { session }, error }) => {
-        clearTimeout(timeoutId) // Clear timeout on success
         if (error) {
           console.error('❌ Supabase session error:', error)
           setError(error.message)
@@ -59,12 +50,9 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           setSession(session)
           setUser(session?.user ?? null)
         }
-        setLoading(false)
       }).catch(err => {
-        clearTimeout(timeoutId) // Clear timeout on error
         console.error('❌ Supabase session fetch failed:', err)
         setError(err.message)
-        setLoading(false)
       })
 
       // Handle OAuth callback if present (check both query params and hash)
@@ -133,14 +121,12 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
         
         setSession(session)
         setUser(session?.user ?? null)
-        setLoading(false)
       })
 
       return () => subscription.unsubscribe()
     } catch (err) {
       console.error('❌ SupabaseAuthProvider initialization failed:', err)
       setError(err instanceof Error ? err.message : 'Unknown error')
-      setLoading(false)
     }
   }, [])
 
@@ -255,7 +241,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const value = {
     user,
     session,
-    loading,
     signInWithGoogle,
     signOut
   }
