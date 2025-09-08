@@ -1,7 +1,7 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v2';
+const CACHE_NAME = 'christiankit-v3-force-update';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -59,6 +59,19 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('google-analytics.com') || 
       event.request.url.includes('googletagmanager.com') ||
       event.request.url.includes('doubleclick.net')) {
+    return;
+  }
+
+  // For JS/CSS assets, always fetch fresh (bypass cache)
+  if (event.request.url.includes('/assets/js/') || 
+      event.request.url.includes('/assets/css/') ||
+      event.request.url.includes('.js') ||
+      event.request.url.includes('.css')) {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return caches.match(event.request);
+      })
+    );
     return;
   }
 
