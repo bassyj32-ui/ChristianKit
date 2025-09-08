@@ -16,6 +16,7 @@ import { useAppStore } from './store/appStore'
 import { authService } from './services/authService'
 import { cloudSyncService } from './services/cloudSyncService'
 import { useSEO } from './hooks/useSEO'
+import { initPerformanceOptimizations } from './utils/performance'
 
 // Lazy load heavy components to reduce main bundle size
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
@@ -38,12 +39,38 @@ const AuthCallback = lazy(() => import('./pages/AuthCallback'))
 const SunriseSunsetPrayer = lazy(() => import('./components/SunriseSunsetPrayer').then(module => ({ default: module.SunriseSunsetPrayer })))
 const SearchInterface = lazy(() => import('./components/SearchInterface').then(module => ({ default: module.SearchInterface })))
 
-// Loading component for lazy-loaded components
-const LoadingSpinner = () => (
+// Enhanced loading component with progress
+const LoadingSpinner = ({ message = "Loading..." }: { message?: string }) => (
   <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center">
-    <div className="text-center">
-      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-amber-400 mx-auto mb-4"></div>
-      <p className="text-amber-400 text-lg">Loading...</p>
+    <div className="text-center max-w-md mx-auto px-6">
+      {/* Animated Christian cross icon */}
+      <div className="relative mb-6">
+        <div className="w-20 h-20 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center mx-auto shadow-2xl">
+          <span className="text-3xl text-white">✝️</span>
+        </div>
+        {/* Pulsing ring */}
+        <div className="absolute inset-0 rounded-full border-4 border-amber-400/30 animate-ping"></div>
+      </div>
+
+      {/* Loading text with typing animation */}
+      <div className="mb-4">
+        <p className="text-amber-400 text-xl font-semibold mb-2">{message}</p>
+        <div className="flex justify-center space-x-1">
+          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce"></div>
+          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+          <div className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+        </div>
+      </div>
+
+      {/* Loading progress bar */}
+      <div className="w-full bg-slate-700 rounded-full h-2 mb-4">
+        <div className="bg-gradient-to-r from-amber-400 to-orange-500 h-2 rounded-full animate-pulse" style={{width: '60%'}}></div>
+      </div>
+
+      {/* Inspirational quote */}
+      <p className="text-slate-400 text-sm italic">
+        "Be patient, for the Lord is working behind the scenes"
+      </p>
     </div>
   </div>
 )
@@ -136,12 +163,17 @@ const AppContent: React.FC = () => {
       isFirstTimeUser,
       error
     })
-    
+
     // Track app load for analytics
     if (!loading) {
       console.log('🎯 App loaded, GA4 should be tracking...')
     }
   }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser, error])
+
+  // Initialize performance optimizations
+  useEffect(() => {
+    initPerformanceOptimizations()
+  }, [])
 
   // Check if user has completed questionnaire
   const determineIsFirstTimeUser = (): boolean => {
