@@ -1,4 +1,4 @@
-import { User } from 'firebase/auth';
+import { User } from '@supabase/supabase-js';
 
 export interface UserData {
   userPlan: any;

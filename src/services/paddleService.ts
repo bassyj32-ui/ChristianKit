@@ -1,4 +1,4 @@
-import { auth } from '../config/firebase';
+import { supabase } from '../utils/supabase';
 
 export interface PaddleSubscription {
   id: string;
@@ -47,12 +47,12 @@ export class PaddleService {
   // Initialize Paddle with user authentication
   async initialize(): Promise<boolean> {
     try {
-      const user = auth.currentUser;
+      const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         throw new Error('User not authenticated');
       }
 
-      console.log('Paddle initialized for user:', user.uid);
+      console.log('Paddle initialized for user:', user.id);
       return true;
     } catch (error) {
       console.error('Failed to initialize Paddle:', error);
@@ -101,11 +101,13 @@ export class PaddleService {
   // Create checkout session
   async createCheckout(plan: PaddlePlan, userEmail: string): Promise<string> {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const checkoutData: PaddleCheckoutData = {
         product_id: plan.paddleProductId,
         email: userEmail,
         passthrough: JSON.stringify({
-          user_id: auth.currentUser?.uid,
+          user_id: user?.id,
           plan_id: plan.id,
           app: 'christian-kit'
         }),

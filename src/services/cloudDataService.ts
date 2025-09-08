@@ -1,20 +1,4 @@
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  getDocs,
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
-  serverTimestamp,
-  Timestamp 
-} from 'firebase/firestore'
-import { db } from '../config/firebase'
+import { supabase } from '../utils/supabase'
 import { User } from '@supabase/supabase-js'
 
 interface CloudData {
