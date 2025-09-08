@@ -1,284 +1,258 @@
-import { supabase } from '../utils/supabase'
+import { supabase } from '../utils/supabase';
 
 export interface UserProfile {
-  id: string
-  email: string
-  full_name: string
-  display_name: string
-  handle: string
-  avatar_url: string
-  bio: string
-  location: string
-  website: string
-  created_at: string
-  updated_at: string
-  is_verified: boolean
-  follower_count: number
-  following_count: number
-  post_count: number
+  id: string;
+  display_name: string;
+  avatar_url?: string;
+  bio?: string;
+  location?: string;
+  favorite_verse?: string;
+  created_at: string;
+  posts_count: number;
+  amens_received: number;
+  loves_received: number;
+  prayers_received: number;
+  followers_count: number;
+  following_count: number;
 }
 
-export interface ProfileUpdateData {
-  display_name?: string
-  handle?: string
-  bio?: string
-  location?: string
-  website?: string
+export interface UserFollow {
+  id: string;
+  follower_id: string;
+  following_id: string;
+  created_at: string;
 }
 
-// Get user profile by ID
-export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
-  try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return null
-    }
-
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('id', userId)
-      .single()
-
-    if (error) throw error
-    return profile
-  } catch (error) {
-    console.error('Error fetching user profile:', error)
-    return null
-  }
-}
-
-// Get current user's profile
+/**
+ * Get current user profile with stats
+ */
 export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return null
-    }
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return null;
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return null
-
-    return await getUserProfile(user.id)
+    return await getUserProfile(user.id);
   } catch (error) {
-    console.error('Error fetching current user profile:', error)
-    return null
+    console.error('Error fetching current user profile:', error);
+    return null;
   }
-}
+};
 
-// Update user profile
-export const updateUserProfile = async (profileData: ProfileUpdateData): Promise<boolean> => {
+/**
+ * Get user profile with stats
+ */
+export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return false
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-
-    const { error } = await supabase
-      .from('user_profiles')
-      .update({
-        ...profileData,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', user.id)
-
-    if (error) throw error
-    return true
-  } catch (error) {
-    console.error('Error updating user profile:', error)
-    return false
-  }
-}
-
-// Upload avatar image
-export const uploadAvatar = async (file: File): Promise<string | null> => {
-  try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return null
-    }
-
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-
-    // Generate unique filename
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}-${Date.now()}.${fileExt}`
-
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('avatars')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false
-      })
-
-    if (error) throw error
-
-    // Get public URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('avatars')
-      .getPublicUrl(fileName)
-
-    // Update profile with new avatar URL
-    await updateUserProfile({ avatar_url: publicUrl })
-
-    return publicUrl
-  } catch (error) {
-    console.error('Error uploading avatar:', error)
-    return null
-  }
-}
-
-// Search users by handle or display name
-export const searchUsers = async (query: string, limit: number = 10): Promise<UserProfile[]> => {
-  try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return []
-    }
-
-    const { data: profiles, error } = await supabase
-      .from('user_profiles')
+    const { data, error } = await supabase
+      .from('user_stats')
       .select('*')
-      .or(`handle.ilike.%${query}%,display_name.ilike.%${query}%`)
-      .limit(limit)
+      .eq('id', userId)
+      .single();
 
-    if (error) throw error
-    return profiles || []
+    if (error) throw error;
+    return data;
   } catch (error) {
-    console.error('Error searching users:', error)
-    return []
+    console.error('Error fetching user profile:', error);
+    return null;
   }
-}
+};
 
-// Follow a user
-export const followUser = async (userIdToFollow: string): Promise<boolean> => {
+/**
+ * Update user profile
+ */
+export const updateUserProfile = async (
+  userId: string,
+  updates: Partial<Pick<UserProfile, 'display_name' | 'bio' | 'location' | 'favorite_verse' | 'avatar_url'>>
+): Promise<boolean> => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return false
-    }
+    const { error } = await supabase
+      .from('profiles')
+      .upsert({
+        id: userId,
+        ...updates,
+        updated_at: new Date().toISOString()
+      });
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('User not authenticated')
-
-    // Check if already following
-    const { data: existingFollow } = await supabase
-      .from('followers')
-      .select()
-      .eq('follower_id', user.id)
-      .eq('following_id', userIdToFollow)
-      .single()
-
-    if (existingFollow) {
-      // Unfollow
-      await supabase
-        .from('followers')
-        .delete()
-        .eq('follower_id', user.id)
-        .eq('following_id', userIdToFollow)
-
-      // Update follower counts
-      await supabase.rpc('decrement_follower_count', { user_id: userIdToFollow })
-      await supabase.rpc('decrement_following_count', { user_id: user.id })
-
-      return false
-    } else {
-      // Follow
-      await supabase
-        .from('followers')
-        .insert({
-          follower_id: user.id,
-          following_id: userIdToFollow
-        })
-
-      // Update follower counts
-      await supabase.rpc('increment_follower_count', { user_id: userIdToFollow })
-      await supabase.rpc('increment_following_count', { user_id: user.id })
-
-      return true
-    }
+    if (error) throw error;
+    return true;
   } catch (error) {
-    console.error('Error following/unfollowing user:', error)
-    return false
+    console.error('Error updating user profile:', error);
+    return false;
   }
-}
+};
 
-// Get user's followers
-export const getUserFollowers = async (userId: string, limit: number = 20): Promise<UserProfile[]> => {
+/**
+ * Follow a user
+ */
+export const followUser = async (followerId: string, followingId: string): Promise<boolean> => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return []
-    }
+    const { error } = await supabase
+      .from('user_follows')
+      .insert({
+        follower_id: followerId,
+        following_id: followingId
+      });
 
-    const { data: followers, error } = await supabase
-      .from('followers')
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error following user:', error);
+    return false;
+  }
+};
+
+/**
+ * Unfollow a user
+ */
+export const unfollowUser = async (followerId: string, followingId: string): Promise<boolean> => {
+  try {
+    const { error } = await supabase
+      .from('user_follows')
+      .delete()
+      .eq('follower_id', followerId)
+      .eq('following_id', followingId);
+
+    if (error) throw error;
+    return true;
+  } catch (error) {
+    console.error('Error unfollowing user:', error);
+    return false;
+  }
+};
+
+/**
+ * Check if user is following another user
+ */
+export const isFollowing = async (followerId: string, followingId: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_follows')
+      .select('id')
+      .eq('follower_id', followerId)
+      .eq('following_id', followingId)
+      .single();
+
+    if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "not found"
+    return !!data;
+  } catch (error) {
+    console.error('Error checking follow status:', error);
+    return false;
+  }
+};
+
+/**
+ * Get user's followers
+ */
+export const getUserFollowers = async (userId: string): Promise<UserProfile[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_follows')
       .select(`
         follower_id,
-        user_profiles!followers_follower_id_fkey(*)
+        profiles!user_follows_follower_id_fkey (
+          id,
+          display_name,
+          avatar_url,
+          bio
+        )
       `)
-      .eq('following_id', userId)
-      .limit(limit)
+      .eq('following_id', userId);
 
-    if (error) throw error
-    return (followers || []).map(f => f.user_profiles).filter(Boolean)
+    if (error) throw error;
+    
+    return data?.map(follow => ({
+      id: follow.profiles.id,
+      display_name: follow.profiles.display_name,
+      avatar_url: follow.profiles.avatar_url,
+      bio: follow.profiles.bio,
+      created_at: '',
+      posts_count: 0,
+      amens_received: 0,
+      loves_received: 0,
+      prayers_received: 0,
+      followers_count: 0,
+      following_count: 0
+    })) || [];
   } catch (error) {
-    console.error('Error fetching followers:', error)
-    return []
+    console.error('Error fetching followers:', error);
+    return [];
   }
-}
+};
 
-// Get user's following
-export const getUserFollowing = async (userId: string, limit: number = 20): Promise<UserProfile[]> => {
+/**
+ * Get users that a user is following
+ */
+export const getUserFollowing = async (userId: string): Promise<UserProfile[]> => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return []
-    }
-
-    const { data: following, error } = await supabase
-      .from('followers')
+    const { data, error } = await supabase
+      .from('user_follows')
       .select(`
         following_id,
-        user_profiles!followers_following_id_fkey(*)
+        profiles!user_follows_following_id_fkey (
+          id,
+          display_name,
+          avatar_url,
+          bio
+        )
       `)
-      .eq('follower_id', userId)
-      .limit(limit)
+      .eq('follower_id', userId);
 
-    if (error) throw error
-    return (following || []).map(f => f.user_profiles).filter(Boolean)
+    if (error) throw error;
+    
+    return data?.map(follow => ({
+      id: follow.profiles.id,
+      display_name: follow.profiles.display_name,
+      avatar_url: follow.profiles.avatar_url,
+      bio: follow.profiles.bio,
+      created_at: '',
+      posts_count: 0,
+      amens_received: 0,
+      loves_received: 0,
+      prayers_received: 0,
+      followers_count: 0,
+      following_count: 0
+    })) || [];
   } catch (error) {
-    console.error('Error fetching following:', error)
-    return []
+    console.error('Error fetching following:', error);
+    return [];
   }
-}
+};
 
-// Check if current user is following another user
-export const isFollowingUser = async (userIdToCheck: string): Promise<boolean> => {
+/**
+ * Get user's posts
+ */
+export const getUserPosts = async (userId: string, limit: number = 10) => {
   try {
-    if (!supabase) {
-      console.warn('Supabase client not initialized')
-      return false
-    }
+    const { data, error } = await supabase
+      .from('community_posts')
+      .select('*')
+      .eq('author_id', userId)
+      .order('created_at', { ascending: false })
+      .limit(limit);
 
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return false
-
-    const { data: follow } = await supabase
-      .from('followers')
-      .select()
-      .eq('follower_id', user.id)
-      .eq('following_id', userIdToCheck)
-      .single()
-
-    return !!follow
+    if (error) throw error;
+    return data || [];
   } catch (error) {
-    console.error('Error checking follow status:', error)
-    return false
+    console.error('Error fetching user posts:', error);
+    return [];
   }
-}
+};
+
+/**
+ * Search users by display name
+ */
+export const searchUsers = async (query: string, limit: number = 10): Promise<UserProfile[]> => {
+  try {
+    const { data, error } = await supabase
+      .from('user_stats')
+      .select('*')
+      .ilike('display_name', `%${query}%`)
+      .limit(limit);
+
+    if (error) throw error;
+    return data || [];
+  } catch (error) {
+    console.error('Error searching users:', error);
+    return [];
+  }
+};

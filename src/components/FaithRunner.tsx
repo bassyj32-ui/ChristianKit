@@ -1,22 +1,62 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 
-// Game Types
+// Enhanced Game Types
 interface GameState {
   isPlaying: boolean;
   isGameOver: boolean;
+  isPaused: boolean;
   score: number;
   distance: number;
   crosses: number;
   level: number;
   speed: number;
-  streak: number;        // NEW → how many crosses in a row
-  comboMessage: string;  // NEW → text to display
-  comboTimer: number;    // NEW → how long to show the message
-  powerUpActive: 'none' | 'wings' | 'shield' | 'speed' | 'doublejump' | 'magnet';
+  streak: number;
+  comboMessage: string;
+  comboTimer: number;
+  powerUpActive: 'none' | 'wings' | 'shield' | 'speed' | 'doublejump' | 'magnet' | 'invincible' | 'slowmo';
   powerUpTimer: number;
   bestScore: number;
   canDoubleJump: boolean;
   doubleJumpUsed: boolean;
+  coins: number;
+  experience: number;
+  playerLevel: number;
+  currentMission: Mission | null;
+  missionProgress: number;
+  combo: number;
+  maxCombo: number;
+  perfectJumps: number;
+  timeAlive: number;
+  difficulty: 'easy' | 'normal' | 'hard' | 'insane';
+}
+
+interface Mission {
+  id: string;
+  title: string;
+  description: string;
+  target: number;
+  type: 'distance' | 'crosses' | 'combo' | 'jumps' | 'powerups';
+  reward: { coins: number; experience: number };
+  completed: boolean;
+}
+
+interface Character {
+  id: string;
+  name: string;
+  sprite: string;
+  unlocked: boolean;
+  cost: number;
+  abilities: string[];
+}
+
+interface Upgrade {
+  id: string;
+  name: string;
+  description: string;
+  level: number;
+  maxLevel: number;
+  cost: number;
+  effect: string;
 }
 
 interface Obstacle {
@@ -25,7 +65,10 @@ interface Obstacle {
   y: number;
   width: number;
   height: number;
-  type: 'cloud' | 'rock' | 'spike';
+  type: 'cloud' | 'rock' | 'spike' | 'lightning' | 'tornado' | 'fire' | 'ice';
+  health?: number;
+  animated?: boolean;
+  dangerous?: boolean;
 }
 
 interface Collectible {
@@ -34,8 +77,11 @@ interface Collectible {
   y: number;
   width: number;
   height: number;
-  type: 'cross' | 'wings' | 'shield' | 'speed' | 'doublejump' | 'magnet';
+  type: 'cross' | 'wings' | 'shield' | 'speed' | 'doublejump' | 'magnet' | 'coin' | 'gem' | 'heart' | 'star' | 'invincible' | 'slowmo';
   collected: boolean;
+  value: number;
+  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  animated?: boolean;
 }
 
 interface Particle {
@@ -48,7 +94,21 @@ interface Particle {
   maxLife: number;
   size: number;
   color: string;
-  type: 'dust' | 'sparkle' | 'magnet';
+  type: 'dust' | 'sparkle' | 'magnet' | 'explosion' | 'trail' | 'combo' | 'coin' | 'star';
+  alpha: number;
+  rotation?: number;
+  scale?: number;
+  gravity?: number;
+}
+
+interface VisualEffect {
+  id: string;
+  x: number;
+  y: number;
+  type: 'screen_shake' | 'flash' | 'zoom' | 'slow_motion' | 'color_shift';
+  duration: number;
+  intensity: number;
+  startTime: number;
 }
 
 interface BackgroundElement {
@@ -71,10 +131,11 @@ interface Player {
 }
 
 const FaithRunner: React.FC = () => {
-  // Game state
+  // Enhanced game state
   const [gameState, setGameState] = useState<GameState>({
     isPlaying: false,
     isGameOver: false,
+    isPaused: false,
     score: 0,
     distance: 0,
     crosses: 0,
@@ -87,7 +148,17 @@ const FaithRunner: React.FC = () => {
     powerUpTimer: 0,
     bestScore: 0,
     canDoubleJump: false,
-    doubleJumpUsed: false
+    doubleJumpUsed: false,
+    coins: 0,
+    experience: 0,
+    playerLevel: 1,
+    currentMission: null,
+    missionProgress: 0,
+    combo: 0,
+    maxCombo: 0,
+    perfectJumps: 0,
+    timeAlive: 0,
+    difficulty: 'normal'
   });
 
   const [player, setPlayer] = useState<Player>({
@@ -105,6 +176,15 @@ const FaithRunner: React.FC = () => {
   const [particles, setParticles] = useState<Particle[]>([]);
   const [backgroundElements, setBackgroundElements] = useState<BackgroundElement[]>([]);
   const [keys, setKeys] = useState<Set<string>>(new Set());
+  const [visualEffects, setVisualEffects] = useState<VisualEffect[]>([]);
+  const [characters, setCharacters] = useState<Character[]>([]);
+  const [upgrades, setUpgrades] = useState<Upgrade[]>([]);
+  const [missions, setMissions] = useState<Mission[]>([]);
+  const [selectedCharacter, setSelectedCharacter] = useState<string>('soldier');
+  const [showUpgradeMenu, setShowUpgradeMenu] = useState(false);
+  const [showMissionMenu, setShowMissionMenu] = useState(false);
+  const [cameraShake, setCameraShake] = useState({ x: 0, y: 0, intensity: 0 });
+  const [gameSpeed, setGameSpeed] = useState(1.0);
 
   // Refs
   const gameLoopRef = useRef<number>();
@@ -115,8 +195,29 @@ const FaithRunner: React.FC = () => {
   const GRAVITY = 0.8;
   const JUMP_FORCE = -15;
   const GROUND_HEIGHT = 100;
-  const CANVAS_WIDTH = Math.min(800, window.innerWidth - 40);
-  const CANVAS_HEIGHT = Math.min(400, window.innerHeight * 0.6);
+  const CANVAS_WIDTH = 800;
+  const CANVAS_HEIGHT = 400;
+
+  // Game data
+  const gameCharacters: Character[] = [
+    { id: 'soldier', name: 'Faith Warrior', sprite: '⚔️', unlocked: true, cost: 0, abilities: ['Basic Jump'] },
+    { id: 'angel', name: 'Guardian Angel', sprite: '👼', unlocked: false, cost: 500, abilities: ['Double Jump', 'Slow Fall'] },
+    { id: 'prophet', name: 'Divine Prophet', sprite: '🧙‍♂️', unlocked: false, cost: 1000, abilities: ['Foresight', 'Shield Aura'] },
+    { id: 'crusader', name: 'Holy Crusader', sprite: '🛡️', unlocked: false, cost: 2000, abilities: ['Armor', 'Charge Attack'] }
+  ];
+
+  const gameUpgrades: Upgrade[] = [
+    { id: 'jump_height', name: 'Higher Jump', description: 'Jump 20% higher', level: 0, maxLevel: 5, cost: 100, effect: 'jump_boost' },
+    { id: 'magnet_power', name: 'Magnet Range', description: 'Attract items from further away', level: 0, maxLevel: 3, cost: 200, effect: 'magnet_range' },
+    { id: 'shield_duration', name: 'Shield Time', description: 'Shield lasts 50% longer', level: 0, maxLevel: 3, cost: 150, effect: 'shield_boost' },
+    { id: 'coin_multiplier', name: 'Coin Value', description: 'Coins worth 2x more', level: 0, maxLevel: 5, cost: 300, effect: 'coin_boost' }
+  ];
+
+  const dailyMissions: Mission[] = [
+    { id: 'distance_1000', title: 'Marathon Runner', description: 'Run 1000 meters', target: 1000, type: 'distance', reward: { coins: 100, experience: 50 }, completed: false },
+    { id: 'crosses_50', title: 'Cross Collector', description: 'Collect 50 crosses', target: 50, type: 'crosses', reward: { coins: 75, experience: 30 }, completed: false },
+    { id: 'combo_10', title: 'Combo Master', description: 'Achieve 10x combo', target: 10, type: 'combo', reward: { coins: 150, experience: 75 }, completed: false }
+  ];
 
   // Audio system
   const playSound = useCallback((type: 'jump' | 'collect' | 'combo' | 'powerup' | 'gameover') => {
@@ -153,15 +254,20 @@ const FaithRunner: React.FC = () => {
       const canvas = canvasRef.current;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // Set canvas size
-        canvas.width = CANVAS_WIDTH;
-        canvas.height = CANVAS_HEIGHT;
+        // Set canvas size with responsive dimensions
+        const maxWidth = Math.min(800, window.innerWidth - 40);
+        const maxHeight = Math.min(400, window.innerHeight * 0.6);
+        
+        canvas.width = maxWidth;
+        canvas.height = maxHeight;
+        
+        console.log('🎮 Faith Runner: Canvas initialized', { width: maxWidth, height: maxHeight });
         
         // Set initial player position
         setPlayer(prev => ({
           ...prev,
-          y: CANVAS_HEIGHT - GROUND_HEIGHT - prev.height,
-          groundY: CANVAS_HEIGHT - GROUND_HEIGHT - prev.height
+          y: maxHeight - GROUND_HEIGHT - prev.height,
+          groundY: maxHeight - GROUND_HEIGHT - prev.height
         }));
 
         // Load best score from localStorage
@@ -175,7 +281,7 @@ const FaithRunner: React.FC = () => {
         for (let i = 0; i < 5; i++) {
           initialBackground.push({
             x: i * 200,
-            y: CANVAS_HEIGHT - 300,
+            y: maxHeight - 300,
             width: 100,
             height: 80,
             speed: 0.5,
@@ -185,7 +291,7 @@ const FaithRunner: React.FC = () => {
         for (let i = 0; i < 3; i++) {
           initialBackground.push({
             x: i * 300,
-            y: CANVAS_HEIGHT - 400,
+            y: maxHeight - 400,
             width: 80,
             height: 40,
             speed: 1,
@@ -330,6 +436,8 @@ const FaithRunner: React.FC = () => {
   // Game loop
   const gameLoop = useCallback(() => {
     if (!gameState.isPlaying || gameState.isGameOver) return;
+    
+    try {
 
     setGameState(prev => ({
       ...prev,
@@ -419,7 +527,8 @@ const FaithRunner: React.FC = () => {
         x: element.x - element.speed
       })).map(element => {
         if (element.x < -element.width) {
-          return { ...element, x: CANVAS_WIDTH + Math.random() * 200 };
+          const canvas = canvasRef.current;
+          return { ...element, x: (canvas?.width || 800) + Math.random() * 200 };
         }
         return element;
       })
@@ -448,6 +557,9 @@ const FaithRunner: React.FC = () => {
     }
 
     animationFrameRef.current = requestAnimationFrame(gameLoop);
+    } catch (error) {
+      console.error('🎮 Faith Runner: Game loop error:', error);
+    }
   }, [gameState.isPlaying, gameState.isGameOver, gameState.speed, gameState.level, gameState.distance]);
 
   // Start game loop
@@ -465,12 +577,15 @@ const FaithRunner: React.FC = () => {
 
   // Spawn obstacle
   const spawnObstacle = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const types: Obstacle['type'][] = ['cloud', 'rock', 'spike'];
     const type = types[Math.floor(Math.random() * types.length)];
     const newObstacle: Obstacle = {
       id: `obstacle-${Date.now()}`,
-      x: CANVAS_WIDTH,
-      y: CANVAS_HEIGHT - GROUND_HEIGHT - (type === 'cloud' ? 60 : 40),
+      x: canvas.width,
+      y: canvas.height - GROUND_HEIGHT - (type === 'cloud' ? 60 : 40),
       width: type === 'cloud' ? 50 : 40,
       height: type === 'cloud' ? 60 : 40,
       type
@@ -481,12 +596,15 @@ const FaithRunner: React.FC = () => {
 
   // Spawn collectible
   const spawnCollectible = () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    
     const types: Collectible['type'][] = ['cross', 'wings', 'shield', 'speed', 'doublejump', 'magnet'];
     const type = types[Math.floor(Math.random() * types.length)];
     const newCollectible: Collectible = {
       id: `collectible-${Date.now()}`,
-      x: CANVAS_WIDTH,
-      y: CANVAS_HEIGHT - GROUND_HEIGHT - 80,
+      x: canvas.width,
+      y: canvas.height - GROUND_HEIGHT - 80,
       width: 30,
       height: 30,
       type,
@@ -691,12 +809,16 @@ const FaithRunner: React.FC = () => {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Get actual canvas dimensions
+    const canvasWidth = canvas.width;
+    const canvasHeight = canvas.height;
+
     // Clear canvas
-    ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.clearRect(0, 0, canvasWidth, canvasHeight);
 
     // Background layers with parallax
     ctx.fillStyle = '#C6E2FF'; // sky
-    ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    ctx.fillRect(0, 0, canvasWidth, canvasHeight);
     
     // Draw background elements (parallax)
     backgroundElements.forEach(element => {
@@ -722,7 +844,7 @@ const FaithRunner: React.FC = () => {
     });
     
     ctx.fillStyle = '#98FB98'; // ground
-    ctx.fillRect(0, CANVAS_HEIGHT - GROUND_HEIGHT, CANVAS_WIDTH, GROUND_HEIGHT);
+    ctx.fillRect(0, canvasHeight - GROUND_HEIGHT, canvasWidth, GROUND_HEIGHT);
 
     // Draw player (soldier)
     ctx.fillStyle = '#4169E1'; // Royal blue
@@ -874,8 +996,8 @@ const FaithRunner: React.FC = () => {
       ctx.textAlign = 'center';
       ctx.fillText(
         gameState.comboMessage,
-        CANVAS_WIDTH / 2,
-        CANVAS_HEIGHT / 2 - 120
+        canvasWidth / 2,
+        canvasHeight / 2 - 120
       );
       ctx.textAlign = 'left';
     }
@@ -883,38 +1005,38 @@ const FaithRunner: React.FC = () => {
     // Draw game over screen
     if (gameState.isGameOver) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('GAME OVER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+      ctx.fillText('GAME OVER', canvasWidth / 2, canvasHeight / 2 - 50);
       
       ctx.font = '24px Arial';
-      ctx.fillText(`Final Score: ${gameState.score}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2);
-      ctx.fillText(`Best Score: ${gameState.bestScore}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 30);
-      ctx.fillText(`Crosses Collected: ${gameState.crosses}`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 60);
-      ctx.fillText(`Distance: ${Math.floor(gameState.distance)}m`, CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 90);
-      ctx.fillText('Press SPACE to restart', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 130);
+      ctx.fillText(`Final Score: ${gameState.score}`, canvasWidth / 2, canvasHeight / 2);
+      ctx.fillText(`Best Score: ${gameState.bestScore}`, canvasWidth / 2, canvasHeight / 2 + 30);
+      ctx.fillText(`Crosses Collected: ${gameState.crosses}`, canvasWidth / 2, canvasHeight / 2 + 60);
+      ctx.fillText(`Distance: ${Math.floor(gameState.distance)}m`, canvasWidth / 2, canvasHeight / 2 + 90);
+      ctx.fillText('Press SPACE to restart', canvasWidth / 2, canvasHeight / 2 + 130);
       ctx.textAlign = 'left';
     }
 
     // Draw start screen
     if (!gameState.isPlaying && !gameState.isGameOver) {
       ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
-      ctx.fillRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+      ctx.fillRect(0, 0, canvasWidth, canvasHeight);
       
       ctx.fillStyle = '#FFFFFF';
       ctx.font = 'bold 48px Arial';
       ctx.textAlign = 'center';
-      ctx.fillText('FAITH RUNNER', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 50);
+      ctx.fillText('FAITH RUNNER', canvasWidth / 2, canvasHeight / 2 - 50);
       
       ctx.font = '20px Arial';
-      ctx.fillText('Help the soldier run through the storm!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 - 10);
-      ctx.fillText('Jump over obstacles and collect crosses', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 20);
-      ctx.fillText('Collect power-ups: Wings, Shield, Speed,', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 50);
-      ctx.fillText('Double Jump, and Magnet!', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 80);
-      ctx.fillText('Press SPACE to start', CANVAS_WIDTH / 2, CANVAS_HEIGHT / 2 + 110);
+      ctx.fillText('Help the soldier run through the storm!', canvasWidth / 2, canvasHeight / 2 - 10);
+      ctx.fillText('Jump over obstacles and collect crosses', canvasWidth / 2, canvasHeight / 2 + 20);
+      ctx.fillText('Collect power-ups: Wings, Shield, Speed,', canvasWidth / 2, canvasHeight / 2 + 50);
+      ctx.fillText('Double Jump, and Magnet!', canvasWidth / 2, canvasHeight / 2 + 80);
+      ctx.fillText('Press SPACE to start', canvasWidth / 2, canvasHeight / 2 + 110);
       ctx.textAlign = 'left';
     }
   }, [player, obstacles, collectibles, particles, backgroundElements, gameState]);

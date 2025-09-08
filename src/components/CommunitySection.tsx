@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 
-import { cloudDataService } from '../services/cloudDataService'
 import { CommunityPrayerRequests } from './CommunityPrayerRequests'
 import { ProFeatureGate } from './ProFeatureGate'
 
@@ -206,17 +205,8 @@ export const CommunitySection: React.FC = () => {
     }
 
     try {
-      // Save to cloud
-      await cloudDataService.saveCommunityPost(user, {
-        id: newPost.id,
-        content: newPost.content,
-        authorName: newPost.authorName,
-        authorAvatar: newPost.authorAvatar,
-        hashtags: newPost.hashtags,
-        likes: newPost.likes,
-        comments: newPost.comments,
-        timestamp: new Date()
-      })
+      // TODO: Implement post creation with Supabase
+      console.log('Creating post:', newPost)
 
       // Update local state
       setPosts(prevPosts => [newPost, ...prevPosts])
@@ -267,33 +257,9 @@ export const CommunitySection: React.FC = () => {
   useEffect(() => {
     const loadPostsFromCloud = async () => {
       try {
-        const cloudPosts = await cloudDataService.getCommunityPosts()
-        if (cloudPosts.length > 0) {
-          // Convert cloud format to local format
-          const localPosts = cloudPosts.map(post => ({
-            id: post.id,
-            content: post.content,
-            authorId: post.userId,
-            authorName: post.authorName || 'Anonymous',
-            authorAvatar: post.authorAvatar || '👤',
-            timestamp: post.timestamp?.toDate?.()?.getTime() || Date.now(),
-            likes: post.likes || [],
-            comments: post.comments?.map(comment => ({
-              id: comment.id,
-              content: comment.content,
-              authorId: comment.authorId,
-              authorName: comment.authorName || 'Anonymous',
-              authorAvatar: comment.authorAvatar || '👤',
-              timestamp: comment.timestamp?.toDate?.()?.getTime() || Date.now(),
-              likes: []
-            })) || [],
-            hashtags: post.hashtags || [],
-            type: 'general' as const,
-            isPublic: true
-          }))
-          
-          setPosts(localPosts)
-        }
+        // TODO: Load posts from Supabase
+        console.log('Loading community posts from Supabase...')
+        setPosts([])
       } catch (error) {
         console.error('Error loading posts from cloud:', error)
         // Fall back to local posts

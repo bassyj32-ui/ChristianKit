@@ -20,7 +20,7 @@ import { useSEO } from './hooks/useSEO'
 // Lazy load heavy components to reduce main bundle size
 const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
 const CommunityPage = lazy(() => import('./components/CommunityPage').then(module => ({ default: module.CommunityPage })))
-const BibleQuest = lazy(() => import('./components/FaithRunner'))
+const BibleQuest = lazy(() => import('./components/BibleVerseMemoryMatch'))
 const BlogPage = lazy(() => import('./components/BlogPage').then(module => ({ default: module.BlogPage })))
 const JournalPage = lazy(() => import('./components/JournalPage').then(module => ({ default: module.JournalPage })))
 const StorePage = lazy(() => import('./components/StorePage').then(module => ({ default: module.StorePage })))
