@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
 // Game Types
 interface Card {
@@ -32,7 +32,7 @@ interface BibleVerse {
   category: string;
 }
 
-const BibleVerseMemoryMatch: React.FC = () => {
+const BibleVerseMemoryMatch = () => {
   // Game state
   const [gameState, setGameState] = useState<GameState>({
     cards: [],
