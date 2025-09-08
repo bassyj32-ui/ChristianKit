@@ -19,12 +19,12 @@ class PWAService {
   private isSupported: boolean = false;
   private isInstalled: boolean = false;
   private deferredPrompt: any = null;
-  // private swRegistration: ServiceWorkerRegistration | null = null;
+  private swRegistration: ServiceWorkerRegistration | null = null;
 
   constructor() {
-    // Temporarily disable service worker support to prevent build issues
-    this.isSupported = false; // 'serviceWorker' in navigator && 'PushManager' in window
-    
+    // Enable PWA support
+    this.isSupported = typeof navigator !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window;
+
     this.setupEventListeners();
     this.checkInstallationStatus();
   }
@@ -50,40 +50,40 @@ class PWAService {
     }
   }
 
-  // async registerServiceWorker() {
-  //   if (!this.isSupported) return false;
+  async registerServiceWorker() {
+    if (!this.isSupported) return false;
 
-  //   try {
-  //     // Temporarily disabled to prevent build issues
-  //     // this.swRegistration = await navigator.serviceWorker.register('/sw.js')
-  //     console.log('Service Worker registered successfully');
-  //     return true;
-  //   } catch (error) {
-  //     console.error('Service Worker registration failed:', error);
-  //     return false;
-  //   }
-  // }
+    try {
+      // Register service worker for PWA functionality
+      this.swRegistration = await navigator.serviceWorker.register('/sw.js');
+      console.log('✅ PWA Service Worker registered successfully');
+      return true;
+    } catch (error) {
+      console.error('❌ PWA Service Worker registration failed:', error);
+      return false;
+    }
+  }
 
-  // async checkForUpdates() {
-  //   if (!this.swRegistration) return;
+  async checkForUpdates() {
+    if (!this.swRegistration) return;
 
-  //   try {
-  //     await this.swRegistration.update();
-  //     this.swRegistration.addEventListener('updatefound', () => {
-  //       const newWorker = this.swRegistration!.installing;
-  //       if (newWorker) {
-  //         newWorker.addEventListener('statechange', () => {
-  //           if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-  //             // New version available
-  //             console.log('New version available');
-  //           }
-  //         });
-  //       }
-  //     });
-  //   } catch (error) {
-  //     console.error('Update check failed:', error);
-  //   }
-  // }
+    try {
+      await this.swRegistration.update();
+      this.swRegistration.addEventListener('updatefound', () => {
+        const newWorker = this.swRegistration!.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              // New version available
+              console.log('🆕 PWA New version available');
+            }
+          });
+        }
+      });
+    } catch (error) {
+      console.error('❌ PWA Update check failed:', error);
+    }
+  }
 
   async showInstallPrompt() {
     if (!this.deferredPrompt) {
@@ -119,8 +119,8 @@ class PWAService {
 
   getSupportStatus() {
     return {
-      serviceWorker: false, // Temporarily disabled
-      pushManager: false,   // Temporarily disabled
+      serviceWorker: this.isSupported,
+      pushManager: 'PushManager' in window,
       installPrompt: this.deferredPrompt !== null,
       isInstalled: this.isInstalled
     };
