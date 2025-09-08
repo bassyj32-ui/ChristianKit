@@ -6,21 +6,18 @@
   "devCommand": "npm run dev",
   "rewrites": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html",
-      "has": [
-        {
-          "type": "header",
-          "key": "accept",
-          "value": "text/html"
-        }
-      ]
+      "source": "/((?!assets/).*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
     {
-      "source": "/assets/(.*)",
+      "source": "/assets/js/(.*)",
       "headers": [
+        {
+          "key": "Content-Type",
+          "value": "application/javascript"
+        },
         {
           "key": "Cache-Control",
           "value": "public, max-age=31536000, immutable"
@@ -28,20 +25,15 @@
       ]
     },
     {
-      "source": "/(.*\\.js)",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "application/javascript"
-        }
-      ]
-    },
-    {
-      "source": "/(.*\\.css)",
+      "source": "/assets/css/(.*)",
       "headers": [
         {
           "key": "Content-Type",
           "value": "text/css"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
         }
       ]
     }
