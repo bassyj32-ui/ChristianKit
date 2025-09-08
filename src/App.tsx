@@ -8,6 +8,7 @@ import { UnifiedTimerPage } from './components/UnifiedTimerPage'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { UserProfile } from './components/UserProfile'
 import { GameLeaderboard } from './components/GameLeaderboard'
+import { NotificationManager } from './components/NotificationManager'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SupabaseAuthProvider, useSupabaseAuth } from './components/SupabaseAuthProvider'
@@ -384,7 +385,10 @@ const AppContent: React.FC = () => {
         
         {/* Offline Indicator */}
         <OfflineIndicator />
-        
+
+        {/* Notification Manager */}
+        <NotificationManager user={user} />
+
         {/* Main Content */}
         <div className="flex-1 pt-20 pb-20 lg:pb-0 lg:pt-20">
           {renderContent()}
