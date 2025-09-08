@@ -69,10 +69,10 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
           
           displayData.push({
             day: days[i],
-            prayer: this.getDayProgress(daySessions, 'prayer'),
-            bible: this.getDayProgress(daySessions, 'bible'),
-            meditation: this.getDayProgress(daySessions, 'meditation'),
-            journal: this.getDayProgress(daySessions, 'journal')
+            prayer: getDayProgress(daySessions, 'prayer'),
+            bible: getDayProgress(daySessions, 'bible'),
+            meditation: getDayProgress(daySessions, 'meditation'),
+            journal: getDayProgress(daySessions, 'journal')
           });
         }
         
