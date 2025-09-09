@@ -60,11 +60,17 @@ export const getTrendingPosts = async (
     }
 
     // Simple query to get posts
-    const { data: posts, error } = await supabase
+    console.log('🔍 Fetching posts with query parameters:', {
+      moderation_status: 'approved',
+      is_live: true,
+      limit
+    });
+
+    let { data: posts, error } = await supabase
       .from('community_posts')
       .select(`
         *,
-        profiles!community_posts_author_id_fkey(
+        profiles(
           display_name,
           avatar_url
         )
@@ -74,10 +80,28 @@ export const getTrendingPosts = async (
       .order('created_at', { ascending: false })
       .limit(limit);
 
+    // If the join fails, try without profiles join
     if (error) {
-      console.error('Error fetching posts:', error);
-      return { data: [], pagination: { hasNextPage: false, limit } };
+      console.warn('⚠️ Profile join failed, trying without join:', error);
+      const { data: fallbackPosts, error: fallbackError } = await supabase
+        .from('community_posts')
+        .select('*')
+        .eq('moderation_status', 'approved')
+        .eq('is_live', true)
+        .order('created_at', { ascending: false })
+        .limit(limit);
+
+      if (fallbackError) {
+        console.error('❌ Error fetching posts (fallback):', fallbackError);
+        return { data: [], pagination: { hasNextPage: false, limit } };
+      }
+
+      posts = fallbackPosts;
+      error = null;
     }
+
+    console.log('✅ Fetched posts:', posts?.length || 0, 'posts found');
+    console.log('📋 Raw posts data:', posts);
 
     // Transform data
     const transformedPosts = (posts || []).map((post: any) => ({
@@ -125,6 +149,15 @@ export const createPost = async (postData: {
       postData.content.match(/#\w+/g)?.map(tag => tag.slice(1)) || [];
 
     // Create post
+    console.log('🚀 Creating post with data:', {
+      author_id: user.id,
+      content: postData.content,
+      category: postData.category,
+      hashtags,
+      is_live: true,
+      moderation_status: 'approved'
+    });
+
     const { data: post, error } = await supabase
       .from('community_posts')
       .insert({
@@ -139,10 +172,11 @@ export const createPost = async (postData: {
       .single();
 
     if (error) {
-      console.error('Error creating post:', error);
+      console.error('❌ Error creating post:', error);
       throw error;
     }
 
+    console.log('✅ Post created successfully:', post);
     return post;
   } catch (error) {
     console.error('Error creating post:', error);
