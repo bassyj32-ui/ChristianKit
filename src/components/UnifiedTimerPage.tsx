@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { SharePrayerSession } from './SharePrayerSession'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
-import { ProgressService } from '../services/ProgressService'
+import ProgressService from '../services/ProgressService'
 
 interface PrayerSession {
   id: string

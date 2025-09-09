@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
-import { ProgressService } from '../services/ProgressService'
+import ProgressService from '../services/ProgressService'
 
 interface PrayerSession {
   id: string

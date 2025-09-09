@@ -16,7 +16,7 @@ import { prayerService } from '../services/prayerService'
 import { subscriptionService } from '../services/subscriptionService'
 import { dailyReEngagementService } from '../services/dailyReEngagementService'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
-import { ProgressService } from '../services/ProgressService'
+import ProgressService from '../services/ProgressService'
 
 interface DashboardProps {
   onNavigate?: (page: string, duration?: number) => void;

@@ -4,7 +4,7 @@ import { DailyProgressReminder } from './DailyProgressReminder'
 import { bibleService, BibleVerse } from '../services/BibleService'
 import { BibleSearch } from './BibleSearch'
 import { BibleReader } from './BibleReader'
-import { ProgressService } from '../services/ProgressService'
+import ProgressService from '../services/ProgressService'
 
 interface BibleSession {
   id: string
