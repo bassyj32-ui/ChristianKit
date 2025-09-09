@@ -1,7 +1,7 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v3-force-update';
+const CACHE_NAME = 'christiankit-v4-dev-cache-clear';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -62,13 +62,16 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For JS/CSS assets, always fetch fresh (bypass cache)
-  if (event.request.url.includes('/assets/js/') || 
+  // For development files and assets, always fetch fresh (bypass cache)
+  if (event.request.url.includes('/src/') || 
+      event.request.url.includes('/assets/js/') || 
       event.request.url.includes('/assets/css/') ||
       event.request.url.includes('.js') ||
-      event.request.url.includes('.css')) {
+      event.request.url.includes('.css') ||
+      event.request.url.includes('App.tsx') ||
+      event.request.url.includes('main.tsx')) {
     event.respondWith(
-      fetch(event.request).catch(() => {
+      fetch(event.request, { cache: 'no-cache' }).catch(() => {
         return caches.match(event.request);
       })
     );

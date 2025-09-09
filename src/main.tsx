@@ -19,9 +19,22 @@ if ('serviceWorker' in navigator) {
   } else {
     // In dev, ensure any existing SWs are unregistered to prevent stale prod assets
     navigator.serviceWorker.getRegistrations().then((regs) => {
-      regs.forEach((r) => r.unregister());
-      console.log('🧹 Dev mode: unregistered existing Service Workers');
+      regs.forEach((r) => {
+        r.unregister();
+        console.log('🧹 Dev mode: unregistered service worker');
+      });
+      console.log('🧹 Dev mode: unregistered all existing Service Workers');
     });
+    
+    // Also clear all caches in development
+    if ('caches' in window) {
+      caches.keys().then((cacheNames) => {
+        cacheNames.forEach((cacheName) => {
+          caches.delete(cacheName);
+          console.log('🧹 Dev mode: cleared cache:', cacheName);
+        });
+      });
+    }
   }
 }
 

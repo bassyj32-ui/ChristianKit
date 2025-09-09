@@ -13,32 +13,36 @@ import { NotificationManager } from './components/NotificationManager'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SupabaseAuthProvider, useSupabaseAuth } from './components/SupabaseAuthProvider'
 import { AnalyticsProvider } from './components/AnalyticsProvider'
+import { LoadingSpinner } from './components/LoadingSpinner'
 import { useAppStore } from './store/appStore'
 import { authService } from './services/authService'
 import { cloudSyncService } from './services/cloudSyncService'
 import { useSEO } from './hooks/useSEO'
 import { initPerformanceOptimizations } from './utils/performance'
 
-// Lazy load heavy components to reduce main bundle size
-const Dashboard = lazy(() => import('./components/Dashboard').then(module => ({ default: module.Dashboard })))
-const CommunityPage = lazy(() => import('./components/CommunityPage').then(module => ({ default: module.CommunityPage })))
-const BibleQuest = lazy(() => import('./components/BibleVerseMemoryMatch'))
-const BlogPage = lazy(() => import('./components/BlogPage').then(module => ({ default: module.BlogPage })))
-const JournalPage = lazy(() => import('./components/JournalPage').then(module => ({ default: module.JournalPage })))
-const StorePage = lazy(() => import('./components/StorePage').then(module => ({ default: module.StorePage })))
-const SubscriptionPage = lazy(() => import('./components/SubscriptionPage').then(module => ({ default: module.SubscriptionPage })))
-const SettingsPage = lazy(() => import('./components/SettingsPage').then(module => ({ default: module.SettingsPage })))
-const PrayerHistory = lazy(() => import('./components/PrayerHistory').then(module => ({ default: module.PrayerHistory })))
-const PrayerSettings = lazy(() => import('./components/PrayerSettings').then(module => ({ default: module.PrayerSettings })))
-const BibleTracker = lazy(() => import('./components/BibleTracker').then(module => ({ default: module.BibleTracker })))
-const OsmoLandingPage = lazy(() => import('./components/OsmoLandingPage').then(module => ({ default: module.OsmoLandingPage })))
-const UserQuestionnaire = lazy(() => import('./components/UserQuestionnaire').then(module => ({ default: module.UserQuestionnaire })))
-const LoginPage = lazy(() => import('./components/LoginPage').then(module => ({ default: module.LoginPage })))
-const BibleReadingPage = lazy(() => import('./components/BibleReadingPage').then(module => ({ default: module.BibleReadingPage })))
-const MeditationPage = lazy(() => import('./components/MeditationPage').then(module => ({ default: module.MeditationPage })))
-const AuthCallback = lazy(() => import('./pages/AuthCallback'))
-const SunriseSunsetPrayer = lazy(() => import('./components/SunriseSunsetPrayer').then(module => ({ default: module.SunriseSunsetPrayer })))
-const SearchInterface = lazy(() => import('./components/SearchInterface').then(module => ({ default: module.SearchInterface })))
+// Import components directly to fix lazy loading issue
+import { Dashboard } from './components/Dashboard'
+import { CommunityPage } from './components/CommunityPage'
+import BibleVerseMemoryMatch from './components/BibleVerseMemoryMatch'
+import { BlogPage } from './components/BlogPage'
+import { JournalPage } from './components/JournalPage'
+import { StorePage } from './components/StorePage'
+import { SubscriptionPage } from './components/SubscriptionPage'
+import { SettingsPage } from './components/SettingsPage'
+import { PrayerHistory } from './components/PrayerHistory'
+import { PrayerSettings } from './components/PrayerSettings'
+import { BibleTracker } from './components/BibleTracker'
+import { OsmoLandingPage } from './components/OsmoLandingPage'
+import { UserQuestionnaire } from './components/UserQuestionnaire'
+import { LoginPage } from './components/LoginPage'
+import { BibleReadingPage } from './components/BibleReadingPage'
+import { MeditationPage } from './components/MeditationPage'
+import AuthCallback from './pages/AuthCallback'
+import { SunriseSunsetPrayer } from './components/SunriseSunsetPrayer'
+import { SearchInterface } from './components/SearchInterface'
+
+// Create aliases for backward compatibility
+const BibleQuest = BibleVerseMemoryMatch
 
 
 // Main App component with providers
@@ -106,17 +110,14 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     console.log('🔍 AppContent Debug:', {
       user: user?.email,
-      loading,
       activeTab,
       showQuestionnaire,
       isFirstTimeUser
     })
 
     // Track app load for analytics
-    if (!loading) {
-      console.log('🎯 App loaded, GA4 should be tracking...')
-    }
-  }, [user, loading, activeTab, showQuestionnaire, isFirstTimeUser])
+    console.log('🎯 App loaded, GA4 should be tracking...')
+  }, [user, activeTab, showQuestionnaire, isFirstTimeUser])
 
   // Initialize performance optimizations
   useEffect(() => {
@@ -294,14 +295,12 @@ const AppContent: React.FC = () => {
           return <GameLeaderboard />
         case 'analysis':
           return (
-            <Suspense fallback={<LoadingSpinner />}>
-              <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
-                <div className="text-center">
-                  <h1 className="text-4xl font-bold mb-4">Analysis</h1>
-                  <p className="text-gray-400">Coming soon...</p>
-                </div>
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
+              <div className="text-center">
+                <h1 className="text-4xl font-bold mb-4">Analysis</h1>
+                <p className="text-gray-400">Coming soon...</p>
               </div>
-            </Suspense>
+            </div>
           )
         case 'prayer':
           return (
