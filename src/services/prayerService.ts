@@ -1,6 +1,7 @@
 import { PrayerSession, PrayerStats, PrayerSettings, PrayerReminder, PrayerPrompt, PrayerTechnique } from '../types/prayer';
 import { cloudDataService } from './cloudDataService'
 import { useAuth } from '../components/AuthProvider'
+import { supabase } from '../utils/supabase';
 
 class PrayerService {
   private readonly SESSIONS_KEY = 'prayerSessions';
@@ -11,16 +12,40 @@ class PrayerService {
     try {
       const sessions = await this.getPrayerSessions();
       sessions.unshift(session);
-      
+
       // Keep only last 100 sessions
       if (sessions.length > 100) {
         sessions.splice(100);
       }
-      
+
       localStorage.setItem(this.SESSIONS_KEY, JSON.stringify(sessions));
-      
-      // Save to cloud if user is authenticated (we'll handle this in the component)
-      // The cloud sync is handled at the component level through the AuthProvider
+
+      // Also save to Supabase if user is authenticated
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { error } = await supabase
+              .from('prayer_sessions')
+              .insert({
+                user_id: user.id,
+                started_at: new Date(session.started_at).toISOString(),
+                ended_at: session.ended_at ? new Date(session.ended_at).toISOString() : null,
+                duration_minutes: session.duration_minutes,
+                prayer_type: session.prayer_type || 'personal',
+                notes: session.notes
+              });
+
+            if (error) {
+              console.error('Error saving to Supabase:', error);
+            } else {
+              console.log('✅ Prayer session saved to Supabase');
+            }
+          }
+        } catch (supabaseError) {
+          console.warn('Supabase save failed, continuing with localStorage:', supabaseError);
+        }
+      }
     } catch (error) {
       console.error('Error saving prayer session:', error);
       throw error;
@@ -29,8 +54,45 @@ class PrayerService {
 
   async getPrayerSessions(): Promise<PrayerSession[]> {
     try {
+      // Try to get from Supabase first if user is authenticated
+      if (supabase) {
+        try {
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user) {
+            const { data: supabaseSessions, error } = await supabase
+              .from('prayer_sessions')
+              .select('*')
+              .eq('user_id', user.id)
+              .order('started_at', { ascending: false })
+              .limit(100);
+
+            if (!error && supabaseSessions) {
+              console.log('✅ Loaded prayer sessions from Supabase:', supabaseSessions.length);
+
+              // Convert Supabase format to local format
+              const convertedSessions: PrayerSession[] = supabaseSessions.map(session => ({
+                id: session.id,
+                started_at: session.started_at,
+                ended_at: session.ended_at,
+                duration_minutes: session.duration_minutes,
+                prayer_type: session.prayer_type,
+                notes: session.notes,
+                completed: true // Assume completed if in database
+              }));
+
+              return convertedSessions;
+            }
+          }
+        } catch (supabaseError) {
+          console.warn('Supabase fetch failed, falling back to localStorage:', supabaseError);
+        }
+      }
+
+      // Fallback to localStorage
       const saved = localStorage.getItem(this.SESSIONS_KEY);
-      return saved ? JSON.parse(saved) : [];
+      const localSessions = saved ? JSON.parse(saved) : [];
+      console.log('📱 Using localStorage sessions:', localSessions.length);
+      return localSessions;
     } catch (error) {
       console.error('Error loading prayer sessions:', error);
       return [];
@@ -260,10 +322,12 @@ class PrayerService {
     ];
   }
 
-  // Weekly Progress - Enhanced Logic
+  // Weekly Progress - Enhanced Logic with Real Data
   async getWeeklyProgress(): Promise<any> {
     try {
+      console.log('📊 Calculating weekly progress...');
       const sessions = await this.getPrayerSessions();
+      console.log('📊 Sessions loaded:', sessions.length);
       const today = new Date();
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
@@ -297,38 +361,41 @@ class PrayerService {
       
       // Calculate daily progress with enhanced logic
       weeklySessions.forEach(session => {
-        const sessionDate = new Date(session.date);
+        const sessionDate = new Date(session.started_at || session.date);
         const dayIndex = sessionDate.getDay();
         const dayName = days[dayIndex];
-        
+
         // Enhanced activity type detection
         let activityType = 'prayer'; // Default
-        
+
         // More sophisticated activity detection
-        const focus = session.focus?.toLowerCase() || '';
-        const mood = session.mood?.toLowerCase() || '';
-        
-        if (focus.includes('bible') || focus.includes('scripture') || focus.includes('reading')) {
+        const notes = session.notes?.toLowerCase() || '';
+        const prayerType = session.prayer_type?.toLowerCase() || '';
+
+        if (notes.includes('bible') || notes.includes('scripture') || notes.includes('reading') || prayerType.includes('bible')) {
           activityType = 'bible';
-        } else if (focus.includes('meditation') || focus.includes('contemplation') || focus.includes('silence')) {
+        } else if (notes.includes('meditation') || notes.includes('contemplation') || notes.includes('silence') || prayerType.includes('meditation')) {
           activityType = 'meditation';
-        } else if (focus.includes('journal') || focus.includes('writing') || focus.includes('reflection')) {
+        } else if (notes.includes('journal') || notes.includes('writing') || notes.includes('reflection') || prayerType.includes('journal')) {
           activityType = 'journal';
-        } else if (focus.includes('prayer') || focus.includes('worship') || focus.includes('thanksgiving')) {
+        } else if (prayerType.includes('prayer') || prayerType.includes('worship') || prayerType.includes('thanksgiving')) {
           activityType = 'prayer';
         }
-        
+
         // Calculate percentage based on user's target duration (default 30 min)
         const targetDuration = 30;
-        const percentage = Math.min(100, Math.round((session.duration / targetDuration) * 100));
-        
+        const duration = session.duration_minutes || session.duration || 0;
+        const percentage = Math.min(100, Math.round((duration / targetDuration) * 100));
+
         // Update daily progress
         dailyProgress[dayName][activityType] = Math.max(
-          dailyProgress[dayName][activityType], 
+          dailyProgress[dayName][activityType],
           percentage
         );
-        dailyProgress[dayName].totalMinutes += session.duration;
+        dailyProgress[dayName].totalMinutes += duration;
         dailyProgress[dayName].sessionsCount += 1;
+
+        console.log(`📊 Day ${dayName}: ${activityType} ${percentage}% (${duration} min)`);
       });
       
       // Calculate streaks and goals

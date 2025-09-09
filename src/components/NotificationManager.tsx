@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { EmailService } from '../services/EmailService';
-import { notificationScheduler } from '../services/NotificationScheduler';
+import NotificationSchedulerService from '../services/NotificationSchedulerService';
 
 interface NotificationManagerProps {
   user: User | null;
@@ -88,63 +88,30 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
     initializeNotifications();
   }, []);
 
-  // Start daily notification scheduling
-  const startDailyScheduling = () => {
-    if (!user) return;
-
-    // Get preferred time from user plan or use default 9 AM
-    const userPlan = localStorage.getItem('userPlan');
-    let preferredTime = '9:00 AM';
-    
-    if (userPlan) {
-      try {
-        const plan = JSON.parse(userPlan);
-        if (plan.notificationPreferences?.preferredTime) {
-          preferredTime = plan.notificationPreferences.preferredTime;
-        }
-      } catch (error) {
-        console.warn('Failed to parse user plan for preferred time:', error);
-      }
+  // Initialize notification scheduler service
+  useEffect(() => {
+    if (user) {
+      console.log('🔔 Initializing notification scheduler for user:', user.id);
+      const scheduler = NotificationSchedulerService.getInstance();
+      scheduler.initialize(user.id).catch(error => {
+        console.error('❌ Failed to initialize notification scheduler:', error);
+      });
     }
 
-    // Schedule daily prayer reminder at preferred time
-    const scheduleDailyReminder = () => {
-      const now = new Date();
-      const reminderTime = new Date(now);
-      
-      // Parse preferred time (e.g., "9:00 AM" -> 9:00)
-      const timeMatch = preferredTime.match(/(\d+):(\d+)\s*(AM|PM)/);
-      if (timeMatch) {
-        let hours = parseInt(timeMatch[1]);
-        const minutes = parseInt(timeMatch[2]);
-        const period = timeMatch[3];
-        
-        if (period === 'PM' && hours !== 12) hours += 12;
-        if (period === 'AM' && hours === 12) hours = 0;
-        
-        reminderTime.setHours(hours, minutes, 0, 0);
-      } else {
-        // Fallback to 9 AM
-        reminderTime.setHours(9, 0, 0, 0);
+    // Cleanup when component unmounts or user changes
+    return () => {
+      if (user) {
+        const scheduler = NotificationSchedulerService.getInstance();
+        scheduler.stopUserNotifications(user.id);
       }
-      
-      // If it's already past the preferred time today, schedule for tomorrow
-      if (now > reminderTime) {
-        reminderTime.setDate(reminderTime.getDate() + 1);
-      }
-      
-      const timeUntilReminder = reminderTime.getTime() - now.getTime();
-      
-      setTimeout(() => {
-        showDailyReminder();
-        // Schedule next day's reminder
-        setInterval(showDailyReminder, 24 * 60 * 60 * 1000);
-      }, timeUntilReminder);
-      
-      console.log(`⏰ Daily reminder scheduled for ${reminderTime.toLocaleString()} (preferred: ${preferredTime})`);
     };
+  }, [user]);
 
-    scheduleDailyReminder();
+  // Legacy method for backward compatibility
+  const startDailyScheduling = () => {
+    if (!user) return;
+    // This method is now handled by NotificationSchedulerService
+    console.log('📅 Daily scheduling now handled by NotificationSchedulerService');
   };
 
   // Show daily prayer reminder

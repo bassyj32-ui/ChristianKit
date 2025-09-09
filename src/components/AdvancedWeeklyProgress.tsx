@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { ProFeatureGate } from './ProFeatureGate'
 import { subscriptionService } from '../services/subscriptionService'
+import ProgressService, { WeeklyProgressData } from '../services/ProgressService'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 
 interface AdvancedProgressData {
   date: string
@@ -53,27 +55,98 @@ export const AdvancedWeeklyProgress: React.FC<AdvancedWeeklyProgressProps> = ({
   const [selectedMetric, setSelectedMetric] = useState<'duration' | 'consistency' | 'quality'>('duration')
   const [timeRange, setTimeRange] = useState<'thisWeek' | 'lastWeek' | 'lastMonth'>('thisWeek')
   const [isLoading, setIsLoading] = useState(true)
+  const { user } = useSupabaseAuth()
 
   useEffect(() => {
     loadAdvancedProgress()
-  }, [timeRange])
+  }, [timeRange, user])
 
   const loadAdvancedProgress = async () => {
+    if (!user) {
+      setIsLoading(false)
+      return
+    }
+
     setIsLoading(true)
     try {
-      // Simulate loading advanced analytics data
-      const mockData = generateMockAdvancedData()
-      setProgressData(mockData)
-      
-      // Generate insights
-      const weeklyInsights = generateWeeklyInsights(mockData)
+      console.log('📊 AdvancedWeeklyProgress: Loading real progress data for user:', user.id)
+
+      // Calculate date range based on timeRange
+      const today = new Date()
+      let weekStart: Date
+
+      switch (timeRange) {
+        case 'lastWeek':
+          weekStart = new Date(today)
+          weekStart.setDate(today.getDate() - today.getDay() - 7) // Last week's start
+          break
+        case 'lastMonth':
+          weekStart = new Date(today)
+          weekStart.setDate(today.getDate() - 30) // Last 30 days
+          break
+        default: // thisWeek
+          weekStart = new Date(today)
+          weekStart.setDate(today.getDate() - today.getDay()) // This week's start
+      }
+
+      const weekStartStr = weekStart.toISOString().split('T')[0]
+
+      // Load real progress data
+      const realData = await ProgressService.getWeeklyProgress(user.id, weekStartStr)
+      console.log('✅ AdvancedWeeklyProgress: Real data loaded:', realData)
+
+      // Convert to AdvancedProgressData format
+      const advancedData = convertToAdvancedFormat(realData)
+      setProgressData(advancedData)
+
+      // Generate insights from real data
+      const weeklyInsights = generateWeeklyInsights(advancedData)
       setInsights(weeklyInsights)
-      
+
       setIsLoading(false)
     } catch (error) {
-      console.error('Error loading advanced progress:', error)
+      console.error('❌ AdvancedWeeklyProgress: Error loading progress:', error)
+      // Fallback to mock data on error
+      const mockData = generateMockAdvancedData()
+      setProgressData(mockData)
+      const weeklyInsights = generateWeeklyInsights(mockData)
+      setInsights(weeklyInsights)
       setIsLoading(false)
     }
+  }
+
+  const convertToAdvancedFormat = (realData: WeeklyProgressData): AdvancedProgressData[] => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
+    const advancedData: AdvancedProgressData[] = []
+
+    days.forEach((day, index) => {
+      const dayData = realData.dailyProgress[day]
+      if (dayData) {
+        advancedData.push({
+          date: day,
+          prayer: {
+            duration: dayData.totalMinutes || 0,
+            sessionsCount: dayData.sessionsCount || 0,
+            consistency: dayData.prayer || 0,
+            quality: dayData.prayer >= 80 ? 'excellent' : dayData.prayer >= 60 ? 'good' : 'needs_improvement'
+          },
+          bible: {
+            duration: dayData.totalMinutes || 0,
+            sessionsCount: dayData.sessionsCount || 0,
+            consistency: dayData.bible || 0,
+            quality: dayData.bible >= 80 ? 'excellent' : dayData.bible >= 60 ? 'good' : 'needs_improvement'
+          },
+          meditation: {
+            duration: dayData.totalMinutes || 0,
+            sessionsCount: dayData.sessionsCount || 0,
+            consistency: dayData.meditation || 0,
+            quality: dayData.meditation >= 80 ? 'excellent' : dayData.meditation >= 60 ? 'good' : 'needs_improvement'
+          }
+        })
+      }
+    })
+
+    return advancedData
   }
 
   const generateMockAdvancedData = (): AdvancedProgressData[] => {

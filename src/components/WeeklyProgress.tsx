@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ProgressService, WeeklyProgress as WeeklyProgressData, UserSession } from '../services/ProgressService';
+import ProgressService, { WeeklyProgressData, DailyProgress } from '../services/ProgressService';
 import { useSupabaseAuth } from './SupabaseAuthProvider';
 
 interface ProgressData {
@@ -27,24 +27,15 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
   useEffect(() => {
     const loadRealProgress = async () => {
       if (!user) {
-        // Fallback to mock data if no user
-        setTimeout(() => {
-          const mockData: ProgressData[] = [
-            { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
-            { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
-            { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
-            { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
-            { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
-            { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
-            { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
-          ];
-          setProgressData(mockData);
-          setLoading(false);
-        }, 1000);
+        // Show empty state if no user
+        setProgressData([]);
+        setLoading(false);
         return;
       }
 
       try {
+        console.log('📊 WeeklyProgress: Loading real progress for user:', user.id);
+
         // Get current week start (Sunday)
         const today = new Date();
         const dayOfWeek = today.getDay();
@@ -52,48 +43,44 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
         weekStart.setDate(today.getDate() - dayOfWeek);
         const weekStartStr = weekStart.toISOString().split('T')[0];
 
-        // Load real progress data
+        // Load real progress data from ProgressService
         const realData = await ProgressService.getWeeklyProgress(user.id, weekStartStr);
         setRealProgressData(realData);
+        console.log('✅ WeeklyProgress: Real data loaded:', realData);
 
         // Convert real data to display format
         const displayData: ProgressData[] = [];
         const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-        
+
         for (let i = 0; i < 7; i++) {
-          const currentDate = new Date(weekStart);
-          currentDate.setDate(weekStart.getDate() + i);
-          const dateStr = currentDate.toISOString().split('T')[0];
-          
-          const daySessions = realData.sessions.filter(s => s.session_date === dateStr);
-          
-          displayData.push({
-            day: days[i],
-            prayer: getDayProgress(daySessions, 'prayer'),
-            bible: getDayProgress(daySessions, 'bible'),
-            meditation: getDayProgress(daySessions, 'meditation'),
-            journal: getDayProgress(daySessions, 'journal')
-          });
+          const dayData = realData.dailyProgress[days[i]];
+          if (dayData) {
+            displayData.push({
+              day: days[i],
+              prayer: dayData.prayer,
+              bible: dayData.bible,
+              meditation: dayData.meditation,
+              journal: dayData.journal
+            });
+          } else {
+            displayData.push({
+              day: days[i],
+              prayer: 0,
+              bible: 0,
+              meditation: 0,
+              journal: 0
+            });
+          }
         }
-        
+
         setProgressData(displayData);
         setLoading(false);
+        console.log('✅ WeeklyProgress: Display data prepared:', displayData);
       } catch (error) {
-        console.error('Error loading progress:', error);
-        // Fallback to mock data on error
-        setTimeout(() => {
-          const mockData: ProgressData[] = [
-            { day: 'Sun', prayer: 85, bible: 70, meditation: 60, journal: 45 },
-            { day: 'Mon', prayer: 90, bible: 80, meditation: 75, journal: 60 },
-            { day: 'Tue', prayer: 75, bible: 85, meditation: 80, journal: 70 },
-            { day: 'Wed', prayer: 95, bible: 90, meditation: 85, journal: 80 },
-            { day: 'Thu', prayer: 80, bible: 75, meditation: 70, journal: 65 },
-            { day: 'Fri', prayer: 85, bible: 80, meditation: 75, journal: 70 },
-            { day: 'Sat', prayer: 70, bible: 65, meditation: 60, journal: 55 }
-          ];
-          setProgressData(mockData);
-          setLoading(false);
-        }, 1000);
+        console.error('❌ WeeklyProgress: Error loading progress:', error);
+        // Show empty state on error
+        setProgressData([]);
+        setLoading(false);
       }
     };
 
@@ -120,20 +107,6 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
   };
 
   // Helper method to calculate day progress from real sessions
-  const getDayProgress = (sessions: UserSession[], activityType: 'prayer' | 'bible' | 'meditation' | 'journal'): number => {
-    const activitySessions = sessions.filter(s => s.activity_type === activityType && s.completed);
-    if (activitySessions.length === 0) return 0;
-    
-    // Calculate percentage based on completed duration vs planned duration
-    const totalCompleted = activitySessions.reduce((sum, session) => 
-      sum + (session.completed_duration || session.duration_minutes), 0
-    );
-    const totalPlanned = activitySessions.reduce((sum, session) => 
-      sum + session.duration_minutes, 0
-    );
-    
-    return Math.min(100, Math.round((totalCompleted / totalPlanned) * 100));
-  };
 
   const getWeeklySummaryMessage = (data: ProgressData[]): string => {
     const avgPrayer = calculateAverage(data, 'prayer');

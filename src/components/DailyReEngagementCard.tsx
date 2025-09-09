@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { ProFeatureGate } from './ProFeatureGate'
-import { dailyReEngagementService } from '../services/dailyReEngagementService'
+import ProgressService from '../services/ProgressService'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
 
 interface ReEngagementMessage {
   id: string
@@ -23,22 +24,40 @@ interface DailyReEngagementCardProps {
 
 export const DailyReEngagementCard: React.FC<DailyReEngagementCardProps> = ({ onActionClick }) => {
   const [message, setMessage] = useState<ReEngagementMessage | null>(null)
-  const [stats, setStats] = useState({ streakDays: 0, missedDays: 0, completedToday: {} })
+  const [stats, setStats] = useState({ streakDays: 0, missedDays: 0, completedToday: false })
   const [isLoading, setIsLoading] = useState(true)
+  const { user } = useSupabaseAuth()
 
   useEffect(() => {
     const loadDailyMessage = async () => {
+      if (!user) {
+        setIsLoading(false)
+        return
+      }
+
       try {
-        // Load user stats
-        const userStats = dailyReEngagementService.getUserStats()
-        setStats(userStats)
+        console.log('📊 DailyReEngagementCard: Loading user stats for:', user.id)
+
+        // Load real user stats from ProgressService
+        const userStats = await ProgressService.getUserStats(user.id)
+        console.log('✅ DailyReEngagementCard: Loaded user stats:', userStats)
+
+        // Convert to component format
+        const componentStats = {
+          streakDays: userStats.currentStreak,
+          missedDays: userStats.totalSessions === 0 ? 1 : 0, // Simple logic for missed days
+          completedToday: userStats.lastSessionDate ?
+            new Date(userStats.lastSessionDate).toDateString() === new Date().toDateString() : false
+        }
+
+        setStats(componentStats)
 
         // Generate today's message based on user state
         const today = new Date()
         const hour = today.getHours()
-        
+
         let timing: 'morning' | 'afternoon' | 'evening' | 'missed'
-        if (userStats.missedDays > 0) {
+        if (componentStats.missedDays > 0) {
           timing = 'missed'
         } else if (hour < 12) {
           timing = 'morning'
@@ -49,27 +68,27 @@ export const DailyReEngagementCard: React.FC<DailyReEngagementCardProps> = ({ on
         }
 
         // Create contextual message
-        const contextualMessage = generateContextualMessage(timing, userStats)
+        const contextualMessage = generateContextualMessage(timing, componentStats, userStats)
         setMessage(contextualMessage)
-        
+
         setIsLoading(false)
       } catch (error) {
-        console.error('Error loading daily message:', error)
+        console.error('❌ DailyReEngagementCard: Error loading daily message:', error)
         setIsLoading(false)
       }
     }
 
     loadDailyMessage()
-  }, [])
+  }, [user])
 
-  const generateContextualMessage = (timing: string, userStats: any): ReEngagementMessage => {
+  const generateContextualMessage = (timing: string, componentStats: any, userStats: any): ReEngagementMessage => {
     const messages = {
       morning: [
         {
           id: 'morning-contextual',
           title: 'Good Morning, Beloved! ☀️',
-          message: userStats.streakDays > 0 
-            ? `You're on a ${userStats.streakDays}-day streak! God is delighted with your consistency.`
+          message: componentStats.streakDays > 0
+            ? `You're on a ${componentStats.streakDays}-day streak! God is delighted with your consistency.`
             : 'God has given you a fresh start today. Begin with His presence.',
           verse: 'This is the day the Lord has made; let us rejoice and be glad in it.',
           verseReference: 'Psalm 118:24',

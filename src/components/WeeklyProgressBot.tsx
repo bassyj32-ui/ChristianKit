@@ -1,55 +1,144 @@
 import React, { useState, useEffect } from 'react';
+import ProgressService from '../services/ProgressService';
+import { useSupabaseAuth } from './SupabaseAuthProvider';
 
 interface WeeklyProgressBotProps {
   position?: 'top-right' | 'bottom-right' | 'floating';
   showNotifications?: boolean;
 }
 
-export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({ 
+export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
   position = 'bottom-right',
-  showNotifications = true 
+  showNotifications = true
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
   const [messageType, setMessageType] = useState<'motivation' | 'celebration' | 'achievement' | 'reminder'>('reminder');
   const [isExpanded, setIsExpanded] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [progressData, setProgressData] = useState<any>(null);
+  const { user } = useSupabaseAuth();
 
   useEffect(() => {
-    // Set initial message
-    setCurrentMessage('You\'re 78% to your weekly goal! 🎯');
-    setMessageType('reminder');
-    
-    // Show bot after a delay
-    setTimeout(() => setIsVisible(true), 2000);
-    
-    // Add attention-grabbing effects for web users
-    const attentionInterval = setInterval(() => {
-      if (!isExpanded) {
-        // Cycle through different message types to grab attention
-        const types = ['motivation', 'celebration', 'achievement', 'reminder'] as const;
-        const randomType = types[Math.floor(Math.random() * types.length)];
-        setMessageType(randomType);
-        
-        // Update message based on type with engaging content
-        switch (randomType) {
-          case 'motivation':
-            setCurrentMessage('Only 3 more prayers to hit 100% this week! 💪');
-            break;
-          case 'celebration':
-            setCurrentMessage('Wow! You\'ve prayed 5 days in a row! 🎉');
-            break;
-          case 'achievement':
-            setCurrentMessage('You\'re in the top 15% of users this week! 🏆');
-            break;
-          default:
-            setCurrentMessage('Your streak is 7 days strong! Keep going! 🔥');
-        }
+    const loadProgressData = async () => {
+      if (!user) {
+        // Default message for non-authenticated users
+        setCurrentMessage('Sign in to track your spiritual progress! 🙏');
+        setMessageType('reminder');
+        setTimeout(() => setIsVisible(true), 2000);
+        return;
       }
-    }, 8000); // Change every 8 seconds
-    
-    return () => clearInterval(attentionInterval);
-  }, [isExpanded]);
+
+      try {
+        // Load real progress data
+        const today = new Date();
+        const dayOfWeek = today.getDay();
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() - dayOfWeek);
+        const weekStartStr = weekStart.toISOString().split('T')[0];
+
+        const progress = await ProgressService.getWeeklyProgress(user.id, weekStartStr);
+        setProgressData(progress);
+
+        // Calculate real progress metrics
+        const weeklyGoal = progress.weeklyGoal;
+        const currentStreak = progress.currentStreak;
+        const totalSessions = progress.sessions.length;
+
+        // Set initial message based on real data
+        let initialMessage = '';
+        let initialType: 'motivation' | 'celebration' | 'achievement' | 'reminder' = 'reminder';
+
+        if (weeklyGoal >= 80) {
+          initialMessage = `You're ${weeklyGoal}% to your weekly goal! 🎯`;
+          initialType = 'achievement';
+        } else if (currentStreak >= 5) {
+          initialMessage = `${currentStreak}-day streak! Keep the momentum! 🔥`;
+          initialType = 'celebration';
+        } else if (totalSessions === 0) {
+          initialMessage = 'Ready to start your spiritual journey? 🙏';
+          initialType = 'motivation';
+        } else {
+          initialMessage = `You've completed ${totalSessions} sessions this week! 💪`;
+          initialType = 'motivation';
+        }
+
+        setCurrentMessage(initialMessage);
+        setMessageType(initialType);
+        setTimeout(() => setIsVisible(true), 2000);
+
+        // Update messages based on real data
+        const attentionInterval = setInterval(() => {
+          if (!isExpanded && progressData) {
+            const messages = generateRealMessages(progress);
+            const randomMessage = messages[Math.floor(Math.random() * messages.length)];
+            setCurrentMessage(randomMessage.text);
+            setMessageType(randomMessage.type);
+          }
+        }, 8000);
+
+        return () => clearInterval(attentionInterval);
+      } catch (error) {
+        console.error('Error loading progress for bot:', error);
+        // Fallback to default message
+        setCurrentMessage('Track your spiritual progress with us! 🙏');
+        setMessageType('reminder');
+        setTimeout(() => setIsVisible(true), 2000);
+      }
+    };
+
+    loadProgressData();
+  }, [user, isExpanded]);
+
+  const generateRealMessages = (progress: any) => {
+    const messages = [];
+    const weeklyGoal = progress.weeklyGoal;
+    const currentStreak = progress.currentStreak;
+    const totalSessions = progress.sessions.length;
+    const totalMinutes = progress.totalMinutesThisWeek;
+
+    // Achievement messages
+    if (weeklyGoal >= 90) {
+      messages.push({
+        text: `Amazing! ${weeklyGoal}% weekly goal achieved! 🏆`,
+        type: 'achievement' as const
+      });
+    }
+
+    if (currentStreak >= 7) {
+      messages.push({
+        text: `${currentStreak}-day streak! You're on fire! 🔥`,
+        type: 'celebration' as const
+      });
+    }
+
+    // Motivation messages
+    if (weeklyGoal < 50 && totalSessions > 0) {
+      messages.push({
+        text: `Only ${7 - Math.floor(totalSessions / 1.5)} more sessions to hit 50%! 💪`,
+        type: 'motivation' as const
+      });
+    }
+
+    // Encouragement messages
+    if (totalMinutes > 0) {
+      const avgMinutes = Math.round(totalMinutes / Math.max(totalSessions, 1));
+      messages.push({
+        text: `Average ${avgMinutes}min per session this week! 📈`,
+        type: 'achievement' as const
+      });
+    }
+
+    // Default messages if we don't have enough data
+    if (messages.length === 0) {
+      messages.push({
+        text: totalSessions > 0 ? `${totalSessions} sessions completed this week! 🎯` : 'Start your spiritual journey today! 🙏',
+        type: 'motivation' as const
+      });
+    }
+
+    return messages;
+  };
 
   const getBotIcon = () => {
     switch (messageType) {
