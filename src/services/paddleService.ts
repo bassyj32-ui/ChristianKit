@@ -77,7 +77,7 @@ export class PaddleService {
           'Community Prayer Requests',
           'Premium Support'
         ],
-        paddleProductId: 'pro_01' // Replace with actual Paddle product ID
+        paddleProductId: 'pro_monthly_001' // Replace with your actual Paddle product ID
       },
       {
         id: 'christiankit_pro_yearly',
@@ -93,7 +93,7 @@ export class PaddleService {
           'Premium Support',
           '17% Savings vs Monthly'
         ],
-        paddleProductId: 'pro_02' // Replace with actual Paddle product ID
+        paddleProductId: 'pro_yearly_001' // Replace with your actual Paddle product ID
       }
     ];
   }

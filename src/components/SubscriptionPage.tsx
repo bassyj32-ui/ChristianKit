@@ -90,11 +90,29 @@ export const SubscriptionPage: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-12">
           <h1 className="text-4xl font-bold text-white mb-4 font-mono tracking-wider">
-            Your Session Today
+            Choose Your Plan
           </h1>
-          <p className="text-slate-300 text-xl max-w-2xl mx-auto">
-            Unlock premium features and take your spiritual journey to the next level
+          <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-6">
+            Start with a <span className="text-amber-400 font-bold">14-day free trial</span> - no credit card required
           </p>
+          
+          {/* Free Access Banner */}
+          <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-2xl p-6 max-w-3xl mx-auto">
+            <div className="flex items-center justify-center gap-3 mb-3">
+              <span className="text-3xl">💝</span>
+              <h2 className="text-2xl font-bold text-green-100">100% Free Access Available</h2>
+            </div>
+            <p className="text-green-200 text-lg mb-4">
+              Can't afford it? We believe everyone deserves spiritual growth tools. 
+              <span className="font-semibold"> Request free access below</span> - no questions asked.
+            </p>
+            <div className="flex flex-wrap justify-center gap-2 text-green-300 text-sm">
+              <span className="bg-green-700/30 px-3 py-1 rounded-full">Students</span>
+              <span className="bg-green-700/30 px-3 py-1 rounded-full">Ministry Workers</span>
+              <span className="bg-green-700/30 px-3 py-1 rounded-full">Financial Hardship</span>
+              <span className="bg-green-700/30 px-3 py-1 rounded-full">Anyone in Need</span>
+            </div>
+          </div>
         </div>
 
         {/* Plans Container */}
@@ -107,6 +125,13 @@ export const SubscriptionPage: React.FC = () => {
               <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
                 <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] px-6 py-2 rounded-full text-sm font-bold shadow-lg border border-[var(--accent-primary)]/50">
                   ⭐ BEST VALUE
+                </span>
+              </div>
+              
+              {/* Trial Badge */}
+              <div className="absolute -top-4 right-4">
+                <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                  14-DAY FREE TRIAL
                 </span>
               </div>
               
@@ -191,14 +216,24 @@ export const SubscriptionPage: React.FC = () => {
                     Processing...
                   </div>
                 ) : (
-                  '🚀 Get Pro Yearly - $30/year'
+                  '🚀 Start 14-Day Free Trial'
                 )}
               </button>
+              <p className="text-center text-slate-400 text-sm mt-3">
+                Then $30/year • Cancel anytime
+              </p>
             </div>
           </div>
 
           {/* Monthly Pro Plan */}
-          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)]">
+          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)] relative">
+            {/* Trial Badge */}
+            <div className="absolute -top-4 right-4">
+              <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
+                14-DAY FREE TRIAL
+              </span>
+            </div>
+            
             <div className="text-center mb-8">
               <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Pro Monthly</h2>
               <p className="text-[var(--text-secondary)] text-lg">Flexible monthly billing</p>
@@ -276,9 +311,12 @@ export const SubscriptionPage: React.FC = () => {
                   Processing...
                 </div>
               ) : (
-                '💳 Get Pro Monthly - $3/month'
+                '💳 Start 14-Day Free Trial'
               )}
             </button>
+            <p className="text-center text-slate-400 text-sm mt-3">
+              Then $3/month • Cancel anytime
+            </p>
           </div>
 
           {/* Free Plan */}
@@ -349,12 +387,15 @@ export const SubscriptionPage: React.FC = () => {
             <div className="text-center">
               <button
                 onClick={() => setShowFreeRequest(true)}
-                className="w-full bg-slate-700 text-slate-200 py-4 px-6 rounded-2xl font-semibold text-lg hover:bg-slate-600 transition-all duration-300 border border-slate-600/50"
+                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-green-500 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-green-500/40 transform hover:-translate-y-1 border border-green-500/30"
               >
-                💝 Request Free Access
+                💝 Request 100% Free Access
               </button>
-              <p className="text-slate-400 text-sm mt-3">
-                Need financial assistance? We're here to help.
+              <p className="text-green-300 text-sm mt-3 font-semibold">
+                Can't afford it? We believe everyone deserves spiritual growth tools.
+              </p>
+              <p className="text-slate-400 text-xs mt-2">
+                Students, ministry workers, financial hardship - no questions asked.
               </p>
             </div>
           </div>
@@ -371,14 +412,15 @@ export const SubscriptionPage: React.FC = () => {
               {!freeRequestSubmitted ? (
                 <>
                   <p className="text-slate-300 mb-6 text-center">
-                    Tell us why you need free access. We believe everyone deserves spiritual growth tools.
+                    <span className="text-green-400 font-semibold">100% Free Access</span> - Tell us why you need free access. 
+                    We believe everyone deserves spiritual growth tools.
                   </p>
                   
                   <textarea
                     value={freeRequestReason}
                     onChange={(e) => setFreeRequestReason(e.target.value)}
-                    placeholder="Please explain your situation (e.g., student, financial hardship, ministry worker...)"
-                    className="w-full p-4 border border-gray-600 rounded-xl resize-none h-32 focus:ring-2 focus:ring-amber-500 focus:border-transparent bg-slate-700 text-white placeholder-slate-400"
+                    placeholder="Please explain your situation (e.g., student, financial hardship, ministry worker, single parent...)"
+                    className="w-full p-4 border border-green-600/50 rounded-xl resize-none h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent bg-slate-700 text-white placeholder-slate-400"
                   />
                   
                   <div className="flex gap-3 mt-6">
@@ -445,10 +487,19 @@ export const SubscriptionPage: React.FC = () => {
 
             <div>
               <h4 className="font-semibold text-white mb-2">
-                How do I request free access?
+                How do I request 100% free access?
               </h4>
               <p className="text-slate-300">
-                Simply click "Request Free Access" on the Free Plan and tell us about your situation. We're committed to making spiritual growth accessible to everyone.
+                Simply click "Request 100% Free Access" on the Free Plan and tell us about your situation. We're committed to making spiritual growth accessible to everyone - no questions asked.
+              </p>
+            </div>
+            
+            <div>
+              <h4 className="font-semibold text-white mb-2">
+                How does the 14-day free trial work?
+              </h4>
+              <p className="text-slate-300">
+                Start your trial immediately with no credit card required. After 14 days, you can choose to continue with a paid plan or switch to our free access program.
               </p>
             </div>
           </div>
