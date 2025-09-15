@@ -1,7 +1,7 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v4-dev-cache-clear';
+const CACHE_NAME = 'christiankit-v5-dev-cache-clear';
 const urlsToCache = [
   '/',
   '/index.html',
