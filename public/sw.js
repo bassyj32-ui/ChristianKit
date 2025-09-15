@@ -1,7 +1,7 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v5-dev-cache-clear';
+const CACHE_NAME = 'christiankit-v6-dev-cache-clear';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -71,8 +71,15 @@ self.addEventListener('fetch', (event) => {
       event.request.url.includes('App.tsx') ||
       event.request.url.includes('main.tsx')) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-cache' }).catch(() => {
-        return caches.match(event.request);
+      fetch(event.request, { cache: 'no-cache' }).catch((error) => {
+        console.log('Network fetch failed, trying cache:', event.request.url, error);
+        return caches.match(event.request).then((response) => {
+          if (response) {
+            return response;
+          }
+          // If no cache match, return a basic response to prevent errors
+          return new Response('Asset not found', { status: 404 });
+        });
       })
     );
     return;
