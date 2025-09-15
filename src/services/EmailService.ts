@@ -24,7 +24,7 @@ export class EmailService {
 
   constructor() {
     // Use Brevo for reliable email delivery
-    this.brevoApiKey = import.meta.env.VITE_BREVO_API_KEY || null;
+    this.brevoApiKey = (import.meta as any).env?.VITE_BREVO_API_KEY || null;
     
     if (this.brevoApiKey) {
       console.log('✅ Brevo email service initialized');

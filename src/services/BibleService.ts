@@ -1,4 +1,4 @@
-// Bible Service with reliable fallback content and optional API integration
+// Bible Service with reliable fallback content and API integration
 interface BibleVerse {
   reference: string;
   text: string;
@@ -6,6 +6,13 @@ interface BibleVerse {
   book: string;
   chapter: number;
   verse: number;
+}
+
+interface BibleChapter {
+  book: string;
+  chapter: number;
+  verses: { verse: number; text: string }[];
+  translation: string;
 }
 
 interface BibleSearchResult {
@@ -49,6 +56,121 @@ class BibleService {
     { reference: 'Matthew 11:28-30', mood: 'rest' },
     { reference: '2 Corinthians 4:16-18', mood: 'hope' }
   ];
+
+  // Get a complete chapter
+  async getChapter(book: string, chapter: number, translation: string = 'NIV'): Promise<BibleChapter | null> {
+    try {
+      console.log(`Fetching chapter: ${book} ${chapter} in ${translation}`);
+
+      // Try Bible API first
+      const apiChapter = await this.fetchChapterFromAPI(book, chapter, translation);
+      if (apiChapter) {
+        return apiChapter;
+      }
+
+      // Fallback to local content
+      return this.getFallbackChapter(book, chapter, translation);
+
+    } catch (error) {
+      console.error('Error fetching chapter:', error);
+      return this.getFallbackChapter(book, chapter, translation);
+    }
+  }
+
+  // Fetch chapter from Bible API
+  private async fetchChapterFromAPI(book: string, chapter: number, translation: string): Promise<BibleChapter | null> {
+    try {
+      // Using ESV API as primary source (free for personal use)
+      const ESV_API_KEY = (import.meta as any).env?.VITE_ESV_API_KEY;
+
+      if (ESV_API_KEY) {
+        const response = await fetch(`https://api.esv.org/v3/passage/text/?q=${book}+${chapter}&include-passage-references=false&include-verse-numbers=true&include-footnotes=false&include-short-copyright=false&include-passage-horizontal-lines=false&include-heading-horizontal-lines=false`, {
+          headers: {
+            'Authorization': `Token ${ESV_API_KEY}`,
+            'Accept': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return this.parseESVResponse(data, book, chapter, translation);
+        }
+      }
+
+      // Fallback to other APIs if ESV fails
+      return await this.tryAlternativeAPIs(book, chapter, translation);
+
+    } catch (error) {
+      console.error('Bible API error:', error);
+      return null;
+    }
+  }
+
+  // Parse ESV API response
+  private parseESVResponse(data: any, book: string, chapter: number, translation: string): BibleChapter {
+    const verses: { verse: number; text: string }[] = [];
+
+    if (data.passages && data.passages[0]) {
+      const passage = data.passages[0];
+      // Split by verse numbers and parse
+      const verseRegex = /\[(\d+)\]\s*([^[\n]+)/g;
+      let match;
+
+      while ((match = verseRegex.exec(passage)) !== null) {
+        verses.push({
+          verse: parseInt(match[1]),
+          text: match[2].trim()
+        });
+      }
+    }
+
+    return {
+      book,
+      chapter,
+      verses,
+      translation
+    };
+  }
+
+  // Try alternative Bible APIs
+  private async tryAlternativeAPIs(book: string, chapter: number, translation: string): Promise<BibleChapter | null> {
+    try {
+      // Try Bible Gateway API (if available)
+      const response = await fetch(`https://www.biblegateway.com/passage/?search=${book}+${chapter}&version=${translation}&interface=print`);
+
+      if (response.ok) {
+        const html = await response.text();
+        return this.parseBibleGatewayResponse(html, book, chapter, translation);
+      }
+    } catch (error) {
+      console.error('Alternative API error:', error);
+    }
+
+    return null;
+  }
+
+  // Parse Bible Gateway HTML response
+  private parseBibleGatewayResponse(html: string, book: string, chapter: number, translation: string): BibleChapter {
+    const verses: { verse: number; text: string }[] = [];
+
+    // Simple HTML parsing for verse content
+    const verseRegex = /<span[^>]*data-verse="(\d+)"[^>]*>(.*?)<\/span>/g;
+    let match;
+
+    while ((match = verseRegex.exec(html)) !== null) {
+      verses.push({
+        verse: parseInt(match[1]),
+        text: match[2].replace(/<[^>]*>/g, '').trim()
+      });
+    }
+
+    return {
+      book,
+      chapter,
+      verses,
+      translation
+    };
+  }
 
   // Get a specific verse or passage
   async getVerse(reference: string, translation: string = 'NIV'): Promise<BibleVerse | null> {
@@ -263,6 +385,24 @@ class BibleService {
       }));
   }
 
+  // Get fallback chapter when API is not available
+  private getFallbackChapter(book: string, chapter: number, translation: string): BibleChapter {
+    const verses: { verse: number; text: string }[] = [];
+
+    // For now, return a single verse indicating content is coming soon
+    verses.push({
+      verse: 1,
+      text: `📖 ${book} Chapter ${chapter} - Coming Soon!\n\nWe're working on adding complete Bible content to ChristianKit. For now, you can enjoy our curated selection of popular verses and daily readings.\n\nCheck back soon for full chapter content!`
+    });
+
+    return {
+      book,
+      chapter,
+      verses,
+      translation
+    };
+  }
+
   // Create a "Coming Soon" verse for references without specific content
   private createComingSoonVerse(reference: string, translation: string): BibleVerse {
     const parsed = this.parseReference(reference);
@@ -279,4 +419,4 @@ class BibleService {
 }
 
 export const bibleService = new BibleService();
-export type { BibleVerse, BibleSearchResult };
+export type { BibleVerse, BibleChapter, BibleSearchResult };

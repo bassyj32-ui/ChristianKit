@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { bibleService, BibleVerse } from '../services/BibleService';
+import { bibleService, BibleVerse, BibleChapter } from '../services/BibleService';
 
 interface BibleReaderProps {
   onClose: () => void;
@@ -15,7 +15,7 @@ interface BibleBook {
 export const BibleReader: React.FC<BibleReaderProps> = ({ onClose }) => {
   const [selectedBook, setSelectedBook] = useState<string>('');
   const [selectedChapter, setSelectedChapter] = useState<number>(1);
-  const [bibleContent, setBibleContent] = useState<BibleVerse | null>(null);
+  const [bibleContent, setBibleContent] = useState<BibleChapter | null>(null);
   const [selectedTranslation, setSelectedTranslation] = useState('NIV');
   const [isLoading, setIsLoading] = useState(false);
   const [view, setView] = useState<'books' | 'chapters' | 'reading'>('books');
@@ -104,35 +104,40 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onClose }) => {
   // Load chapter content
   const loadChapter = async () => {
     if (!selectedBook || !selectedChapter) return;
-    
+
     setIsLoading(true);
-    
+
     try {
-      // Find the book object
-      const bookObj = bibleBooks.find(b => b.name === selectedBook);
-      if (!bookObj) return;
-      
-      // For now, show "Coming Soon" message instead of trying to load content
-      setBibleContent({
-        reference: `${selectedBook} ${selectedChapter}`,
-        text: `📖 ${selectedBook} Chapter ${selectedChapter} - Coming Soon!\n\nWe're working on adding complete Bible content. For now, you can enjoy our curated selection of popular verses and daily readings.\n\nCheck back soon for full chapter content!`,
-        translation: selectedTranslation,
-        book: selectedBook,
-        chapter: selectedChapter,
-        verse: 1
-      });
-      
+      // Use the new getChapter method to fetch complete chapter content
+      const chapterData = await bibleService.getChapter(selectedBook, selectedChapter, selectedTranslation);
+
+      if (chapterData) {
+        setBibleContent(chapterData);
+      } else {
+        // Fallback if chapter loading fails
+        setBibleContent({
+          book: selectedBook,
+          chapter: selectedChapter,
+          verses: [{
+            verse: 1,
+            text: `📖 ${selectedBook} Chapter ${selectedChapter} - Content Unavailable\n\nWe're working on adding complete Bible content. For now, you can enjoy our curated selection of popular verses and daily readings.\n\nCheck back soon for full chapter content!`
+          }],
+          translation: selectedTranslation
+        });
+      }
+
       setView('reading');
     } catch (error) {
       console.error('Error loading chapter:', error);
       // Show error message
       setBibleContent({
-        reference: `${selectedBook} ${selectedChapter}`,
-        text: `❌ Unable to load chapter content\n\n${selectedBook} Chapter ${selectedChapter} is not available yet.\n\nWe're working on adding more Bible content. Please try our curated verses or check back later!`,
-        translation: selectedTranslation,
         book: selectedBook,
         chapter: selectedChapter,
-        verse: 1
+        verses: [{
+          verse: 1,
+          text: `❌ Unable to load chapter content\n\n${selectedBook} Chapter ${selectedChapter} is not available yet.\n\nWe're working on adding more Bible content. Please try a different chapter or translation.`
+        }],
+        translation: selectedTranslation
       });
       setView('reading');
     } finally {
@@ -340,12 +345,20 @@ export const BibleReader: React.FC<BibleReaderProps> = ({ onClose }) => {
                 </div>
               ) : bibleContent ? (
                 <div className="bg-white/5 rounded-xl p-6 border border-white/10">
-                  <div className="text-lg text-white leading-relaxed whitespace-pre-line">
-                    {bibleContent.text}
+                  <div className="text-lg text-white leading-relaxed">
+                    {bibleContent.verses.map((verse, index) => (
+                      <div key={verse.verse} className="mb-4">
+                        <sup className="text-amber-400 font-bold mr-2">{verse.verse}</sup>
+                        <span className="whitespace-pre-line">{verse.text}</span>
+                        {index < bibleContent.verses.length - 1 && (
+                          <span className="block h-2"></span>
+                        )}
+                      </div>
+                    ))}
                   </div>
                   <div className="mt-6 text-right">
                     <span className="text-sm text-gray-400">
-                      {bibleContent.reference} • {bibleContent.translation}
+                      {bibleContent.book} {bibleContent.chapter} • {bibleContent.translation}
                     </span>
                   </div>
                 </div>

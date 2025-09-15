@@ -71,6 +71,8 @@ export interface UserPlan {
     dailyTime: string
     prayerFocus: string[]
     bibleTopics: string[]
+    prayerStyle: string
+    dailyGoal: string
     pushEnabled: boolean
     emailEnabled: boolean
     preferredTime: string
@@ -87,6 +89,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
     dailyTime: '',
     prayerFocus: [] as string[],
     bibleTopics: [] as string[],
+    prayerStyle: '',
+    dailyGoal: '',
     pushEnabled: true,
     emailEnabled: true,
     preferredTime: '9:00 AM',
@@ -96,20 +100,50 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
     intensityOpen: false,
     frequencyOpen: false
   })
+  const [showValidationError, setShowValidationError] = useState(false)
+  const [validationMessage, setValidationMessage] = useState('')
 
   const handleAnswer = (question: string, answer: string | string[] | boolean) => {
     setAnswers(prev => ({ ...prev, [question]: answer }))
+    // Clear validation error when user makes a selection
+    if (showValidationError) {
+      setShowValidationError(false)
+      setValidationMessage('')
+    }
+  }
+
+  const getValidationMessage = (step: number): string => {
+    switch (step) {
+      case 1: return 'Please select your experience level to continue.'
+      case 2: return 'Please choose how much time you can dedicate daily.'
+      case 3: return 'Please select at least one prayer focus area.'
+      case 4: return 'Please select at least one Bible topic.'
+      case 5: return 'Please choose your preferred prayer style.'
+      case 6: return 'Please select your daily spiritual goal.'
+      case 7: return 'Please complete all required selections.'
+      default: return 'Please make a selection to continue.'
+    }
   }
 
   const nextStep = () => {
-    if (currentStep < 5) {
+    if (!canProceed()) {
+      setShowValidationError(true)
+      setValidationMessage(getValidationMessage(currentStep))
+      return
+    }
+
+    if (currentStep < 7) {
       setCurrentStep(currentStep + 1)
+      setShowValidationError(false)
+      setValidationMessage('')
     }
   }
 
   const prevStep = () => {
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1)
+      setShowValidationError(false)
+      setValidationMessage('')
     }
   }
 
@@ -127,9 +161,9 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       // Personalized recommendations
       prayerTime: experienceLevel === 'beginner' ? 10 : experienceLevel === 'intermediate' ? 20 : 30,
       bibleTime: experienceLevel === 'beginner' ? 20 : experienceLevel === 'intermediate' ? 30 : 45,
-      prayerStyle: 'contemplative', // Default style since we removed step 5
-      dailyGoal: 'closer-to-god', // Default goal since we removed step 6
-      
+      prayerStyle: answers.prayerStyle,
+      dailyGoal: answers.dailyGoal,
+
       // Custom plan sections
       customPlan: {
         prayer: {
@@ -137,7 +171,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
           description: `A ${experienceLevel} prayer routine tailored to your spiritual journey`,
           duration: experienceLevel === 'beginner' ? 10 : experienceLevel === 'intermediate' ? 20 : 30,
           focus: answers.prayerFocus as string[],
-          style: 'contemplative',
+          style: answers.prayerStyle,
           tips: [
             'Find a quiet space where you feel comfortable',
             'Start with gratitude for the day',
@@ -203,6 +237,8 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
         dailyTime: answers.dailyTime,
         prayerFocus: answers.prayerFocus as string[],
         bibleTopics: answers.bibleTopics as string[],
+        prayerStyle: answers.prayerStyle,
+        dailyGoal: answers.dailyGoal,
         pushEnabled: answers.pushEnabled,
         emailEnabled: answers.emailEnabled,
         preferredTime: answers.preferredTime,
@@ -226,7 +262,9 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
       case 2: return answers.dailyTime !== ''
       case 3: return answers.prayerFocus.length > 0
       case 4: return answers.bibleTopics.length > 0
-      case 5: return true // Notification preferences are optional
+      case 5: return answers.prayerStyle !== ''
+      case 6: return answers.dailyGoal !== ''
+      case 7: return true // Notification preferences are optional
       default: return false
     }
   }
@@ -240,6 +278,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
               Welcome to Your Spiritual Journey! 🙏
             </h2>
             <p className="text-base sm:text-lg text-white/80 mb-6 sm:mb-8">Let's create a personalized plan just for you</p>
+            <div className="text-xs text-amber-300 mb-4">* Required selection</div>
             
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What's your experience level?</h3>
@@ -273,6 +312,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
               Daily Time Commitment ⏰
             </h2>
+            <div className="text-xs text-amber-300 mb-4">* Required selection</div>
             
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">How much time can you dedicate daily?</h3>
@@ -306,6 +346,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
               Prayer Focus Areas 🙏
             </h2>
+            <div className="text-xs text-amber-300 mb-4">* Select at least one</div>
             
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What areas do you want to focus on in prayer?</h3>
@@ -344,6 +385,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
               Bible Study Topics 📖
             </h2>
+            <div className="text-xs text-amber-300 mb-4">* Select at least one</div>
             
             <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
               <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">Which Bible topics interest you most?</h3>
@@ -377,6 +419,86 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
         )
 
       case 5:
+        return (
+          <div className="text-center px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              Prayer Style 🧘‍♀️
+            </h2>
+            <div className="text-xs text-amber-300 mb-4">* Required selection</div>
+
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What prayer style resonates with you?</h3>
+              <div className="space-y-3 sm:space-y-4">
+                {[
+                  { value: 'mindfulness', label: 'Mindfulness', desc: 'Present moment awareness and breathing', emoji: '🧘‍♀️' },
+                  { value: 'loving-kindness', label: 'Loving-Kindness', desc: 'Cultivating compassion and love', emoji: '💝' },
+                  { value: 'body-scan', label: 'Body Scan', desc: 'Progressive body awareness and relaxation', emoji: '🌊' },
+                  { value: 'transcendental', label: 'Transcendental', desc: 'Deep meditation and inner peace', emoji: '✨' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleAnswer('prayerStyle', option.value)}
+                    className={`w-full p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 border ${
+                      answers.prayerStyle === option.value
+                        ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black border-amber-300 shadow-lg shadow-amber-500/25'
+                        : 'bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/30 hover:shadow-lg hover:shadow-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{option.emoji}</span>
+                      <div className="flex-1">
+                        <div className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">{option.label}</div>
+                        <div className="text-xs sm:text-sm opacity-90">{option.desc}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
+      case 6:
+        return (
+          <div className="text-center px-4">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
+              Daily Spiritual Goal 🎯
+            </h2>
+            <div className="text-xs text-amber-300 mb-4">* Required selection</div>
+
+            <div className="bg-white/10 backdrop-blur-xl rounded-2xl sm:rounded-3xl p-4 sm:p-6 border border-white/20 shadow-2xl max-w-md mx-auto">
+              <h3 className="text-xl sm:text-2xl font-bold text-white mb-4 sm:mb-6">What's your main spiritual goal?</h3>
+              <div className="space-y-3 sm:space-y-4">
+                {[
+                  { value: 'closer-to-god', label: 'Closer to God', desc: 'Deepen my relationship with God', emoji: '❤️' },
+                  { value: 'inner-peace', label: 'Inner Peace', desc: 'Find peace and calm in daily life', emoji: '🕊️' },
+                  { value: 'spiritual-growth', label: 'Spiritual Growth', desc: 'Grow in faith and understanding', emoji: '🌱' },
+                  { value: 'guidance', label: 'Divine Guidance', desc: 'Seek direction for life decisions', emoji: '🧭' }
+                ].map((option) => (
+                  <button
+                    key={option.value}
+                    onClick={() => handleAnswer('dailyGoal', option.value)}
+                    className={`w-full p-4 sm:p-6 rounded-xl sm:rounded-2xl text-left transition-all duration-300 border ${
+                      answers.dailyGoal === option.value
+                        ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black border-amber-300 shadow-lg shadow-amber-500/25'
+                        : 'bg-white/5 text-white border-white/20 hover:bg-white/10 hover:border-white/30 hover:shadow-lg hover:shadow-white/10'
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">{option.emoji}</span>
+                      <div className="flex-1">
+                        <div className="text-lg sm:text-xl font-bold mb-1 sm:mb-2">{option.label}</div>
+                        <div className="text-xs sm:text-sm opacity-90">{option.desc}</div>
+                      </div>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )
+
+      case 7:
         return (
           <div className="text-center px-4">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4 sm:mb-6 bg-gradient-to-r from-amber-400 to-yellow-500 bg-clip-text text-transparent">
@@ -588,19 +710,29 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
           {/* Progress Bar */}
           <div className="mb-6 sm:mb-8">
             <div className="flex justify-between items-center mb-2 sm:mb-3">
-              <span className="text-xs sm:text-sm font-medium text-white/70">Step {currentStep} of 5</span>
-              <span className="text-xs sm:text-sm font-medium text-white/70">{Math.round((currentStep / 5) * 100)}% Complete</span>
+              <span className="text-xs sm:text-sm font-medium text-white/70">Step {currentStep} of 7</span>
+              <span className="text-xs sm:text-sm font-medium text-white/70">{Math.round((currentStep / 7) * 100)}% Complete</span>
             </div>
             <div className="w-full bg-white/10 rounded-full h-2 backdrop-blur-sm">
               <div 
                 className="bg-gradient-to-r from-amber-400 to-yellow-500 h-2 rounded-full transition-all duration-500 shadow-lg shadow-amber-500/25"
-                style={{ width: `${(currentStep / 5) * 100}%` }}
+                style={{ width: `${(currentStep / 7) * 100}%` }}
               ></div>
             </div>
           </div>
 
           {/* Step Content */}
           {renderStep()}
+
+          {/* Validation Error */}
+          {showValidationError && (
+            <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-red-500/20 border border-red-500/30 rounded-xl backdrop-blur-sm">
+              <div className="flex items-center gap-2">
+                <span className="text-red-400 text-lg">⚠️</span>
+                <p className="text-red-300 text-sm sm:text-base font-medium">{validationMessage}</p>
+              </div>
+            </div>
+          )}
 
           {/* Navigation Buttons */}
           <div className="flex justify-between mt-6 sm:mt-8 max-w-md mx-auto px-4">
@@ -616,7 +748,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
               ← Previous
             </button>
 
-            {currentStep < 5 ? (
+            {currentStep < 7 ? (
               <button
                 onClick={nextStep}
                 disabled={!canProceed()}
@@ -629,29 +761,47 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
                 Next →
               </button>
             ) : (
-              <button
-                onClick={handleComplete}
-                disabled={!canProceed()}
-                className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl text-sm sm:text-base ${
-                  canProceed()
-                    ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black hover:from-amber-500 hover:to-yellow-500 shadow-lg shadow-amber-500/25'
-                    : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'
-                }`}
-              >
-                Create My Plan ✨
-              </button>
+              <div className="flex flex-col gap-3">
+                <button
+                  onClick={handleComplete}
+                  disabled={!canProceed()}
+                  className={`px-4 sm:px-6 py-2 sm:py-3 rounded-xl sm:rounded-2xl font-bold transition-all duration-300 transform hover:scale-105 shadow-xl text-sm sm:text-base ${
+                    canProceed()
+                      ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black hover:from-amber-500 hover:to-yellow-500 shadow-lg shadow-amber-500/25'
+                      : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'
+                  }`}
+                >
+                  Create My Plan ✨
+                </button>
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  className="text-white/60 hover:text-white/80 text-sm underline transition-colors duration-300 hover:no-underline"
+                >
+                  ← Start Over
+                </button>
+              </div>
             )}
           </div>
 
-          {/* Back to Timer Option */}
-          {onBack && (
-            <div className="text-center mt-4 sm:mt-6">
-              <button
-                onClick={onBack}
-                className="text-white/70 hover:text-white text-xs sm:text-sm underline transition-colors duration-300 hover:no-underline"
-              >
-                ← Back to Timer
-              </button>
+          {/* Navigation Options */}
+          {(onBack || currentStep > 1) && (
+            <div className="text-center mt-4 sm:mt-6 space-y-2">
+              {onBack && (
+                <button
+                  onClick={onBack}
+                  className="text-white/70 hover:text-white text-xs sm:text-sm underline transition-colors duration-300 hover:no-underline block"
+                >
+                  ← Back to Timer
+                </button>
+              )}
+              {currentStep > 1 && (
+                <button
+                  onClick={() => setCurrentStep(1)}
+                  className="text-white/60 hover:text-white/80 text-xs sm:text-sm underline transition-colors duration-300 hover:no-underline block"
+                >
+                  🔄 Start Questionnaire Over
+                </button>
+              )}
             </div>
           )}
         </div>

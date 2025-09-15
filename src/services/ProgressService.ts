@@ -53,8 +53,8 @@ class ProgressService {
       // Fetch sessions from Supabase
       const { data: sessions, error } = await supabase
         .from('prayer_sessions')
-        .select('*')
-        .eq('user_id', userId)
+      .select('*')
+      .eq('user_id', userId)
         .gte('started_at', startOfWeek.toISOString())
         .lte('started_at', endOfWeek.toISOString())
         .order('started_at', { ascending: false });
@@ -74,9 +74,9 @@ class ProgressService {
       days.forEach(day => {
         dailyProgress[day] = {
           day,
-          prayer: 0,
-          bible: 0,
-          meditation: 0,
+      prayer: 0,
+      bible: 0,
+      meditation: 0,
           journal: 0,
           totalMinutes: 0,
           sessionsCount: 0
@@ -186,8 +186,8 @@ class ProgressService {
 
       const { data: sessions, error } = await supabase
         .from('prayer_sessions')
-        .select('*')
-        .eq('user_id', userId)
+      .select('*')
+      .eq('user_id', userId)
         .gte('started_at', thirtyDaysAgo.toISOString())
         .order('started_at', { ascending: false });
 
@@ -268,7 +268,7 @@ class ProgressService {
    */
   static async saveSession(session: Omit<ProgressSession, 'id' | 'created_at'>): Promise<ProgressSession | null> {
     try {
-      const { data, error } = await supabase
+    const { data, error } = await supabase
         .from('prayer_sessions')
         .insert({
           user_id: session.user_id,

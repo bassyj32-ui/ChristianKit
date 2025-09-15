@@ -11,6 +11,7 @@ import { BibleReadingPage } from './BibleReadingPage'
 import { MeditationPage } from './MeditationPage'
 import { FloatingAuthTab } from './FloatingAuthTab'
 import { ReferralSystem } from './ReferralSystem'
+import { PrayerSystemInterface } from './PrayerSystemInterface'
 
 import { prayerService } from '../services/prayerService'
 import { subscriptionService } from '../services/subscriptionService'
@@ -59,10 +60,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   console.log('🔍 Dashboard: Component initialized with props:', { onNavigate: !!onNavigate, userPlan: !!userPlan })
   
   const [activeSection, setActiveSection] = useState<string | null>(null)
+  const [currentView, setCurrentView] = useState<'dashboard' | 'prayerSystem'>('dashboard')
   const [todayProgress, setTodayProgress] = useState({
     prayer: 0,
     bible: 0,
     meditation: 0
+  })
+  const [prayerProgress, setPrayerProgress] = useState({
+    currentStreak: 0,
+    totalPrayers: 0,
+    currentLevel: 'beginner',
+    daysThisMonth: 0
   })
   const [loading, setLoading] = useState(true)
   const { user, signOut: logout } = useSupabaseAuth()
@@ -92,11 +100,29 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           sessionDate.setHours(0, 0, 0, 0)
           return sessionDate.getTime() === today.getTime() && session.completed
         })
-        
+
         // Calculate today's progress
         let prayerProgress = 0
         let bibleProgress = 0
         let meditationProgress = 0
+
+        // Load prayer system progress
+        if (user?.id) {
+          try {
+            const { prayerSystemService } = await import('../services/PrayerSystemService')
+            const userProfile = prayerSystemService.getUserProfile(user.id)
+            if (userProfile) {
+              setPrayerProgress({
+                currentStreak: userProfile.currentStreak,
+                totalPrayers: userProfile.completedDays,
+                currentLevel: userProfile.currentLevel,
+                daysThisMonth: userProfile.completedDays % 30 // Approximate monthly count
+              })
+            }
+          } catch (error) {
+            console.log('Prayer system not yet initialized for this user')
+          }
+        }
         
         todaySessions.forEach(session => {
           const targetDuration = 30 // 30 minutes target
@@ -137,6 +163,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   // Simple test render first
   console.log('🔍 Dashboard: Attempting to render...')
   
+  // Show Prayer System Interface if selected
+  if (currentView === 'prayerSystem') {
+    return (
+      <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden font-sans">
+        {/* Back to Dashboard Button */}
+        <div className="absolute top-6 left-6 z-50">
+          <button
+            onClick={() => setCurrentView('dashboard')}
+            className="bg-white/10 backdrop-blur-xl hover:bg-white/20 rounded-xl p-3 text-white transition-all duration-300 hover:scale-105 border border-white/20"
+          >
+            ← Back to Dashboard
+          </button>
+        </div>
+
+        <PrayerSystemInterface
+          onNavigate={onNavigate}
+          userPlan={userPlan}
+        />
+      </div>
+    );
+  }
+
   return (
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden font-sans">
       {/* Osmo-inspired Minimal Background */}
@@ -205,12 +253,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               // Record session start for progress tracking
               if (user) {
                 try {
-                  await ProgressService.recordSession({
+                  await ProgressService.saveSession({
                     user_id: user.id,
-                    activity_type: 'prayer',
+                    started_at: new Date().toISOString(),
                     duration_minutes: prayerTime,
-                    completed: false, // Will be updated to true when completed
-                    session_date: new Date().toISOString().split('T')[0],
+                    prayer_type: 'prayer',
                     notes: userPlan?.customPlan?.prayer?.focus?.join(', ') || undefined
                   });
                   console.log('✅ Prayer session started and recorded');
@@ -291,12 +338,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               // Record session start for progress tracking
               if (user) {
                 try {
-                  await ProgressService.recordSession({
+                  await ProgressService.saveSession({
                     user_id: user.id,
-                    activity_type: 'bible',
+                    started_at: new Date().toISOString(),
                     duration_minutes: bibleTime,
-                    completed: false, // Will be updated to true when completed
-                    session_date: new Date().toISOString().split('T')[0],
+                    prayer_type: 'bible',
                     notes: userPlan?.customPlan?.reading?.topics?.join(', ') || undefined
                   });
                   console.log('✅ Bible reading session started and recorded');
@@ -376,30 +422,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
             </div>
 
-                        {/* Personalized Reflection Card */}
-            <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--color-neutral-700)]/10 hover:border-[var(--color-neutral-700)]/20 transition-all duration-300 group cursor-pointer"
-            onClick={async () => {
-              const reflectionTime = userPlan?.customPlan?.reflection?.duration || userPlan?.prayerTime || 10;
-              
-              // Record session start for progress tracking
-              if (user) {
-                try {
-                  await ProgressService.recordSession({
-                    user_id: user.id,
-                    activity_type: 'meditation',
-                    duration_minutes: reflectionTime,
-                    completed: false, // Will be updated to true when completed
-                    session_date: new Date().toISOString().split('T')[0],
-                    notes: userPlan?.customPlan?.reflection?.prompts?.join(', ') || undefined
-                  });
-                  console.log('✅ Meditation session started and recorded');
-                } catch (error) {
-                  console.error('❌ Error recording meditation session start:', error);
-                  // Continue even if database recording fails
-                }
-              }
-              
-              onNavigate?.('meditation', reflectionTime);
+                        {/* Core Prayer System Card - SECOND MOST IMPORTANT FEATURE */}
+            <div className="bg-gradient-to-br from-purple-500/20 via-blue-500/15 to-indigo-500/20 backdrop-blur-xl rounded-2xl overflow-hidden border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 group cursor-pointer shadow-lg hover:shadow-purple-500/25"
+            onClick={() => {
+              setCurrentView('prayerSystem');
             }}>
               {/* Meditation Images - Peaceful Animation */}
               <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-success-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
@@ -442,10 +468,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
               <div className="p-2 md:p-6">
                 <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
-                  My Reflection
+                  My Prayer Time
                 </h3>
                 <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
-                  Your spiritual reflection time
+                  Your daily prayer journey
                 </p>
                 {userPlan?.customPlan?.reflection?.prompts && (
                   <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
@@ -470,6 +496,63 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
             </div>
           </div>
         </div>
+
+                {/* SPIRITUAL GROWTH PROGRESS - CORE FEATURE #2 */}
+                <div className="mt-8 mb-8 w-full">
+                  <div className="bg-gradient-to-r from-purple-500/20 via-blue-500/15 to-indigo-500/20 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30 shadow-lg">
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center justify-center">
+                        <span className="text-3xl mr-3">🙏</span>
+                        Your Spiritual Journey
+                      </h2>
+                      <p className="text-white/70">Grow in faith through daily prayer</p>
+                    </div>
+
+                    <div className="grid md:grid-cols-4 gap-4 mb-6">
+                      {/* Prayer Streak */}
+                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
+                        <div className="text-3xl mb-2">🔥</div>
+                        <div className="text-2xl font-bold text-amber-400">{prayerProgress.currentStreak}</div>
+                        <div className="text-white/70 text-sm">Day Streak</div>
+                      </div>
+
+                      {/* Total Prayers */}
+                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
+                        <div className="text-3xl mb-2">📚</div>
+                        <div className="text-2xl font-bold text-blue-400">{prayerProgress.totalPrayers}</div>
+                        <div className="text-white/70 text-sm">Total Prayers</div>
+                      </div>
+
+                      {/* Current Level */}
+                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
+                        <div className="text-3xl mb-2">
+                          {prayerProgress.currentLevel === 'beginner' ? '🌱' :
+                           prayerProgress.currentLevel === 'intermediate' ? '🌿' : '🌳'}
+                        </div>
+                        <div className="text-lg font-bold text-purple-400 capitalize">{prayerProgress.currentLevel}</div>
+                        <div className="text-white/70 text-sm">Prayer Level</div>
+                      </div>
+
+                      {/* Monthly Progress */}
+                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
+                        <div className="text-3xl mb-2">📅</div>
+                        <div className="text-2xl font-bold text-green-400">{prayerProgress.daysThisMonth}</div>
+                        <div className="text-white/70 text-sm">This Month</div>
+                      </div>
+                    </div>
+
+                    {/* Quick Prayer Access */}
+                    <div className="text-center">
+                      <button
+                        onClick={() => setCurrentView('prayerSystem')}
+                        className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/50"
+                      >
+                        🙏 Start Today's Prayer Journey
+                      </button>
+                      <p className="text-white/60 text-sm mt-2">5-20 minutes • Scripture + Reflection + Growth</p>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Weekly Analysis - Polished Osmo Style */}
         <div className="mt-12 mb-12 w-full">
@@ -788,15 +871,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
             </span>
           </button>
           
-          {/* Prayer Tab */}
+          {/* Prayer Tab - CORE FEATURE #2 */}
           <button
-            onClick={() => onNavigate?.('prayer')}
+            onClick={() => setCurrentView('prayerSystem')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
+            <div className="w-10 h-10 bg-gradient-to-br from-purple-500/30 to-blue-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-purple-500/50 border-2 border-purple-500/80 group-hover:border-purple-500">
               <span className="text-lg">🙏</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-purple-400 transition-colors duration-300">
               Prayer
             </span>
           </button>

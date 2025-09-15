@@ -53,10 +53,10 @@ export const OfflineIndicator: React.FC = () => {
     setQueueLength(0)
   }
 
-  // Don't show indicator if online and no pending items
-  if (isOnline && queueLength === 0) {
-    return null
-  }
+  // Always show indicator for testing/debugging purposes
+  // if (isOnline && queueLength === 0) {
+  //   return null
+  // }
 
   return (
     <div className="fixed top-4 right-4 z-50 max-w-sm">

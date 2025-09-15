@@ -1,4 +1,3 @@
-import { supabase } from '../utils/supabase';
 import ProgressService from './ProgressService';
 
 export interface NotificationSchedule {
@@ -60,22 +59,49 @@ class NotificationSchedulerService {
   }
 
   /**
-   * Get user notification preferences
+   * Get user notification preferences from localStorage
    */
   private async getUserPreferences(userId: string): Promise<UserNotificationPreferences | null> {
     try {
-      const { data, error } = await supabase
-        .from('notification_preferences')
-        .select('*')
-        .eq('user_id', userId)
-        .single();
-
-      if (error && error.code !== 'PGRST116') { // Not found error
-        console.error('Error fetching notification preferences:', error);
-        return null;
+      // First try to get from localStorage notificationSettings
+      let settings = localStorage.getItem('notificationSettings');
+      if (settings) {
+        const parsedSettings = JSON.parse(settings);
+        return {
+          user_id: userId,
+          preferred_time: this.convertToHHMM(parsedSettings.preferredTime),
+          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+          daily_reminders: parsedSettings.frequency === 'daily' || parsedSettings.frequency === 'twice',
+          progress_updates: parsedSettings.frequency === 'daily',
+          streak_notifications: true,
+          weekly_summaries: parsedSettings.frequency === 'daily',
+          email_notifications: parsedSettings.emailEnabled,
+          push_notifications: parsedSettings.pushEnabled
+        };
       }
 
-      return data || {
+      // Fallback to userPlan notificationPreferences
+      const userPlan = localStorage.getItem('userPlan');
+      if (userPlan) {
+        const plan = JSON.parse(userPlan);
+        if (plan.notificationPreferences) {
+          const prefs = plan.notificationPreferences;
+          return {
+            user_id: userId,
+            preferred_time: this.convertToHHMM(prefs.preferredTime),
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            daily_reminders: prefs.frequency === 'daily' || prefs.frequency === 'twice',
+            progress_updates: prefs.frequency === 'daily',
+            streak_notifications: true,
+            weekly_summaries: prefs.frequency === 'daily',
+            email_notifications: prefs.emailEnabled,
+            push_notifications: prefs.pushEnabled
+          };
+        }
+      }
+
+      // Default preferences if none found
+      return {
         user_id: userId,
         preferred_time: '09:00',
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
@@ -90,6 +116,36 @@ class NotificationSchedulerService {
       console.error('Error getting user preferences:', error);
       return null;
     }
+  }
+
+  /**
+   * Convert time format to HH:MM
+   */
+  private convertToHHMM(timeString: string): string {
+    if (!timeString) return '09:00';
+
+    // If it's already in HH:MM format, return it
+    if (/^\d{2}:\d{2}$/.test(timeString)) {
+      return timeString;
+    }
+
+    // If it's in "HH:MM AM/PM" format, convert it
+    if (timeString.includes('AM') || timeString.includes('PM')) {
+      const [time, period] = timeString.split(' ');
+      const [hours, minutes] = time.split(':').map(Number);
+      let hour24 = hours;
+
+      if (period === 'PM' && hours !== 12) {
+        hour24 = hours + 12;
+      } else if (period === 'AM' && hours === 12) {
+        hour24 = 0;
+      }
+
+      return `${hour24.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+    }
+
+    // Default fallback
+    return '09:00';
   }
 
   /**
@@ -207,18 +263,49 @@ class NotificationSchedulerService {
   }
 
   /**
-   * Send daily prayer reminder
+   * Send daily prayer reminder (CORE FEATURE #2 - PRIORITY)
    */
   private async sendDailyReminder(userId: string): Promise<void> {
     try {
+      // PRIMARY: Get prayer system data for personalized prayer reminders
+      let prayerData = null;
+      let userProfile = null;
+      try {
+        const { prayerSystemService } = await import('./PrayerSystemService');
+        prayerData = prayerSystemService.getPrayerNotificationSchedule(userId);
+        userProfile = prayerSystemService.getUserProfile(userId);
+      } catch (error) {
+        console.log('Prayer system not yet available for notifications');
+      }
+
       // Get user stats to personalize the message
       const userStats = await ProgressService.getUserStats(userId);
 
-      let title = 'Daily Prayer Reminder';
-      let message = 'Time to connect with God and start your spiritual journey! 🙏';
+      // PRAYER-FOCUSED TITLE (Core Feature #2)
+      let title = '🙏 Daily Prayer Time';
+      let message = 'Your spiritual journey awaits! Scripture + prayer + reflection ready.';
 
-      // Personalize based on progress
-      if (userStats.currentStreak > 0) {
+      // Personalize based on prayer progress (PRIMARY)
+      if (userProfile) {
+        const { currentStreak, currentLevel, completedDays } = userProfile;
+
+        if (currentStreak > 0) {
+          title = `🙏 Day ${currentStreak} Prayer Streak!`;
+          message = `Keep your spiritual momentum! Your ${currentLevel} prayer journey continues today. 🔥`;
+        } else if (completedDays > 0) {
+          message = `Your prayer journey awaits! ${completedDays} prayers completed - let's make it ${completedDays + 1}! 💝`;
+        } else {
+          message = `Begin your spiritual growth journey! 5-minute prayer + scripture ready to start. 🌱`;
+        }
+
+        // Add motivational quote from prayer system
+        if (prayerData && prayerData.motivationalMessages.length > 0) {
+          const randomQuote = prayerData.motivationalMessages[Math.floor(Math.random() * prayerData.motivationalMessages.length)];
+          message += `\n\n"${randomQuote}"`;
+        }
+      }
+      // FALLBACK: General spiritual reminders
+      else if (userStats.currentStreak > 0) {
         message = `Day ${userStats.currentStreak + 1} of your spiritual journey! Keep the momentum going! 🔥`;
       } else if (userStats.lastSessionDate) {
         const daysSinceLastSession = Math.floor((Date.now() - new Date(userStats.lastSessionDate).getTime()) / (1000 * 60 * 60 * 24));
@@ -229,8 +316,8 @@ class NotificationSchedulerService {
         }
       }
 
-      await this.sendPushNotification(userId, title, message, 'daily-reminder');
-      console.log('✅ Daily reminder sent to user:', userId);
+      await this.sendPushNotification(userId, title, message, 'daily-prayer-reminder');
+      console.log('✅ Priority prayer reminder sent to user:', userId);
     } catch (error) {
       console.error('❌ Failed to send daily reminder:', error);
     }
@@ -355,21 +442,25 @@ class NotificationSchedulerService {
   }
 
   /**
-   * Update user notification preferences
+   * Update user notification preferences in localStorage
    */
   async updateUserPreferences(userId: string, preferences: Partial<UserNotificationPreferences>): Promise<void> {
     try {
-      const { error } = await supabase
-        .from('notification_preferences')
-        .upsert({
-          user_id: userId,
-          ...preferences
-        });
+      // Update localStorage notificationSettings
+      const currentSettings = localStorage.getItem('notificationSettings');
+      const settings = currentSettings ? JSON.parse(currentSettings) : {};
 
-      if (error) {
-        console.error('Error updating notification preferences:', error);
-        throw error;
-      }
+      // Map the preferences to the format expected by notificationSettings
+      const updatedSettings = {
+        ...settings,
+        pushEnabled: preferences.push_notifications ?? settings.pushEnabled ?? true,
+        emailEnabled: preferences.email_notifications ?? settings.emailEnabled ?? false,
+        preferredTime: preferences.preferred_time ?? settings.preferredTime ?? '9:00 AM',
+        urgencyLevel: settings.urgencyLevel ?? 'motivating',
+        frequency: this.mapFrequencyToLocalStorage(preferences)
+      };
+
+      localStorage.setItem('notificationSettings', JSON.stringify(updatedSettings));
 
       // Reinitialize schedules with new preferences
       const updatedPreferences = await this.getUserPreferences(userId);
@@ -382,6 +473,19 @@ class NotificationSchedulerService {
     } catch (error) {
       console.error('❌ Failed to update notification preferences:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Map frequency from service format to localStorage format
+   */
+  private mapFrequencyToLocalStorage(preferences: Partial<UserNotificationPreferences>): string {
+    if (preferences.daily_reminders && preferences.progress_updates) {
+      return 'daily';
+    } else if (preferences.daily_reminders) {
+      return 'twice';
+    } else {
+      return 'hourly';
     }
   }
 

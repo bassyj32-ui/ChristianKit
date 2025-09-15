@@ -22,10 +22,10 @@ export const FloatingAuthTab: React.FC<FloatingAuthTabProps> = ({ className = ''
     }
   };
 
-  // Don't show anything if user is signed in
-  if (user) {
-    return null;
-  }
+  // Always show for testing/debugging purposes
+  // if (user) {
+  //   return null;
+  // }
 
   return (
     <div className={`fixed z-50 ${position === 'right' ? 'right-4' : 'left-4'} ${className || 'top-4'}`}>

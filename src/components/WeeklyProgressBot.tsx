@@ -7,9 +7,9 @@ interface WeeklyProgressBotProps {
   showNotifications?: boolean;
 }
 
-export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
+export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({ 
   position = 'bottom-right',
-  showNotifications = true
+  showNotifications = true 
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [currentMessage, setCurrentMessage] = useState('');
@@ -24,7 +24,7 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
       if (!user) {
         // Default message for non-authenticated users
         setCurrentMessage('Sign in to track your spiritual progress! 🙏');
-        setMessageType('reminder');
+    setMessageType('reminder');
         setTimeout(() => setIsVisible(true), 2000);
         return;
       }

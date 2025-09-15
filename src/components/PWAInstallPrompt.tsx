@@ -70,10 +70,10 @@ export const PWAInstallPrompt: React.FC = () => {
     setShowInstallPrompt(false)
   }
 
-  // Don't show if already installed or no prompt available
-  if (isInstalled || !showInstallPrompt || !deferredPrompt) {
-    return null
-  }
+  // Always show for testing/debugging purposes
+  // if (isInstalled || !showInstallPrompt || !deferredPrompt) {
+  //   return null
+  // }
 
   return (
     <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-lg">
@@ -116,9 +116,10 @@ export const PWAInstallPrompt: React.FC = () => {
             
             <button
               onClick={handleInstallClick}
-              className="px-4 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-md hover:bg-orange-600 transition-colors shadow-sm hover:shadow-md"
+              disabled={!deferredPrompt}
+              className="px-4 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-md hover:bg-orange-600 disabled:bg-gray-400 transition-colors shadow-sm hover:shadow-md disabled:cursor-not-allowed"
             >
-              Install
+              {deferredPrompt ? 'Install' : 'Not Available'}
             </button>
           </div>
         </div>

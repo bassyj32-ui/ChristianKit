@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { User } from '@supabase/supabase-js';
 import { EmailService } from '../services/EmailService';
 import NotificationSchedulerService from '../services/NotificationSchedulerService';
+import { notificationScheduler } from '../services/NotificationScheduler';
 
 interface NotificationManagerProps {
   user: User | null;
@@ -73,11 +74,11 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
         if ('Notification' in window) {
           const permission = await Notification.requestPermission();
           setPermissionStatus(permission);
-          
+
           if (permission === 'granted') {
             console.log('Notification permission granted');
-            // Start daily scheduling
-            startDailyScheduling();
+            // Start comprehensive notification scheduling
+            startComprehensiveScheduling();
           }
         }
       } catch (error) {
@@ -107,11 +108,34 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
     };
   }, [user]);
 
-  // Legacy method for backward compatibility
-  const startDailyScheduling = () => {
+  // Comprehensive notification scheduling using NotificationSchedulerService
+  const startComprehensiveScheduling = async () => {
     if (!user) return;
-    // This method is now handled by NotificationSchedulerService
-    console.log('📅 Daily scheduling now handled by NotificationSchedulerService');
+
+    try {
+      console.log('🚀 Starting comprehensive notification scheduling...');
+
+      // Initialize the notification scheduler service
+      const scheduler = NotificationSchedulerService.getInstance();
+      await scheduler.initialize(user.id);
+
+      // Also set up legacy notification methods for immediate notifications
+      setupLegacyNotifications();
+
+      console.log('✅ Comprehensive notification scheduling started');
+    } catch (error) {
+      console.error('❌ Failed to start comprehensive scheduling:', error);
+    }
+  }
+
+  // Legacy notification methods for immediate/fallback notifications
+  const setupLegacyNotifications = () => {
+    if (!user) return;
+
+    // Set up user activity tracking for immediate notifications
+    startUserTracking();
+
+    console.log('📱 Legacy notification methods set up');
   };
 
   // Show daily prayer reminder
@@ -156,9 +180,9 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
     }
 
     try {
-      const EmailService = await import('../services/EmailService');
-      const emailService = EmailService.default.getInstance();
-      
+      const { emailService } = await import('../services/EmailService');
+      const emailSvc = emailService.getInstance();
+
       const testSchedule = {
         userId: user.id,
         email: user.email,
@@ -168,8 +192,8 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
         streak: 5
       };
 
-      const result = await emailService.sendDailyReEngagementEmail(testSchedule);
-      
+      const result = await emailSvc.sendDailyReEngagementEmail(testSchedule);
+
       if (result) {
         alert('✅ Test email sent successfully! Check your inbox.');
       } else {
@@ -447,129 +471,133 @@ export const NotificationManager: React.FC<NotificationManagerProps> = ({ user }
 
   return (
     <div className="notification-manager">
-      {/* Notification Permission Button */}
-      {permissionStatus !== 'granted' && (
-        <div className="fixed bottom-20 right-4 z-50 lg:bottom-4">
-          <button
-            onClick={requestPermissions}
-            className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 animate-pulse text-sm sm:text-base"
-          >
-            <span>🔔</span>
-            <span className="font-semibold hidden sm:inline">Enable Prayer Reminders</span>
-            <span className="font-semibold sm:hidden">Enable</span>
-          </button>
-        </div>
-      )}
+      {/* Notification Permission Button - Always Visible */}
+      <div className="fixed bottom-20 right-4 z-50 lg:bottom-4">
+        <button
+          onClick={requestPermissions}
+          className={`bg-gradient-to-r from-amber-500 to-orange-500 text-white px-4 sm:px-6 py-2 sm:py-3 rounded-full shadow-lg hover:shadow-xl transition-all duration-300 flex items-center space-x-2 animate-pulse text-sm sm:text-base ${
+            permissionStatus === 'granted' ? 'opacity-75' : 'opacity-100'
+          }`}
+        >
+          <span>🔔</span>
+          <span className="font-semibold hidden sm:inline">
+            {permissionStatus === 'granted' ? 'Notifications Active' : 'Enable Prayer Reminders'}
+          </span>
+          <span className="font-semibold sm:hidden">
+            {permissionStatus === 'granted' ? 'Active' : 'Enable'}
+          </span>
+        </button>
+      </div>
 
-      {/* Minimal Notification Toggle */}
-      {permissionStatus === 'granted' && (
-        <div className="fixed bottom-20 right-4 z-50 lg:bottom-4">
-          {/* Settings Toggle Button */}
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-3 shadow-lg hover:bg-white/20 transition-all duration-300"
-            title="Notification Settings"
-          >
-            <span className="text-xl">🔔</span>
-          </button>
+      {/* Minimal Notification Toggle - Always Visible */}
+      <div className="fixed bottom-32 right-4 z-50 lg:bottom-16">
+        {/* Settings Toggle Button */}
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className={`bg-white/10 backdrop-blur-xl border border-white/20 rounded-full p-3 shadow-lg hover:bg-white/20 transition-all duration-300 ${
+            permissionStatus === 'granted' ? 'opacity-100' : 'opacity-60'
+          }`}
+          title="Notification Settings"
+        >
+          <span className="text-xl">⚙️</span>
+        </button>
 
-          {/* Settings Panel - Only show when toggled */}
-          {showSettings && (
-            <div className="absolute bottom-16 right-0 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl min-w-[280px]">
-              <div className="text-center mb-4">
-                <div className="text-2xl mb-2">🔔</div>
-                <h3 className="text-white font-semibold">Notifications Active</h3>
-                <p className="text-white/70 text-sm">Manage your spiritual reminders</p>
-              </div>
-              
-              {/* Settings Panel */}
-              <div className="space-y-3">
-                {/* Push Notifications */}
-                <div className="flex items-center justify-between">
-                  <span className="text-white text-sm">Push Notifications</span>
-                  <button
-                    onClick={() => saveSettings({ pushEnabled: !settings.pushEnabled })}
-                    className={`w-12 h-6 rounded-full transition-colors duration-300 ${
-                      settings.pushEnabled 
-                        ? 'bg-green-500' 
-                        : 'bg-gray-600'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full transition-transform duration-300 transform ${
-                      settings.pushEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                
-                {/* Email Notifications */}
-                <div className="flex items-center justify-between">
-                  <span className="text-white text-sm">Email Notifications</span>
-                  <button
-                    onClick={() => saveSettings({ emailEnabled: !settings.emailEnabled })}
-                    className={`w-12 h-6 rounded-full transition-colors duration-300 ${
-                      settings.emailEnabled 
-                        ? 'bg-green-500' 
-                        : 'bg-gray-600'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full transition-transform duration-300 transform ${
-                      settings.emailEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`} />
-                  </button>
-                </div>
-                
-                {/* Urgency Level */}
-                <div className="space-y-2">
-                  <span className="text-white text-sm">Urgency Level</span>
-                  <select
-                    value={settings.urgencyLevel}
-                    onChange={(e) => saveSettings({ urgencyLevel: e.target.value as any })}
-                    className="w-full bg-white/20 text-white rounded-lg px-3 py-2 text-sm border border-white/30 focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="gentle">Gentle</option>
-                    <option value="moderate">Moderate</option>
-                    <option value="aggressive">Aggressive</option>
-                    <option value="ruthless">Ruthless</option>
-                  </select>
-                </div>
-                
-                {/* Frequency */}
-                <div className="space-y-2">
-                  <span className="text-white text-sm">Frequency</span>
-                  <select
-                    value={settings.frequency}
-                    onChange={(e) => saveSettings({ frequency: e.target.value as any })}
-                    className="w-full bg-white/20 text-white rounded-lg px-3 py-2 text-sm border border-white/30 focus:outline-none focus:border-amber-400"
-                  >
-                    <option value="hourly">Hourly</option>
-                    <option value="daily">Daily</option>
-                    <option value="constant">Constant</option>
-                  </select>
-                </div>
-              </div>
-              
-              {/* Test Buttons - Development Only */}
-              {import.meta.env.DEV && (
-                <div className="space-y-2">
-                  <button
-                    onClick={showDailyReminder}
-                    className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
-                  >
-                    🧪 Test Notification
-                  </button>
-                  
-                  <button
-                    onClick={testEmailService}
-                    className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
-                  >
-                    📧 Test Email
-                  </button>
-                </div>
-              )}
+        {/* Settings Panel - Always show when toggled */}
+        {showSettings && (
+          <div className="absolute bottom-16 right-0 bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-4 shadow-2xl min-w-[280px]">
+            <div className="text-center mb-4">
+              <div className="text-2xl mb-2">🔔</div>
+              <h3 className="text-white font-semibold">
+                {permissionStatus === 'granted' ? 'Notifications Active' : 'Configure Notifications'}
+              </h3>
+              <p className="text-white/70 text-sm">Manage your spiritual reminders</p>
             </div>
-          )}
-        </div>
-      )}
+
+            {/* Settings Panel */}
+            <div className="space-y-3">
+              {/* Push Notifications */}
+              <div className="flex items-center justify-between">
+                <span className="text-white text-sm">Push Notifications</span>
+                <button
+                  onClick={() => saveSettings({ pushEnabled: !settings.pushEnabled })}
+                  className={`w-12 h-6 rounded-full transition-colors duration-300 ${
+                    settings.pushEnabled
+                      ? 'bg-green-500'
+                      : 'bg-gray-600'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform duration-300 transform ${
+                    settings.pushEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              </div>
+
+              {/* Email Notifications */}
+              <div className="flex items-center justify-between">
+                <span className="text-white text-sm">Email Notifications</span>
+                <button
+                  onClick={() => saveSettings({ emailEnabled: !settings.emailEnabled })}
+                  className={`w-12 h-6 rounded-full transition-colors duration-300 ${
+                    settings.emailEnabled
+                      ? 'bg-green-500'
+                      : 'bg-gray-600'
+                  }`}
+                >
+                  <div className={`w-5 h-5 bg-white rounded-full transition-transform duration-300 transform ${
+                    settings.emailEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`} />
+                </button>
+              </div>
+
+              {/* Urgency Level */}
+              <div className="space-y-2">
+                <span className="text-white text-sm">Urgency Level</span>
+                <select
+                  value={settings.urgencyLevel}
+                  onChange={(e) => saveSettings({ urgencyLevel: e.target.value as any })}
+                  className="w-full bg-white/20 text-white rounded-lg px-3 py-2 text-sm border border-white/30 focus:outline-none focus:border-amber-400"
+                >
+                  <option value="gentle">Gentle</option>
+                  <option value="moderate">Moderate</option>
+                  <option value="aggressive">Aggressive</option>
+                  <option value="ruthless">Ruthless</option>
+                </select>
+              </div>
+
+              {/* Frequency */}
+              <div className="space-y-2">
+                <span className="text-white text-sm">Frequency</span>
+                <select
+                  value={settings.frequency}
+                  onChange={(e) => saveSettings({ frequency: e.target.value as any })}
+                  className="w-full bg-white/20 text-white rounded-lg px-3 py-2 text-sm border border-white/30 focus:outline-none focus:border-amber-400"
+                >
+                  <option value="hourly">Hourly</option>
+                  <option value="daily">Daily</option>
+                  <option value="constant">Constant</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Test Buttons - Always visible for debugging */}
+            <div className="space-y-2 mt-4 pt-4 border-t border-white/20">
+              <button
+                onClick={showDailyReminder}
+                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-300"
+              >
+                🧪 Test Notification
+              </button>
+
+              <button
+                onClick={testEmailService}
+                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-2 rounded-lg font-medium hover:from-green-600 hover:to-emerald-700 transition-all duration-300"
+              >
+                📧 Test Email
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

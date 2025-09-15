@@ -40,6 +40,7 @@ import { MeditationPage } from './components/MeditationPage'
 import AuthCallback from './pages/AuthCallback'
 import { SunriseSunsetPrayer } from './components/SunriseSunsetPrayer'
 import { SearchInterface } from './components/SearchInterface'
+import { PrayerTimePage } from './components/PrayerTimePage'
 
 // Create aliases for backward compatibility
 const BibleQuest = BibleVerseMemoryMatch
@@ -128,16 +129,9 @@ const AppContent: React.FC = () => {
   const determineIsFirstTimeUser = (): boolean => {
     const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
     console.log('🔍 Checking questionnaire completion:', { hasCompleted, result: !hasCompleted })
-    
-    // For now, allow navigation without questionnaire to fix the tab issue
-    // TODO: Implement proper questionnaire flow later
-    if (!hasCompleted) {
-      console.log('🔧 Setting questionnaire as completed to allow navigation')
-      localStorage.setItem('hasCompletedQuestionnaire', 'true')
-      return false
-    }
-    
-    return false
+
+    // Return true if questionnaire hasn't been completed (meaning user is first time)
+    return !hasCompleted
   }
 
   // Initialize services
@@ -169,12 +163,28 @@ const AppContent: React.FC = () => {
     initializeServices()
   }, [])
 
+  // Check if questionnaire should be shown for first-time users
+  useEffect(() => {
+    const shouldShowQuestionnaire = determineIsFirstTimeUser()
+    console.log('🔍 Should show questionnaire:', shouldShowQuestionnaire)
+
+    if (shouldShowQuestionnaire) {
+      console.log('📝 Showing questionnaire for first-time user')
+      setShowQuestionnaire(true)
+    }
+  }, [])
+
   // Handle navigation between tabs
-  const handleNavigate = (tab: string) => {
-    console.log('🔄 Navigating to:', tab)
+  const handleNavigate = (tab: string, duration?: number) => {
+    console.log('🔄 Navigating to:', tab, 'with duration:', duration)
     // Normalize known aliases
     const normalized = tab === 'faith-runner' ? 'runner' : tab
     setActiveTab(normalized)
+
+    // If duration is provided, update the selected minutes for timer pages
+    if (duration) {
+      setSelectedMinutes(duration)
+    }
   }
 
   // Handle timer completion
@@ -252,6 +262,7 @@ const AppContent: React.FC = () => {
           return (
             <Dashboard
               userPlan={userPlan}
+              onNavigate={handleNavigate}
             />
           )
         case 'community':
@@ -285,6 +296,7 @@ const AppContent: React.FC = () => {
               onTimerComplete={handleTimerComplete}
               selectedMinutes={selectedMinutes}
               isFirstTimeUser={determineIsFirstTimeUser()}
+              onStartQuestionnaire={() => setShowQuestionnaire(true)}
             />
           )
         case 'sunrise-sunset':
@@ -304,12 +316,20 @@ const AppContent: React.FC = () => {
           )
         case 'prayer':
           return (
-            <UnifiedTimerPage 
+            <UnifiedTimerPage
               timerType="prayer"
               onNavigate={handleNavigate}
               onTimerComplete={handleTimerComplete}
               selectedMinutes={selectedMinutes}
               isFirstTimeUser={determineIsFirstTimeUser()}
+              onStartQuestionnaire={() => setShowQuestionnaire(true)}
+            />
+          )
+        case 'prayer-time':
+          return (
+            <PrayerTimePage
+              onNavigate={handleNavigate}
+              userPlan={userPlan}
             />
           )
         case 'bible':
@@ -320,6 +340,7 @@ const AppContent: React.FC = () => {
               onTimerComplete={handleTimerComplete}
               selectedMinutes={selectedMinutes}
               isFirstTimeUser={determineIsFirstTimeUser()}
+              onStartQuestionnaire={() => setShowQuestionnaire(true)}
             />
           )
         case 'blog':
@@ -332,6 +353,7 @@ const AppContent: React.FC = () => {
               onTimerComplete={handleTimerComplete}
               selectedMinutes={selectedMinutes}
               isFirstTimeUser={determineIsFirstTimeUser()}
+              onStartQuestionnaire={() => setShowQuestionnaire(true)}
             />
           )
       }
