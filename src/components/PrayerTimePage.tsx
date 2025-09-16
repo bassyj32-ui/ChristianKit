@@ -169,65 +169,40 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
       const today = new Date()
       const todayStr = today.toISOString().split('T')[0]
 
-      // Get today's prayer sessions
-      const todaySessions = await ProgressService.getSessionsByDateRange(
-        user.id,
-        todayStr,
-        todayStr
-      )
+      // Get weekly progress which includes sessions
+      const weeklyData = await ProgressService.getWeeklyProgress(user.id)
+      
+      // Calculate today's prayer minutes from weekly data
+      const todayPrayerMinutes = weeklyData.dailyProgress[todayStr]?.prayer || 0
 
-      // Calculate today's prayer minutes
-      const todayPrayerMinutes = todaySessions.reduce((total, session) => {
-        return total + (session.duration_minutes || 0)
-      }, 0)
+      // Calculate current streak from weekly data
+      let currentStreak = 0
+      const sortedDates = Object.keys(weeklyData.dailyProgress).sort()
 
-      // Load weekly data for progress calculation
-      if (todayPrayerMinutes > 0) {
-        try {
-          const oneWeekAgo = new Date(today)
-          oneWeekAgo.setDate(oneWeekAgo.getDate() - 7)
-
-          const weeklyData = await ProgressService.getWeeklyProgress(user.id)
-
-          // Calculate current streak
-          let currentStreak = 0
-          const sortedDates = Object.keys(weeklyData.dailyProgress).sort()
-
-          for (let i = sortedDates.length - 1; i >= 0; i--) {
-            const dateProgress = weeklyData.dailyProgress[sortedDates[i]]
-            if (dateProgress.prayer > 0) {
-              currentStreak++
-            } else {
-              break
-            }
-          }
-
-          // If today has prayer but isn't in weekly data yet, add 1
-          if (todayPrayerMinutes > 0 && !weeklyData.dailyProgress[todayStr]) {
-            currentStreak++
-          }
-
-          // Calculate prayer stats from weekly data
-          const totalPrayers = Object.values(weeklyData.dailyProgress).reduce((sum: number, day: any) => sum + day.prayer, 0)
-          const daysActive = Object.values(weeklyData.dailyProgress).filter((day: any) => day.prayer > 0).length
-
-          setPrayerProgress({
-            currentStreak,
-            totalPrayers,
-            currentLevel: currentStreak > 30 ? 'advanced' : currentStreak > 14 ? 'intermediate' : 'beginner',
-            daysThisMonth: daysActive
-          })
-
-        } catch (error) {
-          console.error('Error loading progress data:', error)
-          setPrayerProgress({
-            currentStreak: todayPrayerMinutes > 0 ? 1 : 0,
-            totalPrayers: todaySessions.length,
-            currentLevel: 'beginner',
-            daysThisMonth: todayPrayerMinutes > 0 ? 1 : 0
-          })
+      for (let i = sortedDates.length - 1; i >= 0; i--) {
+        const dateProgress = weeklyData.dailyProgress[sortedDates[i]]
+        if (dateProgress.prayer > 0) {
+          currentStreak++
+        } else {
+          break
         }
       }
+
+      // If today has prayer but isn't in weekly data yet, add 1
+      if (todayPrayerMinutes > 0 && !weeklyData.dailyProgress[todayStr]) {
+        currentStreak++
+      }
+
+      // Calculate prayer stats from weekly data
+      const totalPrayers = Object.values(weeklyData.dailyProgress).reduce((sum: number, day: any) => sum + day.prayer, 0)
+      const daysActive = Object.values(weeklyData.dailyProgress).filter((day: any) => day.prayer > 0).length
+
+      setPrayerProgress({
+        currentStreak,
+        totalPrayers,
+        currentLevel: currentStreak > 30 ? 'advanced' : currentStreak > 14 ? 'intermediate' : 'beginner',
+        daysThisMonth: daysActive
+      })
 
       setTodayProgress({
         prayer: todayPrayerMinutes,
@@ -278,69 +253,82 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
   }, [showPrayerTimer])
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
+      {/* Osmo Background Elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute top-40 right-20 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-yellow-300/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 right-1/3 w-16 h-16 bg-purple-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '3s'}}></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="border-b border-gray-200 bg-white">
-        <div className="max-w-6xl mx-auto px-6 py-4">
+      <nav className="relative z-10 bg-black/20 backdrop-blur-2xl border-b border-yellow-400/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
-            <div className="text-lg font-medium text-gray-900">Prayer Time</div>
-            <div className="text-sm text-gray-500">Your spiritual practice</div>
+            <div className="text-xl font-bold text-white">Prayer Time</div>
+            <div className="text-sm text-gray-400">Your spiritual practice</div>
           </div>
         </div>
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-6 py-12">
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
         
         {/* Header Section */}
-        <div className="mb-16">
-          <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mb-4">
+        <div className="mb-12 sm:mb-16 text-center">
+          <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-500/20 text-amber-200 border border-amber-400/30 text-sm font-medium mb-6">
             PRAYER & SCRIPTURE
           </div>
-          <h1 className="text-4xl font-medium text-gray-900 mb-4">My Prayer Time</h1>
-          <p className="text-lg text-gray-600 max-w-2xl">
-            Connect with God through intentional prayer and scripture study.
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
+            My <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent">Prayer Time</span>
+          </h1>
+          <p className="text-lg sm:text-xl text-gray-400 max-w-3xl mx-auto leading-relaxed">
+            Connect with God through intentional prayer and scripture study in a sacred digital space.
           </p>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-12 sm:mb-16">
           {[
-            { label: 'Current Streak', value: prayerProgress.currentStreak, unit: 'days' },
-            { label: 'Total Prayers', value: prayerProgress.totalPrayers, unit: 'sessions' },
-            { label: 'Prayer Level', value: prayerProgress.currentLevel, unit: '' },
-            { label: 'This Month', value: prayerProgress.daysThisMonth, unit: 'days' }
+            { label: 'Current Streak', value: prayerProgress.currentStreak, unit: 'days', icon: '🔥' },
+            { label: 'Total Prayers', value: prayerProgress.totalPrayers, unit: 'sessions', icon: '🙏' },
+            { label: 'Prayer Level', value: prayerProgress.currentLevel, unit: '', icon: '⭐' },
+            { label: 'This Month', value: prayerProgress.daysThisMonth, unit: 'days', icon: '📅' }
           ].map((stat, index) => (
-            <div key={index} className="bg-white rounded-lg p-6 border border-gray-200 hover:border-gray-300 transition-colors">
-              <div className="text-2xl font-semibold text-gray-900 mb-1">
-                {typeof stat.value === 'string' ? stat.value : stat.value}
-              </div>
-              <div className="text-sm text-gray-500">
-                {stat.label} {stat.unit && typeof stat.value === 'number' && `(${stat.unit})`}
+            <div key={index} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 sm:p-6 hover:bg-white/10 hover:border-yellow-400/30 transition-all duration-300 shadow-lg">
+              <div className="text-center">
+                <div className="text-2xl sm:text-3xl mb-2">{stat.icon}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                  {typeof stat.value === 'string' ? stat.value : stat.value}
+                </div>
+                <div className="text-xs sm:text-sm text-gray-400">
+                  {stat.label} {stat.unit && typeof stat.value === 'number' && `(${stat.unit})`}
+                </div>
               </div>
             </div>
           ))}
         </div>
 
         {/* Prayer Session Card */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-16">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 mb-12 sm:mb-16 shadow-2xl hover:bg-white/10 hover:border-yellow-400/30 transition-all duration-300">
           <div className="text-center">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mb-4">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-500/20 text-amber-200 border border-amber-400/30 text-sm font-medium mb-6">
               SESSION
             </div>
-            <h2 className="text-2xl font-medium text-gray-900 mb-4">Start Prayer Session</h2>
-            <p className="text-gray-600 mb-8">Choose your prayer duration and begin your spiritual practice.</p>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Start Prayer Session</h2>
+            <p className="text-gray-400 mb-8 text-lg">Choose your prayer duration and begin your spiritual practice.</p>
             
             {/* Duration Selection */}
-            <div className="flex justify-center gap-3 mb-8">
+            <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mb-8">
               {[5, 10, 15, 20, 30].map((minutes) => (
                 <button
                   key={minutes}
                   onClick={() => setSelectedMinutes(minutes)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-w-[44px] min-h-[44px] ${
                     selectedMinutes === minutes
-                      ? 'bg-gray-900 text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/25'
+                      : 'bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-yellow-400/30'
                   }`}
                 >
                   {minutes}m
@@ -350,7 +338,7 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
 
             <button
               onClick={() => setShowPrayerTimer(true)}
-              className="px-8 py-3 bg-gray-900 text-white rounded-lg font-medium hover:bg-gray-800 transition-colors"
+              className="px-8 py-4 bg-gradient-to-r from-yellow-400 to-amber-500 text-black rounded-xl font-bold text-lg hover:from-amber-500 hover:to-yellow-400 transition-all duration-300 shadow-lg shadow-amber-500/25 hover:shadow-amber-500/40 transform hover:scale-105 active:scale-95"
             >
               Begin Prayer
             </button>
@@ -358,29 +346,29 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
         </div>
 
         {/* Scripture Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8 mb-16">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 mb-12 sm:mb-16 shadow-2xl hover:bg-white/10 hover:border-yellow-400/30 transition-all duration-300">
           <div className="text-center">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mb-4">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-200 border border-purple-400/30 text-sm font-medium mb-6">
               SCRIPTURE
             </div>
-            <h2 className="text-2xl font-medium text-gray-900 mb-6">Daily Scripture</h2>
-            <blockquote className="text-lg text-gray-700 italic mb-4 max-w-3xl mx-auto leading-relaxed">
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-6">Daily Scripture</h2>
+            <blockquote className="text-lg sm:text-xl text-gray-300 italic mb-6 max-w-4xl mx-auto leading-relaxed">
               "If we confess our sins, he is faithful and just and will forgive us our sins and purify us from all unrighteousness."
             </blockquote>
-            <cite className="text-sm text-gray-500 font-medium">— 1 John 1:9</cite>
+            <cite className="text-sm sm:text-base text-amber-400 font-medium">— 1 John 1:9</cite>
           </div>
         </div>
 
         {/* Weekly Progress Placeholder */}
-        <div className="bg-white rounded-lg border border-gray-200 p-8">
+        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 sm:p-8 shadow-2xl hover:bg-white/10 hover:border-yellow-400/30 transition-all duration-300">
           <div className="text-center">
-            <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mb-4">
+            <div className="inline-flex items-center px-4 py-2 rounded-full bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-200 border border-green-400/30 text-sm font-medium mb-6">
               PROGRESS
             </div>
-            <h2 className="text-2xl font-medium text-gray-900 mb-4">Weekly Progress</h2>
-            <p className="text-gray-600 mb-8">Track your spiritual growth and consistency.</p>
-            <div className="bg-gray-50 rounded-lg p-12">
-              <div className="text-gray-400 text-sm">Progress visualization coming soon...</div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-white mb-4">Weekly Progress</h2>
+            <p className="text-gray-400 mb-8 text-lg">Track your spiritual growth and consistency.</p>
+            <div className="bg-white/5 border border-white/10 rounded-xl p-8 sm:p-12">
+              <div className="text-gray-400 text-sm sm:text-base">Progress visualization coming soon...</div>
             </div>
           </div>
         </div>
@@ -389,54 +377,54 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
 
       {/* Prayer Timer Modal */}
       {showPrayerTimer && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div 
-            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            className="absolute inset-0 bg-black/70 backdrop-blur-md"
             onClick={() => setShowPrayerTimer(false)}
           ></div>
           
           {/* Modal Content */}
-          <div className="relative bg-white rounded-2xl shadow-xl max-w-md w-full mx-4 p-8 max-h-[90vh] overflow-y-auto">
+          <div className="relative bg-white/10 backdrop-blur-2xl border border-white/20 rounded-3xl shadow-2xl max-w-md w-full p-6 sm:p-8 max-h-[90vh] overflow-y-auto">
             
             {/* Close Button */}
             <button
               onClick={() => setShowPrayerTimer(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white/10 hover:bg-white/20 text-white transition-all duration-300"
             >
               ✕
             </button>
 
             {/* Current Streak Display */}
             <div className="text-center mb-6">
-              <div className="inline-flex items-center px-3 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-medium mb-2">
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-gradient-to-r from-amber-400/20 to-yellow-500/20 text-amber-200 border border-amber-400/30 text-xs font-medium mb-3">
                 CURRENT STREAK
               </div>
-              <div className="text-2xl font-semibold text-gray-900">{prayerProgress.currentStreak} days</div>
-              <div className="text-sm text-gray-500">Keep going strong!</div>
+              <div className="text-3xl font-bold text-white mb-1">{prayerProgress.currentStreak} days</div>
+              <div className="text-sm text-gray-400">Keep going strong!</div>
             </div>
 
             {/* Completion Feedback */}
             {prayerCompleted && (
-              <div className="text-center mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-                <div className="text-green-600 font-medium mb-2">Prayer Session Completed!</div>
-                <div className="text-sm text-green-700">{completionMessage}</div>
+              <div className="text-center mb-6 p-4 bg-green-500/10 border border-green-500/20 rounded-xl">
+                <div className="text-green-400 font-medium mb-2">Prayer Session Completed!</div>
+                <div className="text-sm text-green-300">{completionMessage}</div>
               </div>
             )}
 
             {/* Timer Display */}
             <div className="text-center mb-8">
-              <div className="text-6xl font-light text-gray-900 mb-2">
+              <div className="text-6xl sm:text-7xl font-light text-white mb-3">
                 {formatTime(timeRemaining)}
               </div>
-              <div className="text-sm text-gray-500 mb-4">
+              <div className="text-sm sm:text-base text-gray-400 mb-6">
                 {encouragingTitles[currentEncouragingTitle]}
               </div>
               
               {/* Progress Bar */}
-              <div className="w-full bg-gray-200 rounded-full h-2 mb-6">
+              <div className="w-full bg-white/10 rounded-full h-3 mb-6">
                 <div 
-                  className="bg-gray-900 h-2 rounded-full transition-all duration-1000"
+                  className="bg-gradient-to-r from-yellow-400 to-amber-500 h-3 rounded-full transition-all duration-1000 shadow-lg shadow-amber-500/25"
                   style={{
                     width: `${((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100}%`
                   }}
@@ -445,7 +433,7 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
             </div>
 
             {/* Achievement Orbs */}
-            <div className="flex justify-center space-x-4 mb-8">
+            <div className="flex justify-center space-x-3 sm:space-x-4 mb-8">
               {[
                 { emoji: '🌱', label: 'Seed', achieved: prayerProgress.currentStreak >= 1 },
                 { emoji: '🌿', label: 'Growth', achieved: prayerProgress.currentStreak >= 7 },
@@ -453,12 +441,14 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
                 { emoji: '🔥', label: 'Flame', achieved: prayerProgress.currentStreak >= 30 }
               ].map((orb, index) => (
                 <div key={index} className="text-center">
-                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg mb-2 ${
-                    orb.achieved ? 'bg-green-100 border-2 border-green-300' : 'bg-gray-100 border-2 border-gray-300'
+                  <div className={`w-12 h-12 rounded-full flex items-center justify-center text-lg mb-2 transition-all duration-300 ${
+                    orb.achieved 
+                      ? 'bg-gradient-to-br from-green-400/20 to-emerald-500/20 border-2 border-green-400/50 shadow-lg shadow-green-500/25' 
+                      : 'bg-white/10 border-2 border-white/20'
                   }`}>
                     <span className={orb.achieved ? 'opacity-100' : 'opacity-40'}>{orb.emoji}</span>
                   </div>
-                  <div className={`text-xs ${orb.achieved ? 'text-green-600' : 'text-gray-400'}`}>
+                  <div className={`text-xs ${orb.achieved ? 'text-green-400' : 'text-gray-500'}`}>
                     {orb.label}
                   </div>
                 </div>
@@ -466,27 +456,27 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
             </div>
 
             {/* Scripture During Prayer */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <div className="text-xs font-medium text-gray-500 mb-2 text-center">TODAY'S SCRIPTURE</div>
-              <div className="text-sm text-gray-700 text-center italic">
+            <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6">
+              <div className="text-xs font-medium text-gray-400 mb-2 text-center">TODAY'S SCRIPTURE</div>
+              <div className="text-sm text-gray-300 text-center italic">
                 "If we confess our sins, he is faithful and just..."
               </div>
             </div>
 
             {/* Timer Controls */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               {/* Duration Selection */}
               <div className="text-center">
-                <div className="text-sm text-gray-500 mb-3">Choose prayer duration:</div>
-                <div className="flex justify-center space-x-2 mb-4">
+                <div className="text-sm text-gray-400 mb-3">Choose prayer duration:</div>
+                <div className="flex flex-wrap justify-center gap-2 mb-4">
                   {[5, 10, 15, 20, 30].map((minutes) => (
                     <button
                       key={minutes}
                       onClick={() => setSelectedMinutes(minutes)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      className={`px-3 py-2 rounded-xl text-sm font-medium transition-all duration-300 min-w-[44px] min-h-[44px] ${
                         selectedMinutes === minutes
-                          ? 'bg-gray-900 text-white'
-                          : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                          ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-black shadow-lg shadow-amber-500/25'
+                          : 'bg-white/10 text-white border border-white/20 hover:bg-white/20 hover:border-yellow-400/30'
                       }`}
                       disabled={isTimerRunning}
                     >
@@ -507,12 +497,12 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
                   setIsTimerRunning(!isTimerRunning)
                 }}
                 disabled={prayerCompleted}
-                className={`w-full py-4 rounded-lg font-medium transition-colors ${
+                className={`w-full py-4 rounded-xl font-bold text-lg transition-all duration-300 transform hover:scale-105 active:scale-95 ${
                   prayerCompleted
-                    ? 'bg-green-100 text-green-600 cursor-not-allowed'
+                    ? 'bg-green-500/20 text-green-400 cursor-not-allowed border border-green-500/30'
                     : isTimerRunning
-                    ? 'bg-red-600 hover:bg-red-700 text-white'
-                    : 'bg-gray-900 hover:bg-gray-800 text-white'
+                    ? 'bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white shadow-lg shadow-red-500/25'
+                    : 'bg-gradient-to-r from-yellow-400 to-amber-500 hover:from-amber-500 hover:to-yellow-400 text-black shadow-lg shadow-amber-500/25'
                 }`}
               >
                 {prayerCompleted
@@ -533,7 +523,7 @@ export const PrayerTimePage: React.FC<PrayerTimePageProps> = ({ onNavigate, user
                   setPrayerCompleted(false)
                   setCompletionMessage('')
                 }}
-                className="w-full py-3 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg font-medium transition-colors"
+                className="w-full py-3 bg-white/10 hover:bg-white/20 text-white border border-white/20 hover:border-white/30 rounded-xl font-medium transition-all duration-300"
               >
                 Reset
               </button>

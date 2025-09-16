@@ -1,8 +1,19 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { paddleService, PaddlePlan } from '../services/paddleService'
+import { 
+  OsmoCard, 
+  OsmoButton, 
+  OsmoBadge, 
+  OsmoSectionHeader, 
+  OsmoContainer, 
+  OsmoGradientText,
+  OsmoGrid 
+} from '../theme/osmoComponents'
 
 export const SubscriptionPage: React.FC = () => {
+  const navigate = useNavigate()
   const { user } = useSupabaseAuth()
   const [showFreeRequest, setShowFreeRequest] = useState(false)
   const [freeRequestReason, setFreeRequestReason] = useState('')
@@ -61,101 +72,117 @@ export const SubscriptionPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] py-8 px-4">
+    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
       {/* Top Navigation Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 mb-8">
-        <div className="bg-[var(--glass-dark)] backdrop-blur-xl border-b-2 border-[var(--glass-border)] shadow-2xl">
-          <div className="flex items-center justify-between py-4 px-6">
-            <div className="flex items-center space-x-4">
-              <button 
-                onClick={() => window.location.href = '/'}
-                className="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] transition-colors duration-300"
-              >
-                🏠 Home
-              </button>
+      <div className="fixed top-0 left-0 right-0 z-50">
+        <div className="bg-[var(--glass-dark)] backdrop-blur-xl border-b border-[var(--glass-border)] shadow-2xl">
+          <OsmoContainer size="lg" padding={true}>
+            <div className="flex items-center justify-between py-4">
+              <div className="flex items-center space-x-4">
+                <button 
+                  onClick={() => navigate('/')}
+                  className="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] transition-colors duration-300"
+                >
+                  🏠 Home
+                </button>
+              </div>
+              <div className="flex items-center space-x-3">
+                <OsmoButton 
+                  onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                  size="sm"
+                >
+                  Pro
+                </OsmoButton>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <button 
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="osmo-button-primary px-4 py-2 font-semibold"
-              >
-                Pro
-              </button>
-            </div>
-          </div>
+          </OsmoContainer>
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-white mb-4 font-mono tracking-wider">
-            Choose Your Plan
-          </h1>
-          <p className="text-slate-300 text-xl max-w-2xl mx-auto mb-6">
-            Start with a <span className="text-amber-400 font-bold">14-day free trial</span> - no credit card required
-          </p>
+      <div className="pt-20 pb-8">
+        <OsmoContainer size="lg">
+          {/* Header */}
+          <OsmoSectionHeader
+            title="Choose Your Plan"
+            subtitle="Start with a 14-day free trial - no credit card required"
+          />
+          
+          {/* Enhanced subtitle with gradient */}
+          <div className="text-center mb-8">
+            <p className="text-[var(--text-secondary)] text-xl max-w-2xl mx-auto">
+              Start with a <OsmoGradientText gradient="gold">14-day free trial</OsmoGradientText> - no credit card required
+            </p>
+          </div>
           
           {/* Free Access Banner */}
-          <div className="bg-gradient-to-r from-green-600/20 to-emerald-600/20 border border-green-500/30 rounded-2xl p-6 max-w-3xl mx-auto">
-            <div className="flex items-center justify-center gap-3 mb-3">
-              <span className="text-3xl">💝</span>
-              <h2 className="text-2xl font-bold text-green-100">100% Free Access Available</h2>
+          <OsmoCard className="mb-12 bg-gradient-to-r from-green-600/10 to-emerald-600/10 border-green-500/30">
+            <div className="text-center">
+              <div className="flex items-center justify-center gap-3 mb-4">
+                <span className="text-3xl">💝</span>
+                <h2 className="text-2xl font-bold text-green-100">100% Free Access Available</h2>
+              </div>
+              <p className="text-green-200 text-lg mb-6">
+                Can't afford it? We believe everyone deserves spiritual growth tools. 
+                <span className="font-semibold"> Request free access below</span> - no questions asked.
+              </p>
+              <div className="flex flex-wrap justify-center gap-2">
+                <OsmoBadge variant="spiritual" className="bg-green-700/30 text-green-300 border-green-500/30">
+                  Students
+                </OsmoBadge>
+                <OsmoBadge variant="spiritual" className="bg-green-700/30 text-green-300 border-green-500/30">
+                  Ministry Workers
+                </OsmoBadge>
+                <OsmoBadge variant="spiritual" className="bg-green-700/30 text-green-300 border-green-500/30">
+                  Financial Hardship
+                </OsmoBadge>
+                <OsmoBadge variant="spiritual" className="bg-green-700/30 text-green-300 border-green-500/30">
+                  Anyone in Need
+                </OsmoBadge>
+              </div>
             </div>
-            <p className="text-green-200 text-lg mb-4">
-              Can't afford it? We believe everyone deserves spiritual growth tools. 
-              <span className="font-semibold"> Request free access below</span> - no questions asked.
-            </p>
-            <div className="flex flex-wrap justify-center gap-2 text-green-300 text-sm">
-              <span className="bg-green-700/30 px-3 py-1 rounded-full">Students</span>
-              <span className="bg-green-700/30 px-3 py-1 rounded-full">Ministry Workers</span>
-              <span className="bg-green-700/30 px-3 py-1 rounded-full">Financial Hardship</span>
-              <span className="bg-green-700/30 px-3 py-1 rounded-full">Anyone in Need</span>
-            </div>
-          </div>
-        </div>
+          </OsmoCard>
 
-        {/* Plans Container */}
-        <div className="grid md:grid-cols-3 gap-8 mb-12">
-          
-          {/* Yearly Pro Plan - Featured */}
-          <div className="relative">
-            <div className="osmo-card p-8 transform hover:scale-105 transition-all duration-300">
-              {/* Popular Badge */}
-              <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-                <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] text-[var(--text-inverse)] px-6 py-2 rounded-full text-sm font-bold shadow-lg border border-[var(--accent-primary)]/50">
-                  ⭐ BEST VALUE
-                </span>
-              </div>
+          {/* Plans Container */}
+          <OsmoGrid columns={3} gap="lg" className="mb-12">
+            
+            {/* Yearly Pro Plan - Featured */}
+            <div className="relative">
+              <OsmoCard className="p-8 transform hover:scale-105 transition-all duration-300" glow={true}>
+                {/* Popular Badge */}
+                <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                  <OsmoBadge variant="primary" className="px-6 py-2 text-sm font-bold shadow-lg">
+                    ⭐ BEST VALUE
+                  </OsmoBadge>
+                </div>
+                
+                {/* Trial Badge */}
+                <div className="absolute -top-4 right-4">
+                  <OsmoBadge variant="spiritual" className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 text-xs font-bold shadow-lg border-blue-500/50">
+                    14-DAY FREE TRIAL
+                  </OsmoBadge>
+                </div>
               
-              {/* Trial Badge */}
-              <div className="absolute -top-4 right-4">
-                <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
-                  14-DAY FREE TRIAL
-                </span>
-              </div>
-              
-              {/* Plan Header */}
-              <div className="text-center mb-8">
-                <h2 className="text-3xl font-bold mb-2 bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] bg-clip-text text-transparent">
-                  Pro Yearly
-                </h2>
-                <p className="text-[var(--text-secondary)] text-lg">Unlock everything & save 17%</p>
-              </div>
+                {/* Plan Header */}
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold mb-2">
+                    <OsmoGradientText gradient="gold">Pro Yearly</OsmoGradientText>
+                  </h2>
+                  <p className="text-[var(--text-secondary)] text-lg">Unlock everything & save 17%</p>
+                </div>
 
-              {/* Pricing - Prominent Display */}
-              <div className="text-center mb-8">
-                <div className="mb-2">
-                  <span className="text-5xl font-bold text-[var(--text-primary)]">$30</span>
-                  <span className="text-2xl text-[var(--text-secondary)]">/year</span>
+                {/* Pricing - Prominent Display */}
+                <div className="text-center mb-8">
+                  <div className="mb-2">
+                    <span className="text-5xl font-bold text-[var(--text-primary)]">$30</span>
+                    <span className="text-2xl text-[var(--text-secondary)]">/year</span>
+                  </div>
+                  <div className="text-[var(--text-secondary)] text-lg font-semibold">
+                    Just <span className="text-[var(--text-primary)] font-bold">$2.50/month</span> when billed yearly
+                  </div>
+                  <div className="text-green-400 text-sm font-semibold mt-2">
+                    💰 Save $6/year vs monthly billing
+                  </div>
                 </div>
-                <div className="text-[var(--text-secondary)] text-lg font-semibold">
-                  Just <span className="text-[var(--text-primary)] font-bold">$2.50/month</span> when billed yearly
-                </div>
-                <div className="text-green-400 text-sm font-semibold mt-2">
-                  💰 Save $6/year vs monthly billing
-                </div>
-              </div>
 
               {/* Features List */}
               <div className="space-y-4 mb-8">
@@ -204,40 +231,42 @@ export const SubscriptionPage: React.FC = () => {
                 </div>
               </div>
 
-              {/* CTA Button */}
-              <button
-                onClick={() => selectedPlan && handleProUpgrade(selectedPlan)}
-                disabled={isLoading || !selectedPlan}
-                className="w-full bg-gradient-to-r from-amber-600 to-orange-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-amber-500 hover:to-orange-500 transition-all duration-300 shadow-lg hover:shadow-amber-500/40 transform hover:-translate-y-1 border border-amber-500/30 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                    Processing...
-                  </div>
-                ) : (
-                  '🚀 Start 14-Day Free Trial'
-                )}
-              </button>
-              <p className="text-center text-slate-400 text-sm mt-3">
-                Then $30/year • Cancel anytime
-              </p>
+                {/* CTA Button */}
+                <OsmoButton
+                  onClick={() => selectedPlan && handleProUpgrade(selectedPlan)}
+                  disabled={isLoading || !selectedPlan}
+                  size="lg"
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    '🚀 Start 14-Day Free Trial'
+                  )}
+                </OsmoButton>
+                <p className="text-center text-[var(--text-tertiary)] text-sm mt-3">
+                  Then $30/year • Cancel anytime
+                </p>
+              </OsmoCard>
             </div>
-          </div>
 
-          {/* Monthly Pro Plan */}
-          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)] relative">
-            {/* Trial Badge */}
-            <div className="absolute -top-4 right-4">
-              <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 rounded-full text-xs font-bold shadow-lg">
-                14-DAY FREE TRIAL
-              </span>
-            </div>
-            
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Pro Monthly</h2>
-              <p className="text-[var(--text-secondary)] text-lg">Flexible monthly billing</p>
-            </div>
+            {/* Monthly Pro Plan */}
+            <div className="relative">
+              <OsmoCard className="p-8">
+                {/* Trial Badge */}
+                <div className="absolute -top-4 right-4">
+                  <OsmoBadge variant="spiritual" className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-1 text-xs font-bold shadow-lg border-blue-500/50">
+                    14-DAY FREE TRIAL
+                  </OsmoBadge>
+                </div>
+                
+                <div className="text-center mb-8">
+                  <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Pro Monthly</h2>
+                  <p className="text-[var(--text-secondary)] text-lg">Flexible monthly billing</p>
+                </div>
 
             {/* Pricing */}
             <div className="text-center mb-8">
@@ -296,35 +325,38 @@ export const SubscriptionPage: React.FC = () => {
               </div>
             </div>
 
-            {/* CTA Button */}
-            <button
-              onClick={() => {
-                const monthlyPlan = plans.find(plan => plan.interval === 'month')
-                if (monthlyPlan) handleProUpgrade(monthlyPlan)
-              }}
-              disabled={isLoading}
-              className="w-full bg-slate-700 text-slate-200 py-4 px-6 rounded-2xl font-semibold text-lg hover:bg-slate-600 transition-all duration-300 border border-slate-600/50 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isLoading ? (
-                <div className="flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Processing...
-                </div>
-              ) : (
-                '💳 Start 14-Day Free Trial'
-              )}
-            </button>
-            <p className="text-center text-slate-400 text-sm mt-3">
-              Then $3/month • Cancel anytime
-            </p>
-          </div>
-
-          {/* Free Plan */}
-          <div className="bg-[var(--glass-light)] backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-[var(--glass-border)] text-[var(--text-primary)]">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Free Plan</h2>
-              <p className="text-[var(--text-secondary)] text-lg">Basic features included</p>
+                {/* CTA Button */}
+                <OsmoButton
+                  onClick={() => {
+                    const monthlyPlan = plans.find(plan => plan.interval === 'month')
+                    if (monthlyPlan) handleProUpgrade(monthlyPlan)
+                  }}
+                  disabled={isLoading}
+                  variant="secondary"
+                  size="lg"
+                  className="w-full"
+                >
+                  {isLoading ? (
+                    <div className="flex items-center justify-center">
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      Processing...
+                    </div>
+                  ) : (
+                    '💳 Start 14-Day Free Trial'
+                  )}
+                </OsmoButton>
+                <p className="text-center text-[var(--text-tertiary)] text-sm mt-3">
+                  Then $3/month • Cancel anytime
+                </p>
+              </OsmoCard>
             </div>
+
+            {/* Free Plan */}
+            <OsmoCard className="p-8">
+              <div className="text-center mb-8">
+                <h2 className="text-3xl font-bold text-[var(--text-primary)] mb-2">Free Plan</h2>
+                <p className="text-[var(--text-secondary)] text-lg">Basic features included</p>
+              </div>
 
             {/* Pricing */}
             <div className="text-center mb-8">
@@ -383,190 +415,192 @@ export const SubscriptionPage: React.FC = () => {
               </div>
             </div>
 
-        {/* Free Plan Request */}
-            <div className="text-center">
-              <button
-                onClick={() => setShowFreeRequest(true)}
-                className="w-full bg-gradient-to-r from-green-600 to-emerald-600 text-white py-4 px-6 rounded-2xl font-bold text-lg hover:from-green-500 hover:to-emerald-500 transition-all duration-300 shadow-lg hover:shadow-green-500/40 transform hover:-translate-y-1 border border-green-500/30"
-              >
-                💝 Request 100% Free Access
-              </button>
-              <p className="text-green-300 text-sm mt-3 font-semibold">
-                Can't afford it? We believe everyone deserves spiritual growth tools.
-              </p>
-              <p className="text-slate-400 text-xs mt-2">
-                Students, ministry workers, financial hardship - no questions asked.
-              </p>
-            </div>
-          </div>
-        </div>
+              {/* Free Plan Request */}
+              <div className="text-center">
+                <OsmoButton
+                  onClick={() => setShowFreeRequest(true)}
+                  size="lg"
+                  className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 border-green-500/30"
+                >
+                  💝 Request 100% Free Access
+                </OsmoButton>
+                <p className="text-green-300 text-sm mt-3 font-semibold">
+                  Can't afford it? We believe everyone deserves spiritual growth tools.
+                </p>
+                <p className="text-[var(--text-tertiary)] text-xs mt-2">
+                  Students, ministry workers, financial hardship - no questions asked.
+                </p>
+              </div>
+            </OsmoCard>
+          </OsmoGrid>
 
-        {/* Free Plan Request Modal */}
-        {showFreeRequest && (
-          <div className="fixed inset-0 bg-[var(--glass-dark)] flex items-center justify-center p-4 z-50">
-            <div className="bg-slate-800 rounded-2xl p-8 max-w-md w-full border border-gray-600/30">
-              <h3 className="text-2xl font-bold text-white mb-4 text-center">
-                Request Free Access
-              </h3>
-              
-              {!freeRequestSubmitted ? (
-                <>
-                  <p className="text-slate-300 mb-6 text-center">
-                    <span className="text-green-400 font-semibold">100% Free Access</span> - Tell us why you need free access. 
-                    We believe everyone deserves spiritual growth tools.
-                  </p>
-                  
-                  <textarea
-                    value={freeRequestReason}
-                    onChange={(e) => setFreeRequestReason(e.target.value)}
-                    placeholder="Please explain your situation (e.g., student, financial hardship, ministry worker, single parent...)"
-                    className="w-full p-4 border border-green-600/50 rounded-xl resize-none h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent bg-slate-700 text-white placeholder-slate-400"
-                  />
-                  
-                  <div className="flex gap-3 mt-6">
-                    <button
+          {/* Free Plan Request Modal */}
+          {showFreeRequest && (
+            <div className="fixed inset-0 bg-[var(--glass-dark)] flex items-center justify-center p-4 z-50">
+              <OsmoCard className="max-w-md w-full p-8">
+                <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-4 text-center">
+                  Request Free Access
+                </h3>
+                
+                {!freeRequestSubmitted ? (
+                  <>
+                    <p className="text-[var(--text-secondary)] mb-6 text-center">
+                      <span className="text-green-400 font-semibold">100% Free Access</span> - Tell us why you need free access. 
+                      We believe everyone deserves spiritual growth tools.
+                    </p>
+                    
+                    <textarea
+                      value={freeRequestReason}
+                      onChange={(e) => setFreeRequestReason(e.target.value)}
+                      placeholder="Please explain your situation (e.g., student, financial hardship, ministry worker, single parent...)"
+                      className="w-full p-4 border border-green-600/50 rounded-xl resize-none h-32 focus:ring-2 focus:ring-green-500 focus:border-transparent bg-[var(--bg-tertiary)] text-[var(--text-primary)] placeholder-[var(--text-tertiary)]"
+                    />
+                    
+                    <div className="flex gap-3 mt-6">
+                      <OsmoButton
+                        onClick={() => setShowFreeRequest(false)}
+                        variant="secondary"
+                        className="flex-1"
+                      >
+                        Cancel
+                      </OsmoButton>
+                      <OsmoButton
+                        onClick={handleFreeRequest}
+                        disabled={!freeRequestReason.trim()}
+                        className="flex-1"
+                      >
+                        Submit Request
+                      </OsmoButton>
+                    </div>
+                  </>
+                ) : (
+                  <div className="text-center">
+                    <div className="text-6xl mb-4">🎉</div>
+                    <h4 className="text-xl font-bold text-[var(--text-primary)] mb-2">
+                      Request Submitted!
+                    </h4>
+                    <p className="text-[var(--text-secondary)] mb-6">
+                      We'll review your request and get back to you within 24-48 hours.
+                    </p>
+                    <OsmoButton
                       onClick={() => setShowFreeRequest(false)}
-                      className="flex-1 py-3 px-4 bg-slate-600 text-slate-200 rounded-xl font-semibold hover:bg-slate-500 transition-colors"
                     >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleFreeRequest}
-                      disabled={!freeRequestReason.trim()}
-                      className="flex-1 py-3 px-4 bg-gradient-to-r from-amber-600 to-orange-600 text-white rounded-xl font-semibold hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                    >
-                      Submit Request
-                    </button>
+                      Close
+                    </OsmoButton>
                   </div>
-                </>
-              ) : (
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h4 className="text-xl font-bold text-white mb-2">
-                    Request Submitted!
-                  </h4>
-                  <p className="text-slate-300 mb-6">
-                    We'll review your request and get back to you within 24-48 hours.
-                  </p>
-                  <button
-                    onClick={() => setShowFreeRequest(false)}
-                    className="bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-amber-500 hover:to-orange-500 transition-colors"
-                  >
-                    Close
-                  </button>
+                )}
+              </OsmoCard>
+            </div>
+          )}
+
+          {/* FAQ Section */}
+          <OsmoCard className="mb-12">
+            <h3 className="text-2xl font-bold text-[var(--text-primary)] mb-6 text-center">
+              Frequently Asked Questions
+            </h3>
+            
+            <div className="space-y-6">
+              <div>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-2">
+                  How does the yearly payment work?
+                </h4>
+                <p className="text-[var(--text-secondary)]">
+                  You pay $30 once per year, which works out to just $2.50 per month - saving you $6 compared to monthly billing!
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-2">
+                  What's included in the Pro plan?
+                </h4>
+                <p className="text-[var(--text-secondary)]">
+                  Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus premium support.
+                </p>
+              </div>
+
+              <div>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-2">
+                  How do I request 100% free access?
+                </h4>
+                <p className="text-[var(--text-secondary)]">
+                  Simply click "Request 100% Free Access" on the Free Plan and tell us about your situation. We're committed to making spiritual growth accessible to everyone - no questions asked.
+                </p>
+              </div>
+              
+              <div>
+                <h4 className="font-semibold text-[var(--text-primary)] mb-2">
+                  How does the 14-day free trial work?
+                </h4>
+                <p className="text-[var(--text-secondary)]">
+                  Start your trial immediately with no credit card required. After 14 days, you can choose to continue with a paid plan or switch to our free access program.
+                </p>
+              </div>
+            </div>
+          </OsmoCard>
+
+          {/* Contact Support */}
+          <div className="text-center">
+            <p className="text-[var(--text-secondary)] mb-4">
+              Have questions? Need help choosing a plan?
+            </p>
+            <OsmoButton size="lg">
+              💬 Contact Support
+            </OsmoButton>
+          </div>
+
+          {/* Mobile Bottom Spacing */}
+          <div className="h-24 lg:hidden"></div>
+
+          {/* Mobile Navigation Tabs - Floating Glass Tabs */}
+          <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-6">
+            <div className="flex items-center space-x-4">
+              {/* Weekly Analysis Tab */}
+              <button
+                onClick={() => navigate('/analysis')}
+                className="flex flex-col items-center space-y-2 group"
+              >
+                <div className="w-16 h-20 bg-gradient-to-br from-amber-400/10 to-orange-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-amber-400/30 border border-amber-300/20">
+                  <div className="w-10 h-10 bg-gradient-to-br from-amber-400/30 to-orange-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-amber-400/40 border border-amber-300/30 mb-2">
+                    <svg className="w-5 h-5 text-amber-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-amber-100 group-hover:text-amber-50 transition-colors duration-300 tracking-wide">Analysis</span>
                 </div>
-              )}
+              </button>
+              
+              {/* Prayer Tab */}
+              <button
+                onClick={() => navigate('/prayer')}
+                className="flex flex-col items-center space-y-2 group"
+              >
+                <div className="w-16 h-20 bg-gradient-to-br from-blue-400/10 to-indigo-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/30 border border-blue-300/20">
+                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400/30 to-indigo-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/40 border border-blue-300/30 mb-2">
+                    <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-blue-100 group-hover:text-blue-50 transition-colors duration-300 tracking-wide">Prayer</span>
+                </div>
+              </button>
+              
+              {/* Community Tab */}
+              <button
+                onClick={() => navigate('/community')}
+                className="flex flex-col items-center space-y-2 group"
+              >
+                <div className="w-16 h-20 bg-gradient-to-br from-emerald-400/10 to-teal-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/30 border border-emerald-300/20">
+                  <div className="w-10 h-10 bg-gradient-to-br from-emerald-400/30 to-teal-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/40 border border-emerald-300/30 mb-2">
+                    <svg className="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </div>
+                  <span className="text-xs font-medium text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300 tracking-wide">Community</span>
+                </div>
+              </button>
             </div>
           </div>
-        )}
-
-        {/* FAQ Section */}
-        <div className="bg-slate-800/90 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-gray-600/30">
-          <h3 className="text-2xl font-bold text-white mb-6 text-center">
-            Frequently Asked Questions
-          </h3>
-          
-          <div className="space-y-6">
-            <div>
-              <h4 className="font-semibold text-white mb-2">
-                How does the yearly payment work?
-              </h4>
-              <p className="text-slate-300">
-                You pay $30 once per year, which works out to just $2.50 per month - saving you $6 compared to monthly billing!
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-2">
-                What's included in the Pro plan?
-              </h4>
-              <p className="text-slate-300">
-                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus premium support.
-              </p>
-            </div>
-
-            <div>
-              <h4 className="font-semibold text-white mb-2">
-                How do I request 100% free access?
-              </h4>
-              <p className="text-slate-300">
-                Simply click "Request 100% Free Access" on the Free Plan and tell us about your situation. We're committed to making spiritual growth accessible to everyone - no questions asked.
-              </p>
-            </div>
-            
-            <div>
-              <h4 className="font-semibold text-white mb-2">
-                How does the 14-day free trial work?
-              </h4>
-              <p className="text-slate-300">
-                Start your trial immediately with no credit card required. After 14 days, you can choose to continue with a paid plan or switch to our free access program.
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* Contact Support */}
-        <div className="text-center mt-12">
-          <p className="text-slate-300 mb-4">
-            Have questions? Need help choosing a plan?
-          </p>
-          <button className="bg-gradient-to-r from-amber-600 to-orange-600 text-white py-3 px-8 rounded-2xl font-semibold hover:from-amber-500 hover:to-orange-500 transition-all duration-300 border border-amber-500/30">
-            💬 Contact Support
-          </button>
-        </div>
-
-        {/* Mobile Bottom Spacing */}
-        <div className="h-24 lg:hidden"></div>
-
-        {/* Mobile Navigation Tabs - Floating Glass Tabs */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-6">
-          <div className="flex items-center space-x-4">
-            {/* Weekly Analysis Tab */}
-            <button
-              onClick={() => window.location.href = '/weekly-analysis'}
-              className="flex flex-col items-center space-y-2 group"
-            >
-              <div className="w-16 h-20 bg-gradient-to-br from-amber-400/10 to-orange-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-amber-400/30 border border-amber-300/20">
-                <div className="w-10 h-10 bg-gradient-to-br from-amber-400/30 to-orange-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-amber-400/40 border border-amber-300/30 mb-2">
-                  <svg className="w-5 h-5 text-amber-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                  </svg>
-                </div>
-                <span className="text-xs font-medium text-amber-100 group-hover:text-amber-50 transition-colors duration-300 tracking-wide">Analysis</span>
-              </div>
-            </button>
-            
-            {/* Prayer Tab */}
-            <button
-              onClick={() => window.location.href = '/prayer'}
-              className="flex flex-col items-center space-y-2 group"
-            >
-              <div className="w-16 h-20 bg-gradient-to-br from-blue-400/10 to-indigo-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/30 border border-blue-300/20">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-400/30 to-indigo-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-blue-400/40 border border-blue-300/30 mb-2">
-                  <svg className="w-5 h-5 text-blue-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs font-medium text-blue-100 group-hover:text-blue-50 transition-colors duration-300 tracking-wide">Prayer</span>
-              </div>
-            </button>
-            
-            {/* Community Tab */}
-            <button
-              onClick={() => window.location.href = '/community'}
-              className="flex flex-col items-center space-y-2 group"
-            >
-              <div className="w-16 h-20 bg-gradient-to-br from-emerald-400/10 to-teal-500/20 backdrop-blur-xl rounded-2xl flex flex-col items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/30 border border-emerald-300/20">
-                <div className="w-10 h-10 bg-gradient-to-br from-emerald-400/30 to-teal-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-110 transition-all duration-300 shadow-lg group-hover:shadow-emerald-400/40 border border-emerald-300/30 mb-2">
-                  <svg className="w-5 h-5 text-emerald-100" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                  </svg>
-                </div>
-                <span className="text-xs font-medium text-emerald-100 group-hover:text-emerald-50 transition-colors duration-300 tracking-wide">Community</span>
-              </div>
-            </button>
-          </div>
-        </div>
+        </OsmoContainer>
       </div>
     </div>
   )

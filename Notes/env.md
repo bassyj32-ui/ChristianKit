@@ -1,18 +1,17 @@
-VITE_APP_TITLE=Christian Kit
-VITE_APP_VERSION=1.0.0
+# Email Service (Resend)
+VITE_RESEND_API_KEY=re_BZghbW5b_6sE9ZvjWWYMrqgmmFaErMEo1
 
-# API Configuration (if needed)
-VITE_API_BASE_URL=http://localhost:3000/api
+# Supabase Configuration
+VITE_SUPABASE_URL=https://hrznuhcwdjnpasfnqqwp.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhyem51aGN3ZGpucGFzZm5xcXdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2Mzg3ODAsImV4cCI6MjA3MTIxNDc4MH0.G4x6DJxwgdXGI47Zc4Gro_HBbDW0J2rwxru72f3z_Us
+
+# App Configuration
+VITE_APP_TITLE=Christian Kit
+VITE_APP_VERSION=1.0.0# Email Service (Resend)
 
 # Feature Flags
-VITE_ENABLE_ANALYTICS=false
+VITE_ENABLE_ANALYTICS=true
 VITE_ENABLE_DEBUG_MODE=false
 
-# Firebase Configuration
-VITE_FIREBASE_API_KEY=your_firebase_api_key_here
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_FIREBASE_VAPID_KEY=your_vapid_key_here
+# Google Analytics 4 Configuration
+VITE_GA4_MEASUREMENT_ID=G-739DKBJRY1 

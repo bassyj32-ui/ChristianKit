@@ -1,0 +1,26 @@
+ # Email Service (Resend)
+VITE_RESEND_API_KEY=re_BZghbW5b_6sE9ZvjWWYMrqgmmFaErMEo1
+
+# Supabase Configuration
+VITE_SUPABASE_URL=https://hrznuhcwdjnpasfnqqwp.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhyem51aGN3ZGpucGFzZm5xcXdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2Mzg3ODAsImV4cCI6MjA3MTIxNDc4MH0.G4x6DJxwgdXGI47Zc4Gro_HBbDW0J2rwxru72f3z_Us
+
+# App Configuration
+VITE_APP_TITLE=Christian Kit
+VITE_APP_VERSION=1.0.0
+
+# Feature Flags
+VITE_ENABLE_ANALYTICS=true
+VITE_ENABLE_DEBUG_MODE=false
+
+# Google Analytics 4 Configuration
+VITE_GA4_MEASUREMENT_ID=G-739DKBJRY1
+
+# Paddle Payment Configuration
+VITE_PADDLE_VENDOR_ID=your_paddle_vendor_id_here
+VITE_PADDLE_VENDOR_AUTH_CODE=your_paddle_vendor_auth_code_here
+VITE_PADDLE_PUBLIC_KEY=your_paddle_public_key_here
+VITE_PADDLE_ENVIRONMENT=sandbox
+
+VITE_VAPID_PUBLIC_KEY=BPlP29OfGd9w0ZcAui2TOSn8PCS6CYUyy8sHKCmOH6sOLEf7GGemqyWpU1T5y2pylT8W-v78UG5uQQ2VylVpVeM
+VITE_VAPID_PRIVATE_KEY=nRrlq7DHaijuldAViq9YzwIHZd4hsTRYa0iIZI8zEQk

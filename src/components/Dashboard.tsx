@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { WeeklyProgress } from './WeeklyProgress'
-import { CommunitySection } from './CommunitySection'
+import { CommunityPage } from './CommunityPage'
 import { WeeklyProgressBot } from './WeeklyProgressBot'
 import { DailyReEngagementCard } from './DailyReEngagementCard'
 import { AdvancedWeeklyProgress } from './AdvancedWeeklyProgress'
@@ -10,7 +10,6 @@ import { ProFeatureGate } from './ProFeatureGate'
 import { BibleReadingPage } from './BibleReadingPage'
 import { MeditationPage } from './MeditationPage'
 import { FloatingAuthTab } from './FloatingAuthTab'
-import { ReferralSystem } from './ReferralSystem'
 import { PrayerSystemInterface } from './PrayerSystemInterface'
 
 import { prayerService } from '../services/prayerService'
@@ -237,10 +236,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
         </div>
 
-        {/* Referral System */}
-        <div className="mb-8">
-          <ReferralSystem />
-        </div>
 
         {/* Main Actions - Compact Responsive Grid */}
         <div className="w-full mb-16">
@@ -759,7 +754,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           onMouseEnter={() => setActiveSection('community')}
         >
           <div className="transform transition-all duration-300 hover:scale-[1.01]">
-            <CommunitySection />
+            <CommunityPage />
           </div>
         </div>
 

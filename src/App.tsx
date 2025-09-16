@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { Routes, Route, Link, useLocation } from 'react-router-dom'
+import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { FloatingAuthTab } from './components/FloatingAuthTab'
@@ -23,6 +23,7 @@ import { initPerformanceOptimizations } from './utils/performance'
 // Import components directly to fix lazy loading issue
 import { Dashboard } from './components/Dashboard'
 import { CommunityPage } from './components/CommunityPage'
+import { CommunityErrorBoundary } from './components/CommunityErrorBoundary'
 import BibleVerseMemoryMatch from './components/BibleVerseMemoryMatch'
 import { BlogPage } from './components/BlogPage'
 import { JournalPage } from './components/JournalPage'
@@ -69,8 +70,9 @@ const App: React.FC = () => {
 // AppContent component - must be defined inside both ThemeProvider and SupabaseAuthProvider contexts
 const AppContent: React.FC = () => {
   // ALL HOOKS MUST BE CALLED FIRST - before any conditional returns
+  const navigate = useNavigate()
+  const location = useLocation()
   const { user, signOut, signInWithGoogle } = useSupabaseAuth();
-  const location = useLocation();
   
   // SEO optimization
   useSEO();
@@ -179,6 +181,12 @@ const AppContent: React.FC = () => {
     console.log('🔄 Navigating to:', tab, 'with duration:', duration)
     // Normalize known aliases
     const normalized = tab === 'faith-runner' ? 'runner' : tab
+    
+    // Update URL to match the tab
+    const urlPath = getUrlPathForTab(normalized)
+    navigate(urlPath)
+    
+    // Update internal state
     setActiveTab(normalized)
 
     // If duration is provided, update the selected minutes for timer pages
@@ -186,6 +194,67 @@ const AppContent: React.FC = () => {
       setSelectedMinutes(duration)
     }
   }
+
+  // Helper function to get URL path for each tab
+  const getUrlPathForTab = (tab: string): string => {
+    const tabToPath: Record<string, string> = {
+      'home': '/',
+      'dashboard': '/dashboard',
+      'community': '/community',
+      'runner': '/faith-runner',
+      'journal': '/journal',
+      'store': '/store',
+      'subscription': '/pricing',
+      'settings': '/settings',
+      'prayer-history': '/prayer-history',
+      'prayer-settings': '/prayer-settings',
+      'bible-tracker': '/bible-tracker',
+      'osmo-landing': '/landing',
+      'bible-reading': '/bible-reading',
+      'meditation': '/meditation',
+      'sunrise-sunset': '/sunrise-sunset',
+      'profile': '/profile',
+      'leaderboard': '/leaderboard',
+      'analysis': '/analysis',
+      'prayer': '/prayer'
+    }
+    return tabToPath[tab] || '/'
+  }
+
+  // Helper function to get tab from URL path
+  const getTabFromUrlPath = (pathname: string): string => {
+    const pathToTab: Record<string, string> = {
+      '/': 'home',
+      '/dashboard': 'dashboard',
+      '/community': 'community',
+      '/faith-runner': 'runner',
+      '/journal': 'journal',
+      '/store': 'store',
+      '/pricing': 'subscription',
+      '/settings': 'settings',
+      '/prayer-history': 'prayer-history',
+      '/prayer-settings': 'prayer-settings',
+      '/bible-tracker': 'bible-tracker',
+      '/landing': 'osmo-landing',
+      '/bible-reading': 'bible-reading',
+      '/meditation': 'meditation',
+      '/sunrise-sunset': 'sunrise-sunset',
+      '/profile': 'profile',
+      '/leaderboard': 'leaderboard',
+      '/analysis': 'analysis',
+      '/prayer': 'prayer'
+    }
+    return pathToTab[pathname] || 'home'
+  }
+
+  // Sync URL with activeTab on location change
+  useEffect(() => {
+    const tabFromUrl = getTabFromUrlPath(location.pathname)
+    if (tabFromUrl !== activeTab) {
+      console.log('🔄 URL changed, syncing activeTab to:', tabFromUrl)
+      setActiveTab(tabFromUrl)
+    }
+  }, [location.pathname])
 
   // Handle timer completion
   const handleTimerComplete = () => {
@@ -266,7 +335,11 @@ const AppContent: React.FC = () => {
             />
           )
         case 'community':
-          return <CommunityPage />
+          return (
+            <CommunityErrorBoundary>
+              <CommunityPage />
+            </CommunityErrorBoundary>
+          )
         case 'runner':
         case 'faith-runner': // accept alias and route to the same view
           return <BibleQuest />

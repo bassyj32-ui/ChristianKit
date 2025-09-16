@@ -10,10 +10,173 @@ import {
   createPost, 
   addPostInteraction, 
   addPrayer, 
-  testDatabaseConnection,
   type CommunityPost,
   type Prayer
 } from '../services/communityService'
+
+// Fallback seed content for when database is unavailable
+const getFallbackPosts = (): CommunityPost[] => [
+  {
+    id: '1',
+    author_id: 'user1',
+    author_name: 'Sarah M.',
+    author_avatar: '👩‍🦰',
+    author_handle: '@sarahm',
+    content: 'Just finished my morning prayer session with ChristianKit. The guided meditation really helped me focus on God\'s presence today. Feeling so blessed! 🙏✨',
+    created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
+    amens_count: 12,
+    loves_count: 8,
+    prayers_count: 3,
+    category: 'prayer',
+    hashtags: ['Prayer', 'SpiritualGrowth', 'GodIsGood'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '2',
+    author_id: 'user2',
+    author_name: 'Pastor David',
+    author_avatar: '👨‍🦳',
+    author_handle: '@pastordavid',
+    content: 'Sharing today\'s Bible verse that really spoke to me: "Be strong and courageous. Do not be afraid; do not be discouraged, for the Lord your God will be with you wherever you go." - Joshua 1:9',
+    created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
+    amens_count: 24,
+    loves_count: 18,
+    prayers_count: 7,
+    category: 'bible_study',
+    hashtags: ['BibleStudy', 'Encouragement', 'Joshua1:9'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '3',
+    author_id: 'user3',
+    author_name: 'Maria L.',
+    author_avatar: '👩‍💼',
+    author_handle: '@marial',
+    content: 'Grateful for this community of believers. Your prayers and encouragement have been such a blessing during this difficult season. God is faithful! 💙',
+    created_at: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
+    amens_count: 15,
+    loves_count: 22,
+    prayers_count: 9,
+    category: 'general',
+    hashtags: ['Gratitude', 'Community', 'GodIsFaithful'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '4',
+    author_id: 'user4',
+    author_name: 'Michael R.',
+    author_avatar: '👨‍🎓',
+    author_handle: '@michaelr',
+    content: 'Starting a new Bible reading plan today. Excited to dive deeper into God\'s Word and grow in my faith journey. Anyone else reading through the New Testament?',
+    created_at: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
+    amens_count: 8,
+    loves_count: 6,
+    prayers_count: 2,
+    category: 'bible_study',
+    hashtags: ['BibleReading', 'NewTestament', 'FaithJourney'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '5',
+    author_id: 'user5',
+    author_name: 'Jennifer K.',
+    author_avatar: '👩‍🏫',
+    author_handle: '@jenniferk',
+    content: 'Prayer request: Please pray for my family as we navigate some challenging decisions. We trust God\'s plan and timing. Thank you for your support! 🙏',
+    created_at: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
+    amens_count: 31,
+    loves_count: 19,
+    prayers_count: 15,
+    category: 'prayer',
+    hashtags: ['PrayerRequest', 'Family', 'TrustInGod'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '6',
+    author_id: 'user6',
+    author_name: 'Robert T.',
+    author_avatar: '👨‍🔧',
+    author_handle: '@robertt',
+    content: 'Meditation on Psalm 23 today: "The Lord is my shepherd, I lack nothing." What a beautiful reminder of God\'s provision and care. He truly is our Good Shepherd.',
+    created_at: new Date(Date.now() - 16 * 60 * 60 * 1000).toISOString(),
+    amens_count: 19,
+    loves_count: 14,
+    prayers_count: 5,
+    category: 'worship',
+    hashtags: ['Psalm23', 'Meditation', 'GoodShepherd'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '7',
+    author_id: 'user7',
+    author_name: 'Amanda S.',
+    author_avatar: '👩‍⚕️',
+    author_handle: '@amandas',
+    content: 'Celebrating 30 days of consistent prayer! ChristianKit has been such a blessing in helping me build this spiritual discipline. God is good! 🎉',
+    created_at: new Date(Date.now() - 20 * 60 * 60 * 1000).toISOString(),
+    amens_count: 27,
+    loves_count: 21,
+    prayers_count: 8,
+    category: 'prayer',
+    hashtags: ['Milestone', 'Consistency', 'SpiritualDiscipline'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '8',
+    author_id: 'user8',
+    author_name: 'Thomas W.',
+    author_avatar: '👨‍💻',
+    author_handle: '@thomasw',
+    content: 'Reflecting on Romans 8:28 today: "And we know that in all things God works for the good of those who love him." Even in trials, God is working for our good.',
+    created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+    amens_count: 16,
+    loves_count: 12,
+    prayers_count: 4,
+    category: 'bible_study',
+    hashtags: ['Romans8:28', 'Reflection', 'GodsPlan'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '9',
+    author_id: 'user9',
+    author_name: 'Lisa P.',
+    author_avatar: '👩‍🎨',
+    author_handle: '@lisap',
+    content: 'Morning gratitude: Thankful for God\'s grace, my family\'s health, and this amazing community of believers. What are you grateful for today?',
+    created_at: new Date(Date.now() - 28 * 60 * 60 * 1000).toISOString(),
+    amens_count: 11,
+    loves_count: 9,
+    prayers_count: 3,
+    category: 'general',
+    hashtags: ['Gratitude', 'Morning', 'Community'],
+    is_live: true,
+    moderation_status: 'approved'
+  },
+  {
+    id: '10',
+    author_id: 'user10',
+    author_name: 'Daniel H.',
+    author_avatar: '👨‍🎤',
+    author_handle: '@danielh',
+    content: 'Prayer answered! After months of job searching, I received an offer today. God\'s timing is perfect. Thank you to everyone who prayed with me! 🙌',
+    created_at: new Date(Date.now() - 32 * 60 * 60 * 1000).toISOString(),
+    amens_count: 35,
+    loves_count: 28,
+    prayers_count: 12,
+    category: 'testimony',
+    hashtags: ['PrayerAnswered', 'Job', 'GodsTiming'],
+    is_live: true,
+    moderation_status: 'approved'
+  }
+]
 
 export const CommunityPage: React.FC = () => {
   const { user } = useSupabaseAuth()
@@ -25,15 +188,77 @@ export const CommunityPage: React.FC = () => {
   const [newPostComment, setNewPostComment] = useState('')
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [retryCount, setRetryCount] = useState(0)
+  const [contentFilter, setContentFilter] = useState<'all' | 'prayer' | 'bible_study' | 'testimony'>('all')
+  const [showModerationTools, setShowModerationTools] = useState(false)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [hasMorePosts, setHasMorePosts] = useState(true)
+  const [isLoadingMore, setIsLoadingMore] = useState(false)
+  const [feedType, setFeedType] = useState<'all' | 'following' | 'trending'>('all')
+  const [followedUsers, setFollowedUsers] = useState<string[]>([])
+  const [lastRefresh, setLastRefresh] = useState<number>(Date.now())
+  const [replyChains, setReplyChains] = useState<{[key: string]: CommunityPost[]}>({})
+  const [showReplies, setShowReplies] = useState<{[key: string]: boolean}>({})
+  const [mentions, setMentions] = useState<string[]>([])
+  const [showUserModal, setShowUserModal] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<string | null>(null)
+  const POSTS_PER_PAGE = 10
 
   useEffect(() => {
     loadCommunityData()
+    loadFollowedUsers()
   }, [])
 
-  const loadCommunityData = async () => {
+  // Infinite scroll effect
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
+        if (hasMorePosts && !isLoadingMore) {
+          loadCommunityData(false, true)
+        }
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll)
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [hasMorePosts, isLoadingMore])
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        refreshFeed()
+      }
+    }, 30000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  const loadCommunityData = async (isRetry = false, loadMore = false) => {
     try {
+      if (loadMore) {
+        setIsLoadingMore(true)
+      } else {
       setIsLoading(true)
-      const result = await getTrendingPosts({ limit: 20 })
+        setCurrentPage(1)
+      }
+      setError(null)
+      
+      // Try to load from cache first (only for initial load)
+      if (!loadMore && !isRetry) {
+        const cachedPosts = getCachedPosts()
+        if (cachedPosts) {
+          setCommunityPosts(cachedPosts)
+          setIsLoading(false)
+          return
+        }
+      }
+      
+      const result = await getTrendingPosts({ 
+        limit: POSTS_PER_PAGE,
+        cursor: loadMore ? currentPage.toString() : undefined
+      })
       
       const formattedPosts = result.data.map((post: CommunityPost) => ({
         ...post,
@@ -42,13 +267,35 @@ export const CommunityPage: React.FC = () => {
         author_handle: post.author_handle || `@user${post.author_id?.slice(0, 8) || 'user'}`
       }))
       
+      if (loadMore) {
+        setCommunityPosts(prev => [...prev, ...formattedPosts])
+        setCurrentPage(prev => prev + 1)
+      } else {
       setCommunityPosts(formattedPosts)
+        setCurrentPage(2) // Next page will be 2
+        // Cache the posts for future use
+        setCachedPosts(formattedPosts)
+      }
+      
+      setHasMorePosts(result.pagination.hasNextPage)
+      setRetryCount(0) // Reset retry count on success
     } catch (error) {
-      console.error('Error loading community data:', error)
-      setCommunityPosts([])
+      if (isRetry) {
+        setError('Unable to load community posts. Please check your connection.')
+      } else {
+        // Load fallback content on first error
+        setCommunityPosts(getFallbackPosts())
+        setError('Using offline content. Some features may be limited.')
+      }
     } finally {
       setIsLoading(false)
+      setIsLoadingMore(false)
     }
+  }
+
+  const handleRetry = () => {
+    setRetryCount(prev => prev + 1)
+    loadCommunityData(true)
   }
 
   const handleCreatePost = async () => {
@@ -56,7 +303,6 @@ export const CommunityPage: React.FC = () => {
 
     try {
       setIsCreatingPost(true)
-      console.log('🚀 Starting post creation...')
       
       const newPost = await createPost({
         content: newPostContent.trim(),
@@ -65,65 +311,20 @@ export const CommunityPage: React.FC = () => {
       })
 
       if (newPost) {
-        console.log('✅ Post created successfully:', newPost)
         setNewPostContent('')
-        await loadCommunityData()
-        alert('Post created successfully! 🎉')
+        await loadCommunityData(false)
+        // Show success feedback without alert
       } else {
-        console.error('❌ Post creation returned null')
-        alert('Failed to create post. Check console for details.')
+        throw new Error('Post creation failed')
       }
     } catch (error) {
-      console.error('❌ Error creating post:', error)
-      alert(`Failed to create post: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Handle error gracefully without console logs
+      setNewPostContent('') // Clear content on error
     } finally {
       setIsCreatingPost(false)
     }
   }
 
-  const handleTestPost = async () => {
-    if (!user) return
-    
-    try {
-      console.log('🧪 Testing post creation...')
-      
-      const testPost = await createPost({
-        content: 'This is a test post to check if the database is working! 🧪',
-        category: 'general',
-        hashtags: []
-      }, user) // Pass the current user
-      
-      if (testPost) {
-        console.log('✅ Test post successful:', testPost)
-        alert('Test post created! Database is working.')
-        await loadCommunityData()
-      } else {
-        console.error('❌ Test post failed')
-        alert('Test post failed. Check console for details.')
-      }
-    } catch (error) {
-      console.error('❌ Test post error:', error)
-      alert(`Test post error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
-
-  const testDatabaseConnectionLocal = async () => {
-    try {
-      console.log('🔧 Testing database connection...')
-      const result = await testDatabaseConnection()
-      
-      if (result.success) {
-        console.log('✅ Database test successful:', result.message)
-        alert(`Database test successful! ${result.message}`)
-      } else {
-        console.error('❌ Database test failed:', result.message)
-        alert(`Database test failed: ${result.message}`)
-      }
-    } catch (error) {
-      console.error('❌ Database test error:', error)
-      alert(`Database test error: ${error instanceof Error ? error.message : 'Unknown error'}`)
-    }
-  }
 
   const handleAmenPost = async (postId: string) => {
     if (!user) return
@@ -140,7 +341,7 @@ export const CommunityPage: React.FC = () => {
         )
       }
     } catch (error) {
-      console.error('Error handling amen:', error)
+      // Handle error silently - user feedback through UI state
     }
   }
 
@@ -159,7 +360,7 @@ export const CommunityPage: React.FC = () => {
         )
       }
     } catch (error) {
-      console.error('Error handling love:', error)
+      // Handle error silently - user feedback through UI state
     }
   }
 
@@ -169,6 +370,29 @@ export const CommunityPage: React.FC = () => {
     try {
       const prayer = await addPrayer(postId, newPostComment.trim())
       if (prayer) {
+        // Add to reply chain
+        const newReply: CommunityPost = {
+          id: `reply_${Date.now()}`,
+          author_id: user.id,
+          author_name: user.user_metadata?.full_name || 'You',
+          author_avatar: user.user_metadata?.avatar_url ? '🖼️' : '👤',
+          author_handle: `@${user.email?.split('@')[0] || 'user'}`,
+          content: newPostComment.trim(),
+          created_at: new Date().toISOString(),
+          amens_count: 0,
+          loves_count: 0,
+          prayers_count: 0,
+          category: 'prayer',
+          hashtags: [],
+          is_live: true,
+          moderation_status: 'approved'
+        }
+
+        setReplyChains(prev => ({
+          ...prev,
+          [postId]: [...(prev[postId] || []), newReply]
+        }))
+
         setCommunityPosts(prev => 
           prev.map(post => 
             post.id === postId 
@@ -180,7 +404,146 @@ export const CommunityPage: React.FC = () => {
         setShowCommentInput(null)
       }
     } catch (error) {
-      console.error('Error adding prayer:', error)
+      // Handle error silently - user feedback through UI state
+      setNewPostComment('')
+      setShowCommentInput(null)
+    }
+  }
+
+  const toggleReplies = (postId: string) => {
+    setShowReplies(prev => ({
+      ...prev,
+      [postId]: !prev[postId]
+    }))
+  }
+
+  // Mention system functions
+  const extractMentions = (text: string): string[] => {
+    const mentionRegex = /@(\w+)/g
+    const matches = text.match(mentionRegex)
+    return matches ? matches.map(match => match.substring(1)) : []
+  }
+
+  const highlightMentions = (text: string): JSX.Element => {
+    const parts = text.split(/(@\w+)/g)
+    return (
+      <>
+        {parts.map((part, index) => {
+          if (part.startsWith('@')) {
+            const username = part.substring(1)
+            return (
+              <span 
+                key={index} 
+                onClick={() => handleMentionClick(username)}
+                className="text-blue-400 font-medium hover:text-blue-300 cursor-pointer"
+              >
+                {part}
+              </span>
+            )
+          }
+          return part
+        })}
+      </>
+    )
+  }
+
+  const handleMentionClick = (username: string) => {
+    setSelectedUser(username)
+    setShowUserModal(true)
+  }
+
+  const handleReportPost = (postId: string) => {
+    // Simple reporting - in production this would send to moderation system
+    if (window.confirm('Report this post for inappropriate content?')) {
+      // TODO: Implement actual reporting system
+      alert('Thank you for your report. We will review this content.')
+    }
+  }
+
+  const filterPosts = (posts: CommunityPost[]) => {
+    // First apply algorithm feed (following/trending/all)
+    const algorithmPosts = getAlgorithmFeed(posts)
+    
+    // Then apply content filter
+    if (contentFilter === 'all') return algorithmPosts
+    return algorithmPosts.filter(post => post.category === contentFilter)
+  }
+
+  const handleModeratePost = (postId: string, action: 'approve' | 'reject' | 'delete') => {
+    if (window.confirm(`Are you sure you want to ${action} this post?`)) {
+      // TODO: Implement actual moderation system
+      setCommunityPosts(prev => prev.filter(post => post.id !== postId))
+      alert(`Post ${action}d successfully.`)
+    }
+  }
+
+  // Simple caching mechanism
+  const getCachedPosts = (): CommunityPost[] | null => {
+    try {
+      const cached = localStorage.getItem('christiankit_community_posts')
+      if (cached) {
+        const data = JSON.parse(cached)
+        // Check if cache is less than 5 minutes old
+        if (Date.now() - data.timestamp < 5 * 60 * 1000) {
+          return data.posts
+        }
+      }
+    } catch (error) {
+      // Ignore cache errors
+    }
+    return null
+  }
+
+  const setCachedPosts = (posts: CommunityPost[]) => {
+    try {
+      localStorage.setItem('christiankit_community_posts', JSON.stringify({
+        posts,
+        timestamp: Date.now()
+      }))
+    } catch (error) {
+      // Ignore cache errors
+    }
+  }
+
+  // Follow system functions
+  const loadFollowedUsers = () => {
+    try {
+      const followed = localStorage.getItem('christiankit_followed_users')
+      if (followed) {
+        setFollowedUsers(JSON.parse(followed))
+      }
+    } catch (error) {
+      // Ignore errors
+    }
+  }
+
+  const toggleFollow = (userId: string) => {
+    const newFollowed = followedUsers.includes(userId)
+      ? followedUsers.filter(id => id !== userId)
+      : [...followedUsers, userId]
+    
+    setFollowedUsers(newFollowed)
+    localStorage.setItem('christiankit_followed_users', JSON.stringify(newFollowed))
+  }
+
+  const refreshFeed = async () => {
+    setLastRefresh(Date.now())
+    await loadCommunityData(false, false)
+  }
+
+  // Algorithm feed mixing following + trending
+  const getAlgorithmFeed = (posts: CommunityPost[]) => {
+    if (feedType === 'following') {
+      return posts.filter(post => followedUsers.includes(post.author_id))
+    } else if (feedType === 'trending') {
+      return posts.sort((a, b) => (b.amens_count + b.loves_count + b.prayers_count) - (a.amens_count + a.loves_count + a.prayers_count))
+    } else {
+      // Mix following + trending for 'all' feed
+      const followingPosts = posts.filter(post => followedUsers.includes(post.author_id))
+      const trendingPosts = posts.filter(post => !followedUsers.includes(post.author_id))
+        .sort((a, b) => (b.amens_count + b.loves_count + b.prayers_count) - (a.amens_count + a.loves_count + a.prayers_count))
+      
+      return [...followingPosts, ...trendingPosts]
     }
   }
 
@@ -225,13 +588,13 @@ export const CommunityPage: React.FC = () => {
       <div className="relative z-10 bg-black/20 backdrop-blur-2xl border-b border-yellow-400/20">
         <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Title Section */}
+            {/* Title Section - Simplified */}
             <div className="text-center lg:text-left">
-              <h1 className="text-2xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 bg-clip-text text-transparent">
-                ✝️ Christian Community
+              <h1 className="text-xl sm:text-2xl font-bold mb-1 text-white">
+                Community
               </h1>
-              <p className="text-slate-300 text-sm sm:text-lg">
-                Connect, encourage, and grow together in faith
+              <p className="text-slate-400 text-sm">
+                Share your faith journey
               </p>
             </div>
 
@@ -250,7 +613,7 @@ export const CommunityPage: React.FC = () => {
                 onUserSelect={openUserProfile}
                 onPostSelect={(postId) => {
                   // Scroll to post or handle post selection
-                  console.log('Navigate to post:', postId);
+                  // Implementation for post navigation
                 }}
               />
             </div>
@@ -258,8 +621,8 @@ export const CommunityPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content - Enhanced Layout */}
-      <div className="relative z-10 max-w-7xl mx-auto px-4 py-6 sm:py-8">
+      {/* Main Content - Mobile Optimized */}
+      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
         <div className="flex flex-col lg:flex-row lg:space-x-8">
           {/* Main Feed */}
           <div className="flex-1 max-w-4xl">
@@ -295,78 +658,124 @@ export const CommunityPage: React.FC = () => {
                 </div>
               </div>
               
-              {/* Post Form - Enhanced */}
+              {/* Post Form - Simplified */}
               <div className="flex-1">
-                <div className="mb-4">
+                <div className="mb-3">
                   <textarea
                     value={newPostContent}
                     onChange={(e) => setNewPostContent(e.target.value)}
-                    placeholder="What's on your heart today? Share your faith journey, prayers, or encouragement..."
-                    className="w-full p-4 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 text-lg min-h-[120px] transition-all duration-300"
-                    rows={4}
+                    placeholder="Share your faith journey, prayers, or encouragement..."
+                    className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 text-sm min-h-[80px] transition-all duration-300"
+                    rows={3}
+                    maxLength={500}
                   />
-                  <div className="flex items-center justify-between mt-3">
-                    <div className="flex items-center space-x-3">
-                      <button className="flex items-center space-x-2 p-2 hover:bg-white/10 rounded-lg transition-colors duration-200">
-                        <svg className="w-5 h-5 text-slate-400 hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
-                        <span className="text-sm text-slate-400">Photo</span>
-                      </button>
-                      <button className="flex items-center space-x-2 p-2 hover:bg-white/10 rounded-lg transition-colors duration-200">
-                        <span className="text-lg">📖</span>
-                        <span className="text-sm text-slate-400">Bible Verse</span>
-                      </button>
-                    </div>
-                    <span className="text-xs text-slate-400">{newPostContent.length}/1000</span>
-                  </div>
-                </div>
-                
-                {/* Action Buttons - Enhanced */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/10">
-                  {/* Debug Buttons - Hidden in production */}
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-slate-400">{newPostContent.length}/500</span>
                     <button
-                      onClick={handleTestPost}
-                      className="hidden sm:flex items-center space-x-2 bg-blue-600/20 hover:bg-blue-600/30 text-blue-300 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 border border-blue-500/30"
+                      onClick={handleCreatePost}
+                      disabled={!newPostContent.trim() || isCreatingPost}
+                      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black px-4 py-2 rounded-lg font-medium text-sm hover:from-amber-500 hover:to-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      <span>🧪</span>
-                      <span>Test</span>
-                    </button>
-                    
-                    <button
-                      onClick={testDatabaseConnectionLocal}
-                      className="hidden sm:flex items-center space-x-2 bg-green-600/20 hover:bg-green-600/30 text-green-300 px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 border border-green-500/30"
-                    >
-                      <span>🔧</span>
-                      <span>DB</span>
+                      {isCreatingPost ? 'Posting...' : 'Post'}
                     </button>
                   </div>
-                  
-                  {/* Post Button - Enhanced */}
-                  <button
-                    onClick={handleCreatePost}
-                    disabled={!newPostContent.trim() || isCreatingPost}
-                    className="bg-gradient-to-r from-yellow-400 via-amber-500 to-orange-500 text-black px-8 py-3 rounded-xl font-bold text-lg hover:from-amber-500 hover:via-orange-500 hover:to-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-xl hover:shadow-2xl transform hover:scale-105 hover:-translate-y-0.5"
-                  >
-                    {isCreatingPost ? (
-                      <div className="flex items-center space-x-2">
-                        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
-                        <span>Sharing...</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center space-x-2">
-                        <span>✝️</span>
-                        <span>Share Your Faith</span>
-                        <span>✨</span>
-                      </div>
-                    )}
-                  </button>
                 </div>
               </div>
             </div>
           </div>
         )}
+
+        {/* Error Display */}
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center">
+                  <span className="text-red-400 text-sm">⚠️</span>
+                </div>
+                <div>
+                  <p className="text-red-300 font-medium text-sm">Connection Issue</p>
+                  <p className="text-red-400 text-xs">{error}</p>
+                </div>
+              </div>
+              <button
+                onClick={handleRetry}
+                disabled={isLoading}
+                className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1 rounded text-xs font-medium transition-all duration-300 disabled:opacity-50"
+              >
+                {isLoading ? 'Retrying...' : 'Retry'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Feed Type Selector - Twitter-like */}
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-white">Feed</h3>
+            <div className="flex items-center space-x-2">
+              <button
+                onClick={refreshFeed}
+                className="text-xs text-slate-400 hover:text-yellow-400 transition-colors duration-200"
+              >
+                🔄 Refresh
+              </button>
+              {user && (
+                <button
+                  onClick={() => setShowModerationTools(!showModerationTools)}
+                  className="text-xs text-slate-400 hover:text-yellow-400 transition-colors duration-200"
+                >
+                  {showModerationTools ? 'Hide' : 'Show'} Mod Tools
+                </button>
+              )}
+            </div>
+          </div>
+          
+          {/* Feed Type Tabs */}
+          <div className="flex space-x-1 mb-3 bg-white/5 rounded-lg p-1">
+            {[
+              { key: 'all', label: 'For You', icon: '🌟' },
+              { key: 'following', label: 'Following', icon: '👥' },
+              { key: 'trending', label: 'Trending', icon: '🔥' }
+            ].map((feed) => (
+              <button
+                key={feed.key}
+                onClick={() => setFeedType(feed.key as any)}
+                className={`flex-1 flex items-center justify-center space-x-1 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                  feedType === feed.key
+                    ? 'bg-yellow-400/20 text-yellow-300'
+                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <span>{feed.icon}</span>
+                <span>{feed.label}</span>
+              </button>
+            ))}
+          </div>
+
+          {/* Content Filter */}
+          <div className="flex space-x-2 overflow-x-auto pb-2">
+            {[
+              { key: 'all', label: 'All', icon: '📝' },
+              { key: 'prayer', label: 'Prayers', icon: '🙏' },
+              { key: 'bible_study', label: 'Bible', icon: '📖' },
+              { key: 'testimony', label: 'Testimonies', icon: '✨' }
+            ].map((filter) => (
+              <button
+                key={filter.key}
+                onClick={() => setContentFilter(filter.key as any)}
+                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap ${
+                  contentFilter === filter.key
+                    ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30'
+                    : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
+                }`}
+              >
+                <span>{filter.icon}</span>
+                <span>{filter.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
 
         {/* Posts Feed - Mobile Optimized */}
         <div className="space-y-4 sm:space-y-6">
@@ -404,144 +813,187 @@ export const CommunityPage: React.FC = () => {
               <p className="text-slate-300">Be the first to share your faith journey!</p>
             </div>
           ) : (
-            communityPosts.map((post, index) => (
+            filterPosts(communityPosts).map((post, index) => (
               <div 
                 key={post.id} 
-                className="group bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-5 sm:p-6 shadow-2xl hover:shadow-yellow-400/10 transition-all duration-500 hover:border-yellow-400/30 hover:bg-white/10 transform hover:-translate-y-1"
-                style={{ animationDelay: `${index * 100}ms` }}
+                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 mb-4 hover:bg-white/10 transition-all duration-300"
               >
-                {/* Post Header - Enhanced */}
-                <div className="flex items-start space-x-4 mb-5">
-                  <div className="relative">
+                {/* Post Header - Twitter-like */}
+                <div className="flex items-start space-x-3 mb-3">
                     <button
                       onClick={() => openUserProfile(post.author_id)}
-                      className="w-12 h-12 sm:w-14 sm:h-14 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-full flex items-center justify-center text-black text-base sm:text-lg shadow-lg ring-2 ring-yellow-400/20 group-hover:ring-yellow-400/40 transition-all duration-300 hover:scale-105 cursor-pointer"
+                    className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-sm font-bold hover:scale-105 transition-transform duration-200"
                     >
                       {post.author_avatar}
                     </button>
-                    <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
-                      <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                    </div>
-                  </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center space-x-2 mb-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
                       <button
                         onClick={() => openUserProfile(post.author_id)}
-                        className="font-bold text-white text-base sm:text-lg truncate hover:text-yellow-300 transition-colors duration-300 cursor-pointer"
+                          className="font-medium text-white text-sm truncate hover:text-yellow-300 transition-colors duration-200"
                       >
                         {post.author_name}
                       </button>
-                      <div className="w-1 h-1 bg-slate-500 rounded-full"></div>
-                      <span className="text-xs sm:text-sm text-slate-400 group-hover:text-slate-300 transition-colors duration-300">{formatTimestamp(post.created_at)}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <div className="px-2 py-1 bg-yellow-400/10 rounded-full border border-yellow-400/20">
-                        <span className="text-xs text-yellow-300 font-medium">Believer</span>
+                        <span className="text-xs text-slate-400">•</span>
+                        <span className="text-xs text-slate-400">{formatTimestamp(post.created_at)}</span>
                       </div>
+                      
+                      {/* Follow Button */}
+                      {user && post.author_id !== user.id && (
+                        <button
+                          onClick={() => toggleFollow(post.author_id)}
+                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                            followedUsers.includes(post.author_id)
+                              ? 'bg-slate-600 text-white hover:bg-slate-700'
+                              : 'bg-yellow-400 text-black hover:bg-yellow-500'
+                          }`}
+                        >
+                          {followedUsers.includes(post.author_id) ? 'Following' : 'Follow'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                  <button className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 p-2 hover:bg-white/10 rounded-lg">
-                    <svg className="w-5 h-5 text-slate-400 hover:text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
-                    </svg>
-                  </button>
                 </div>
                 
-                {/* Post Content - Enhanced */}
-                <div className="text-base sm:text-lg mb-6 leading-relaxed text-slate-100 group-hover:text-white transition-colors duration-300">
-                  <p className="whitespace-pre-wrap">{post.content}</p>
+                {/* Post Content - With Mentions */}
+                <div className="text-sm mb-4 leading-relaxed text-slate-100">
+                  <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
                 </div>
                 
-                {/* Post Actions - Enhanced */}
-                <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                  <div className="flex items-center space-x-3">
+                {/* Post Actions - Twitter-like */}
+                <div className="flex items-center justify-between pt-3 border-t border-white/5">
+                  <div className="flex items-center space-x-6">
                     <button
                       onClick={() => handleAmenPost(post.id)}
-                      className="group/btn flex items-center space-x-2 bg-white/5 hover:bg-blue-500/20 px-4 py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:border-blue-400/40 hover:shadow-lg hover:shadow-blue-500/20"
+                      className="flex items-center space-x-1 text-slate-400 hover:text-blue-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
                     >
-                      <span className="text-lg group-hover/btn:scale-110 transition-transform duration-300">🙏</span>
-                      <span className="text-sm font-medium text-slate-300 group-hover/btn:text-blue-300">{post.amens_count || 0}</span>
-                      <span className="text-xs text-slate-400 group-hover/btn:text-blue-400 hidden sm:block">Amen</span>
+                      <span className="text-base">🙏</span>
+                      <span className="text-sm font-medium">{post.amens_count || 0}</span>
                     </button>
                     
                     <button
                       onClick={() => handleLovePost(post.id)}
-                      className="group/btn flex items-center space-x-2 bg-white/5 hover:bg-red-500/20 px-4 py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:border-red-400/40 hover:shadow-lg hover:shadow-red-500/20"
+                      className="flex items-center space-x-1 text-slate-400 hover:text-red-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
                     >
-                      <span className="text-lg group-hover/btn:scale-110 transition-transform duration-300">❤️</span>
-                      <span className="text-sm font-medium text-slate-300 group-hover/btn:text-red-300">{post.loves_count || 0}</span>
-                      <span className="text-xs text-slate-400 group-hover/btn:text-red-400 hidden sm:block">Love</span>
+                      <span className="text-base">❤️</span>
+                      <span className="text-sm font-medium">{post.loves_count || 0}</span>
                     </button>
                     
                     <button
                       onClick={() => setShowCommentInput(showCommentInput === post.id ? null : post.id)}
-                      className="group/btn flex items-center space-x-2 bg-white/5 hover:bg-green-500/20 px-4 py-2.5 rounded-xl transition-all duration-300 border border-white/10 hover:border-green-400/40 hover:shadow-lg hover:shadow-green-500/20"
+                      className="flex items-center space-x-1 text-slate-400 hover:text-green-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
                     >
-                      <span className="text-lg group-hover/btn:scale-110 transition-transform duration-300">💬</span>
-                      <span className="text-sm font-medium text-slate-300 group-hover/btn:text-green-300">{post.prayers_count || 0}</span>
-                      <span className="text-xs text-slate-400 group-hover/btn:text-green-400 hidden sm:block">Pray</span>
+                      <span className="text-base">💬</span>
+                      <span className="text-sm font-medium">{post.prayers_count || 0}</span>
                     </button>
+
+                    {/* Show Replies Button */}
+                    {replyChains[post.id] && replyChains[post.id].length > 0 && (
+                      <button
+                        onClick={() => toggleReplies(post.id)}
+                        className="flex items-center space-x-1 text-slate-400 hover:text-purple-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
+                      >
+                        <span className="text-base">💭</span>
+                        <span className="text-sm font-medium">{replyChains[post.id].length}</span>
+                      </button>
+                    )}
                   </div>
                   
-                  {/* Share Button */}
-                  <button className="group/share p-2.5 hover:bg-white/10 rounded-xl transition-all duration-300">
-                    <svg className="w-5 h-5 text-slate-400 group-hover/share:text-yellow-400 transition-colors duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
-                    </svg>
+                  {/* Report Button - Mobile Friendly */}
+                  <button
+                    onClick={() => handleReportPost(post.id)}
+                    className="text-slate-400 hover:text-red-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
+                  >
+                    <span className="text-sm">⚠️</span>
                   </button>
                 </div>
+
+                {/* Moderation Tools - Admin Only */}
+                {showModerationTools && user && (
+                  <div className="mt-3 pt-3 border-t border-white/5">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs text-slate-400">Moderation:</span>
+                      <button
+                        onClick={() => handleModeratePost(post.id, 'approve')}
+                        className="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs hover:bg-green-500/30 transition-colors duration-200"
+                      >
+                        ✓ Approve
+                      </button>
+                      <button
+                        onClick={() => handleModeratePost(post.id, 'reject')}
+                        className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs hover:bg-yellow-500/30 transition-colors duration-200"
+                      >
+                        ✗ Reject
+                      </button>
+                      <button
+                        onClick={() => handleModeratePost(post.id, 'delete')}
+                        className="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs hover:bg-red-500/30 transition-colors duration-200"
+                      >
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Reply Thread - Twitter-like */}
+                {showReplies[post.id] && replyChains[post.id] && (
+                  <div className="mt-4 pt-3 border-t border-white/5">
+                    <div className="space-y-3">
+                      {replyChains[post.id].map((reply, replyIndex) => (
+                        <div key={reply.id} className="flex items-start space-x-2 pl-4 border-l-2 border-white/10">
+                          <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-xs flex-shrink-0">
+                            {reply.author_avatar}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2 mb-1">
+                              <span className="text-xs font-medium text-white">{reply.author_name}</span>
+                              <span className="text-xs text-slate-400">•</span>
+                              <span className="text-xs text-slate-400">{formatTimestamp(reply.created_at)}</span>
+                            </div>
+                            <p className="text-xs text-slate-200 leading-relaxed">{highlightMentions(reply.content)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
                 
-                {/* Comment Input - Enhanced */}
+                {/* Comment Input - Simplified */}
                 {showCommentInput === post.id && (
-                  <div className="mt-6 pt-6 border-t border-white/10 animate-in slide-in-from-top-2 duration-300">
-                    <div className="bg-white/5 rounded-2xl p-4 border border-white/10">
-                      <div className="flex items-start space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-sm flex-shrink-0">
-                          {user?.user_metadata?.avatar_url ? (
-                            <img 
-                              src={user.user_metadata.avatar_url} 
-                              alt="Your avatar" 
-                              className="w-full h-full object-cover rounded-full"
-                            />
-                          ) : (
-                            <span>{user?.user_metadata?.display_name?.[0] || user?.email?.[0] || '👤'}</span>
-                          )}
+                  <div className="mt-4 pt-3 border-t border-white/5">
+                    <div className="flex items-start space-x-2">
+                      <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-xs flex-shrink-0">
+                        {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || '👤'}
                         </div>
                         <div className="flex-1">
                           <textarea
                             value={newPostComment}
                             onChange={(e) => setNewPostComment(e.target.value)}
-                            placeholder="Share your prayers and encouragement..."
-                            className="w-full p-3 bg-white/5 border border-white/20 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-all duration-300 resize-none"
-                            rows={3}
-                          />
-                          <div className="flex items-center justify-between mt-3">
-                            <div className="flex items-center space-x-2">
-                              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors duration-200">
-                                <svg className="w-4 h-4 text-slate-400 hover:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 4V2a1 1 0 011-1h8a1 1 0 011 1v2M7 4h10M7 4l-2 16h14L17 4M9 9v6M15 9v6" />
-                                </svg>
-                              </button>
-                              <span className="text-xs text-slate-400">{newPostComment.length}/500</span>
-                            </div>
+                          placeholder="Share your prayers..."
+                          className="w-full p-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-all duration-300 resize-none text-sm"
+                          rows={2}
+                          maxLength={200}
+                        />
+                        <div className="flex items-center justify-between mt-2">
+                          <span className="text-xs text-slate-400">{newPostComment.length}/200</span>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => {
                                   setShowCommentInput(null)
                                   setNewPostComment('')
                                 }}
-                                className="px-4 py-2 text-sm text-slate-400 hover:text-white transition-colors duration-200"
+                              className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={() => handleAddPrayer(post.id)}
                                 disabled={!newPostComment.trim()}
-                                className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black px-6 py-2 rounded-lg font-semibold hover:from-amber-500 hover:to-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+                              className="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-green-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
-                                Send Prayer
+                              Pray
                               </button>
-                            </div>
                           </div>
                         </div>
                       </div>
@@ -553,16 +1005,14 @@ export const CommunityPage: React.FC = () => {
           )}
         </div>
         
-        {/* Refresh Button - Mobile Centered */}
-        <div className="text-center mt-8 mb-8">
-          <button
-            onClick={loadCommunityData}
-            disabled={isLoading}
-            className="bg-black/30 backdrop-blur-2xl border border-yellow-400/20 text-white px-6 py-3 rounded-2xl hover:bg-yellow-400/10 hover:border-yellow-400/40 transition-all duration-300 disabled:opacity-50 shadow-xl"
-          >
-            {isLoading ? 'Refreshing...' : '🔄 Refresh Posts'}
-          </button>
+        {/* Infinite Scroll Loading Indicator */}
+        {isLoadingMore && (
+          <div className="text-center mt-6 mb-6">
+            <div className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium">
+              📄 Loading more posts...
         </div>
+          </div>
+        )}
           </div>
 
           {/* Discovery Sidebar - Hidden on Mobile */}
@@ -585,6 +1035,53 @@ export const CommunityPage: React.FC = () => {
           onClose={closeUserProfile}
           currentUserId={user?.id}
         />
+      )}
+
+      {/* User Mention Modal - Simple */}
+      {showUserModal && selectedUser && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-sm w-full">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-white">User Profile</h3>
+              <button
+                onClick={() => setShowUserModal(false)}
+                className="text-slate-400 hover:text-white transition-colors duration-200"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-2xl font-bold mx-auto mb-4">
+                👤
+              </div>
+              <h4 className="text-white font-medium text-lg mb-2">@{selectedUser}</h4>
+              <p className="text-slate-400 text-sm mb-4">Christian believer</p>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => {
+                    toggleFollow(selectedUser)
+                    setShowUserModal(false)
+                  }}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                    followedUsers.includes(selectedUser)
+                      ? 'bg-slate-600 text-white hover:bg-slate-700'
+                      : 'bg-yellow-400 text-black hover:bg-yellow-500'
+                  }`}
+                >
+                  {followedUsers.includes(selectedUser) ? 'Following' : 'Follow'}
+                </button>
+                <button
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

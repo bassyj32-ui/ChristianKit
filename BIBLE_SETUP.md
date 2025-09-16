@@ -208,3 +208,4 @@ Your Bible integration is now **fully functional** and **completely reliable**! 
 **The new system is completely self-contained and reliable - no more "content not available" errors!** 📖✨
 
 **Your users can now read the FULL BIBLE on your site with content that always works!** 🎉
+index-CQSAYTgT.js:1 Failed to load module script: Expected a JavaScript module script but the server responded with a MIME type of "text/html". Strict MIME type checking is enforced for module scripts per HTML spec.Understand this errorAI

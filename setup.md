@@ -1,339 +1,186 @@
-# Project Setup Guide
+# 🚀 ChristianKit Setup Guide
 
-## Prerequisites
+## Authentication & Payment Integration
 
-Before setting up this project, you need to install Node.js and npm.
+### 1. Firebase Setup (Google OAuth)
 
-### Installing Node.js
+1. **Create a Firebase Project:**
+   - Go to [Firebase Console](https://console.firebase.google.com/)
+   - Click "Add project"
+   - Follow the setup wizard
 
-1. **Download Node.js**:
-   - Go to [https://nodejs.org/](https://nodejs.org/)
-   - Download the LTS (Long Term Support) version
-   - Choose the Windows installer (.msi) for your system architecture
+2. **Enable Authentication:**
+   - In Firebase Console, go to "Authentication"
+   - Click "Get started"
+   - Enable "Google" sign-in method
+   - Add your domain to authorized domains
 
-2. **Install Node.js**:
-   - Run the downloaded installer
-   - Follow the installation wizard
-   - Make sure to check "Add to PATH" during installation
-   - Complete the installation
+3. **Get Firebase Config:**
+   - Go to Project Settings (gear icon)
+   - Scroll down to "Your apps"
+   - Click "Add app" → Web app
+   - Copy the config object
 
-3. **Verify Installation**:
-   - Open a new PowerShell window
-   - Run: `node --version`
-   - Run: `npm --version`
+4. **Create Environment Variables:**
+   Create a `.env` file in your project root:
+   ```env
+   VITE_FIREBASE_API_KEY=your-api-key
+   VITE_FIREBASE_AUTH_DOMAIN=your-project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your-project-id
+   VITE_FIREBASE_STORAGE_BUCKET=your-project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+   VITE_FIREBASE_APP_ID=your-app-id
+   ```
 
-## Project Setup
+### 2. Payment Setup Options 🇪🇹
 
-Once Node.js is installed, follow these steps:
+Since you're in Ethiopia, here are the recommended payment options:
 
-### 1. Install Dependencies
+#### **Option A: Payoneer (Recommended for International)**
+- **Provider**: Payoneer Global Payment Platform
+- **Coverage**: 200+ countries worldwide
+- **Setup**: Business account with API integration
+- **Fees**: 1-3% per transaction
+- **Advantages**: Global reach, multiple currencies, mobile app support
+- **Best for**: International users and global expansion
+
+#### **Option B: Telebirr (Recommended for Local)**
+- **Provider**: Ethio Telecom Mobile Money
+- **Coverage**: Nationwide in Ethiopia
+- **Setup**: Contact Ethio Telecom for business registration
+- **Fees**: 1-2% per transaction
+- **Best for**: Local Ethiopian users
+
+#### **Option C: CBE Birr**
+- **Provider**: Commercial Bank of Ethiopia
+- **Coverage**: Nationwide banking network
+- **Setup**: Open business account with CBE
+- **Fees**: 0.5-1% per transaction
+- **Best for**: Traditional banking users
+
+#### **Option D: Manual Payment Processing**
+- Accept payments via phone/SMS
+- Manual verification and account activation
+- Use WhatsApp Business for customer support
+- **Best for**: Simple setup and testing
+
+**For detailed payment setup guides, see:**
+- `PAYONEER_INTEGRATION.md` - Complete Payoneer integration guide
+- `ETHIOPIAN_PAYMENT_SETUP.md` - Local Ethiopian payment options
+
+### 3. Backend Setup (Optional)
+
+For full functionality, you'll need a backend server to handle:
+- User data storage
+- Subscription management
+- Payment processing
+- Progress tracking
+
+**Recommended Backend Options:**
+- **Firebase Functions** (easiest with Firebase)
+- **Node.js + Express**
+- **Python + FastAPI**
+- **Next.js API routes**
+
+### 4. Database Setup
+
+**Option 1: Firebase Firestore (Recommended)**
+- In Firebase Console, go to "Firestore Database"
+- Create database in test mode
+- Set up security rules
+
+**Option 2: Supabase**
+- Free PostgreSQL database
+- Built-in authentication
+- Real-time subscriptions
+
+### 5. Deployment
+
+**Option 1: Vercel (Recommended)**
 ```bash
-npm install
+npm install -g vercel
+vercel
 ```
 
-### 2. Set up Git Hooks
-```bash
-npm run prepare
-```
-
-### 3. Verify Setup
-
-#### Test Development Server
-```bash
-npm run dev
-```
-This should start the development server at `http://localhost:5173`
-
-#### Test Build Process
-```bash
-npm run build
-```
-This should create a `dist` folder with the production build
-
-#### Test Linting
-```bash
-npm run lint
-```
-This should run ESLint and show any code quality issues
-
-#### Test Formatting
-```bash
-npm run format:check
-```
-This should check if all code is properly formatted
-
-#### Test Test Runner
-```bash
-npm test
-```
-This should start Vitest in watch mode
-
-### 4. Optional: Install Additional Tools
-
-#### Install Prettier Extension (VS Code)
-- Open VS Code
-- Go to Extensions (Ctrl+Shift+X)
-- Search for "Prettier - Code formatter"
-- Install the extension
-
-#### Install ESLint Extension (VS Code)
-- Go to Extensions (Ctrl+Shift+X)
-- Search for "ESLint"
-- Install the extension
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"npm is not recognized"**
-   - Node.js is not installed or not in PATH
-   - Restart your terminal after installing Node.js
-   - Check if Node.js is in your system PATH
-
-2. **Permission Errors**
-   - Run PowerShell as Administrator
-   - Or use `npm install --global` for global packages
-
-3. **Port Already in Use**
-   - The dev server might be using port 5173
-   - Kill any existing processes or change the port in `vite.config.ts`
-
-4. **TypeScript Errors**
-   - Make sure all dependencies are installed
-   - Run `npm run build` to check for TypeScript compilation errors
-
-### Alternative Package Managers
-
-If you prefer other package managers:
-
-#### Using Yarn
-```bash
-npm install -g yarn
-yarn install
-yarn dev
-```
-
-#### Using pnpm
-```bash
-npm install -g pnpm
-pnpm install
-pnpm dev
-```
-
-## Next Steps
-
-After successful setup:
-
-1. **Start Development**: `npm run dev`
-2. **Write Tests**: Add tests in `src/**/*.test.tsx`
-3. **Customize**: Modify Tailwind config, add new components
-4. **Deploy**: Use `npm run build` and deploy the `dist` folder
-
-## Project Structure
-
-```
-├── src/
-│   ├── App.tsx          # Main application component
-│   ├── main.tsx         # Application entry point
-│   ├── index.css        # Global styles with Tailwind
-│   └── test/
-│       └── setup.ts     # Test environment setup
-├── public/              # Static assets
-├── index.html           # HTML entry point
-├── vite.config.ts       # Vite configuration
-├── tailwind.config.js   # Tailwind CSS configuration
-├── tsconfig.json        # TypeScript configuration
-├── .eslintrc.cjs        # ESLint configuration
-├── .prettierrc          # Prettier configuration
-├── .husky/              # Git hooks
-├── package.json         # Dependencies and scripts
-└── README.md            # Project documentation
-```
-
-## Available Scripts
-
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm test` - Run tests in watch mode
-- `npm run test:run` - Run tests once
-- `npm run test:ui` - Run tests with UI
-- `npm run test:coverage` - Generate coverage report
-- `npm run lint` - Lint code
-- `npm run lint:fix` - Fix linting issues
-- `npm run format` - Format code
-- `npm run format:check` - Check formatting
-- `npm run prepare` - Set up Husky hooks
-
-
-
-
-
-
-## Prerequisites
-
-Before setting up this project, you need to install Node.js and npm.
-
-### Installing Node.js
-
-1. **Download Node.js**:
-   - Go to [https://nodejs.org/](https://nodejs.org/)
-   - Download the LTS (Long Term Support) version
-   - Choose the Windows installer (.msi) for your system architecture
-
-2. **Install Node.js**:
-   - Run the downloaded installer
-   - Follow the installation wizard
-   - Make sure to check "Add to PATH" during installation
-   - Complete the installation
-
-3. **Verify Installation**:
-   - Open a new PowerShell window
-   - Run: `node --version`
-   - Run: `npm --version`
-
-## Project Setup
-
-Once Node.js is installed, follow these steps:
-
-### 1. Install Dependencies
-```bash
-npm install
-```
-
-### 2. Set up Git Hooks
-```bash
-npm run prepare
-```
-
-### 3. Verify Setup
-
-#### Test Development Server
-```bash
-npm run dev
-```
-This should start the development server at `http://localhost:5173`
-
-#### Test Build Process
+**Option 2: Netlify**
 ```bash
 npm run build
+# Upload dist folder to Netlify
 ```
-This should create a `dist` folder with the production build
 
-#### Test Linting
+**Option 3: Firebase Hosting**
 ```bash
-npm run lint
+npm install -g firebase-tools
+firebase login
+firebase init hosting
+firebase deploy
 ```
-This should run ESLint and show any code quality issues
 
-#### Test Formatting
+### 6. Environment Variables for Production
+
+Set these in your hosting platform:
+
+**Vercel:**
+- Go to Project Settings → Environment Variables
+- Add all variables from `.env` file
+
+**Netlify:**
+- Go to Site Settings → Environment Variables
+- Add all variables from `.env` file
+
+**Firebase:**
 ```bash
-npm run format:check
-```
-This should check if all code is properly formatted
-
-#### Test Test Runner
-```bash
-npm test
-```
-This should start Vitest in watch mode
-
-### 4. Optional: Install Additional Tools
-
-#### Install Prettier Extension (VS Code)
-- Open VS Code
-- Go to Extensions (Ctrl+Shift+X)
-- Search for "Prettier - Code formatter"
-- Install the extension
-
-#### Install ESLint Extension (VS Code)
-- Go to Extensions (Ctrl+Shift+X)
-- Search for "ESLint"
-- Install the extension
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"npm is not recognized"**
-   - Node.js is not installed or not in PATH
-   - Restart your terminal after installing Node.js
-   - Check if Node.js is in your system PATH
-
-2. **Permission Errors**
-   - Run PowerShell as Administrator
-   - Or use `npm install --global` for global packages
-
-3. **Port Already in Use**
-   - The dev server might be using port 5173
-   - Kill any existing processes or change the port in `vite.config.ts`
-
-4. **TypeScript Errors**
-   - Make sure all dependencies are installed
-   - Run `npm run build` to check for TypeScript compilation errors
-
-### Alternative Package Managers
-
-If you prefer other package managers:
-
-#### Using Yarn
-```bash
-npm install -g yarn
-yarn install
-yarn dev
+firebase functions:config:set payment.provider="telebirr"
+firebase deploy --only functions
 ```
 
-#### Using pnpm
-```bash
-npm install -g pnpm
-pnpm install
-pnpm dev
-```
+## 🎯 Next Steps
 
-## Next Steps
+1. **Test Authentication:**
+   - Run `npm run dev`
+   - Try signing in with Google
+   - Verify user state management
 
-After successful setup:
+2. **Set Up Ethiopian Payments:**
+   - Choose your payment provider (Telebirr recommended)
+   - Complete business registration
+   - Implement payment integration
+   - Test payment flow
 
-1. **Start Development**: `npm run dev`
-2. **Write Tests**: Add tests in `src/**/*.test.tsx`
-3. **Customize**: Modify Tailwind config, add new components
-4. **Deploy**: Use `npm run build` and deploy the `dist` folder
+3. **Add Features:**
+   - User profile management
+   - Progress tracking
+   - Community features
+   - Analytics
 
-## Project Structure
+## 🔧 Troubleshooting
 
-```
-├── src/
-│   ├── App.tsx          # Main application component
-│   ├── main.tsx         # Application entry point
-│   ├── index.css        # Global styles with Tailwind
-│   └── test/
-│       └── setup.ts     # Test environment setup
-├── public/              # Static assets
-├── index.html           # HTML entry point
-├── vite.config.ts       # Vite configuration
-├── tailwind.config.js   # Tailwind CSS configuration
-├── tsconfig.json        # TypeScript configuration
-├── .eslintrc.cjs        # ESLint configuration
-├── .prettierrc          # Prettier configuration
-├── .husky/              # Git hooks
-├── package.json         # Dependencies and scripts
-└── README.md            # Project documentation
-```
+**Firebase Auth Issues:**
+- Check authorized domains in Firebase Console
+- Verify API keys in environment variables
+- Check browser console for errors
 
-## Available Scripts
+**Ethiopian Payment Issues:**
+- Contact your chosen payment provider directly
+- Ensure business registration is complete
+- Verify API credentials and integration
 
-- `npm run dev` - Start development server
-- `npm run build` - Build for production
-- `npm run preview` - Preview production build
-- `npm test` - Run tests in watch mode
-- `npm run test:run` - Run tests once
-- `npm run test:ui` - Run tests with UI
-- `npm run test:coverage` - Generate coverage report
-- `npm run lint` - Lint code
-- `npm run lint:fix` - Fix linting issues
-- `npm run format` - Format code
-- `npm run format:check` - Check formatting
-- `npm run prepare` - Set up Husky hooks
+**Build Issues:**
+- Clear node_modules and reinstall
+- Check TypeScript errors
+- Verify all dependencies installed
+
+## 📞 Support
+
+For issues or questions:
+1. Check Firebase/Telebirr documentation
+2. Review browser console errors
+3. Verify environment variables
+4. Test with minimal configuration
+
+---
+
+**Happy coding! 🙏✨**
 
 
 
