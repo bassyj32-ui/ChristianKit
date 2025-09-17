@@ -60,25 +60,26 @@ export const PersistentNavigation: React.FC<PersistentNavigationProps> = ({
   // Secondary navigation items (shown in desktop sidebar and mobile "More")
   const secondaryNavigationItems = [
     {
-      id: 'bible',
+      id: 'bible-reading',
       label: 'Bible',
       icon: (
         <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
           <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zM9 17H7v-7h2v7zm4 0h-2V7h2v10zm4 0h-2v-4h2v4z"/>
         </svg>
       ),
-      path: 'bible'
+      path: 'bible-reading'
     },
-    {
-      id: 'journal',
-      label: 'Journal',
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-        </svg>
-      ),
-      path: 'journal'
-    },
+    // HIDDEN PAGES - Commented out to simplify app
+    // {
+    //   id: 'journal',
+    //   label: 'Journal',
+    //   icon: (
+    //     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    //       <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+    //     </svg>
+    //   ),
+    //   path: 'journal'
+    // },
     {
       id: 'subscription',
       label: 'Pricing',
@@ -103,26 +104,27 @@ export const PersistentNavigation: React.FC<PersistentNavigationProps> = ({
 
   // Tertiary navigation items (advanced features)
   const tertiaryNavigationItems = [
-    {
-      id: 'leaderboard',
-      label: 'Leaderboard',
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>
-        </svg>
-      ),
-      path: 'leaderboard'
-    },
-    {
-      id: 'analysis',
-      label: 'Analysis',
-      icon: (
-        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-          <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/>
-        </svg>
-      ),
-      path: 'analysis'
-    },
+    // HIDDEN PAGES - Commented out to simplify app
+    // {
+    //   id: 'leaderboard',
+    //   label: 'Leaderboard',
+    //   icon: (
+    //     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    //       <path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>
+    //     </svg>
+    //   ),
+    //   path: 'leaderboard'
+    // },
+    // {
+    //   id: 'analysis',
+    //   label: 'Analysis',
+    //   icon: (
+    //     <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+    //       <path d="M16,6L18.29,8.29L13.41,13.17L9.41,9.17L2,16.59L3.41,18L9.41,12L13.41,16L19.71,9.71L22,12V6H16Z"/>
+    //     </svg>
+    //   ),
+    //   path: 'analysis'
+    // },
     {
       id: 'settings',
       label: 'Settings',

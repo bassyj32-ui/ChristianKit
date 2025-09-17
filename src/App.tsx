@@ -202,20 +202,21 @@ const AppContent: React.FC = () => {
       'dashboard': '/dashboard',
       'community': '/community',
       'runner': '/faith-runner',
-      'journal': '/journal',
-      'store': '/store',
+      // HIDDEN PAGES - Commented out to simplify app
+      // 'journal': '/journal',
+      // 'store': '/store',
       'subscription': '/pricing',
       'settings': '/settings',
-      'prayer-history': '/prayer-history',
-      'prayer-settings': '/prayer-settings',
-      'bible-tracker': '/bible-tracker',
-      'osmo-landing': '/landing',
+      // 'prayer-history': '/prayer-history',
+      // 'prayer-settings': '/prayer-settings',
+      // 'bible-tracker': '/bible-tracker',
+      // 'osmo-landing': '/landing',
       'bible-reading': '/bible-reading',
       'meditation': '/meditation',
-      'sunrise-sunset': '/sunrise-sunset',
+      // 'sunrise-sunset': '/sunrise-sunset',
       'profile': '/profile',
-      'leaderboard': '/leaderboard',
-      'analysis': '/analysis',
+      // 'leaderboard': '/leaderboard',
+      // 'analysis': '/analysis',
       'prayer': '/prayer'
     }
     return tabToPath[tab] || '/'
@@ -228,20 +229,21 @@ const AppContent: React.FC = () => {
       '/dashboard': 'dashboard',
       '/community': 'community',
       '/faith-runner': 'runner',
-      '/journal': 'journal',
-      '/store': 'store',
+      // HIDDEN PAGES - Commented out to simplify app
+      // '/journal': 'journal',
+      // '/store': 'store',
       '/pricing': 'subscription',
       '/settings': 'settings',
-      '/prayer-history': 'prayer-history',
-      '/prayer-settings': 'prayer-settings',
-      '/bible-tracker': 'bible-tracker',
-      '/landing': 'osmo-landing',
+      // '/prayer-history': 'prayer-history',
+      // '/prayer-settings': 'prayer-settings',
+      // '/bible-tracker': 'bible-tracker',
+      // '/landing': 'osmo-landing',
       '/bible-reading': 'bible-reading',
       '/meditation': 'meditation',
-      '/sunrise-sunset': 'sunrise-sunset',
+      // '/sunrise-sunset': 'sunrise-sunset',
       '/profile': 'profile',
-      '/leaderboard': 'leaderboard',
-      '/analysis': 'analysis',
+      // '/leaderboard': 'leaderboard',
+      // '/analysis': 'analysis',
       '/prayer': 'prayer'
     }
     return pathToTab[pathname] || 'home'
@@ -343,22 +345,23 @@ const AppContent: React.FC = () => {
         case 'runner':
         case 'faith-runner': // accept alias and route to the same view
           return <BibleQuest />
-        case 'journal':
-          return <JournalPage />
-        case 'store':
-          return <StorePage />
+        // HIDDEN PAGES - Commented out to simplify app
+        // case 'journal':
+        //   return <JournalPage />
+        // case 'store':
+        //   return <StorePage />
         case 'subscription':
           return <SubscriptionPage />
         case 'settings':
           return <SettingsPage />
-        case 'prayer-history':
-          return <PrayerHistory />
-        case 'prayer-settings':
-          return <PrayerSettings />
-        case 'bible-tracker':
-          return <BibleTracker />
-        case 'osmo-landing':
-          return <OsmoLandingPage />
+        // case 'prayer-history':
+        //   return <PrayerHistory />
+        // case 'prayer-settings':
+        //   return <PrayerSettings />
+        // case 'bible-tracker':
+        //   return <BibleTracker />
+        // case 'osmo-landing':
+        //   return <OsmoLandingPage />
         case 'bible-reading':
           return <BibleReadingPage />
         case 'meditation':
@@ -372,21 +375,21 @@ const AppContent: React.FC = () => {
               onStartQuestionnaire={() => setShowQuestionnaire(true)}
             />
           )
-        case 'sunrise-sunset':
-          return <SunriseSunsetPrayer />
+        // case 'sunrise-sunset':
+        //   return <SunriseSunsetPrayer />
         case 'profile':
           return <UserProfile />
-        case 'leaderboard':
-          return <GameLeaderboard />
-        case 'analysis':
-          return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
-              <div className="text-center">
-                <h1 className="text-4xl font-bold mb-4">Analysis</h1>
-                <p className="text-gray-400">Coming soon...</p>
-              </div>
-            </div>
-          )
+        // case 'leaderboard':
+        //   return <GameLeaderboard />
+        // case 'analysis':
+        //   return (
+        //     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white flex items-center justify-center">
+        //       <div className="text-center">
+        //         <h1 className="text-4xl font-bold mb-4">Analysis</h1>
+        //         <p className="text-gray-400">Coming soon...</p>
+        //       </div>
+        //     </div>
+        //   )
         case 'prayer':
           return (
             <UnifiedTimerPage
@@ -461,8 +464,8 @@ const AppContent: React.FC = () => {
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[70] pointer-events-auto">
           <FloatingAuthTab />
         </div>
-        {/* Floating Search Link - show only for signed-in users and not on auth callback */}
-        {user && location.pathname !== '/auth/callback' && (
+        {/* Floating Search Link - HIDDEN */}
+        {/* {user && location.pathname !== '/auth/callback' && (
           <div className="fixed top-36 right-4 z-10">
             <Link
               to="/search"
@@ -475,13 +478,13 @@ const AppContent: React.FC = () => {
               <span className="text-sm font-semibold">Search</span>
             </Link>
           </div>
-        )}
+        )} */}
         
-        {/* Offline Indicator */}
-        <OfflineIndicator />
+        {/* Offline Indicator - HIDDEN */}
+        {/* <OfflineIndicator /> */}
 
-        {/* Notification Manager */}
-        <NotificationManager user={user} />
+        {/* Notification Manager - HIDDEN */}
+        {/* <NotificationManager user={user} /> */}
 
         {/* Main Content */}
         <div className="flex-1 pt-20 pb-20 lg:pb-0 lg:pt-20">

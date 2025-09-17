@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react'
+import { OsmoCard, OsmoButton, OsmoGradientText } from '../theme/osmoComponents'
 
 interface BeforeInstallPromptEvent extends Event {
   readonly platforms: string[]
@@ -70,62 +71,76 @@ export const PWAInstallPrompt: React.FC = () => {
     setShowInstallPrompt(false)
   }
 
-  // Always show for testing/debugging purposes
-  // if (isInstalled || !showInstallPrompt || !deferredPrompt) {
-  //   return null
-  // }
+  // Don't show if already installed or no prompt available
+  if (isInstalled || !showInstallPrompt || !deferredPrompt) {
+    return null
+  }
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-50 bg-white border-b border-gray-200 shadow-lg">
-      
-      <div className="relative max-w-6xl mx-auto px-4 py-3">
-        <div className="flex items-center justify-between">
-          {/* Left side - Enhanced app info */}
-          <div className="flex items-center space-x-3">
-            {/* Icon container */}
-            <div className="relative">
-              <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center shadow-md">
-                <span className="text-sm text-white">📱</span>
+    <div className="fixed top-0 left-0 right-0 z-50 animate-in slide-in-from-top-4 duration-500">
+      {/* Tab-like design with glowing border and pulsing effect */}
+      <div className="bg-[var(--bg-primary)] border-b-2 border-amber-400 shadow-amber-400/50 backdrop-blur-xl animate-pulse">
+        <div className="max-w-6xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            {/* Left side - App icon and info */}
+            <div className="flex items-center space-x-3 min-w-0 flex-1">
+              {/* Actual ChristianKit app icon */}
+              <div className="relative flex-shrink-0">
+                <img 
+                  src="/icon-192x192.png" 
+                  alt="ChristianKit" 
+                  className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg shadow-sm"
+                />
+                {/* Install indicator badge with glow */}
+                <div className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center border-2 border-[var(--bg-primary)] shadow-lg shadow-emerald-400/50">
+                  <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                  </svg>
+                </div>
               </div>
               
-              {/* Floating cross badge */}
-              <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center border border-white shadow-sm">
-                <span className="text-xs text-white font-bold">✝</span>
+              {/* App info */}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="text-sm sm:text-base font-semibold text-[var(--text-primary)] truncate">
+                    ChristianKit
+                  </h3>
+                  <span className="text-xs text-amber-400 font-medium bg-amber-400/10 px-2 py-0.5 rounded-full border border-amber-400/30">
+                    Install
+                  </span>
+                </div>
+                <p className="text-xs text-[var(--text-secondary)] truncate">
+                  <span className="text-amber-400 font-medium">Spiritual sanctuary</span> • Offline access • Notifications
+                </p>
               </div>
             </div>
             
-            {/* Text content */}
-            <div>
-              <h3 className="text-base font-semibold text-gray-900">
-                Install ChristianKit
-              </h3>
-              <p className="hidden md:block text-xs text-gray-500">
-                Transform your device into a spiritual sanctuary
-              </p>
+            {/* Right side - Enhanced action buttons */}
+            <div className="flex items-center space-x-3 flex-shrink-0">
+              <button
+                onClick={handleDismiss}
+                className="px-3 py-1.5 text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] bg-transparent hover:bg-[var(--glass-light)] rounded-lg transition-all duration-200 font-medium"
+              >
+                <span className="hidden sm:inline">Not now</span>
+                <span className="sm:hidden">Later</span>
+              </button>
+              
+              {/* Larger, more prominent install button */}
+              <button
+                onClick={handleInstallClick}
+                disabled={!deferredPrompt}
+                className="px-6 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 disabled:from-gray-600 disabled:to-gray-700 text-white text-sm font-bold rounded-lg transition-all duration-200 shadow-xl hover:shadow-2xl disabled:cursor-not-allowed flex items-center gap-2 border border-amber-400/30 hover:scale-105 transform"
+              >
+                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/>
+                </svg>
+                <span className="hidden sm:inline">Install App</span>
+                <span className="sm:hidden">Install</span>
+              </button>
             </div>
-          </div>
-          
-          {/* Right side - Action buttons with app theme */}
-          <div className="flex items-center space-x-2">
-            <button
-              onClick={handleDismiss}
-              className="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 bg-transparent hover:bg-gray-100 rounded-md font-medium transition-colors"
-            >
-              Not now
-            </button>
-            
-            <button
-              onClick={handleInstallClick}
-              disabled={!deferredPrompt}
-              className="px-4 py-1.5 bg-orange-500 text-white text-xs font-semibold rounded-md hover:bg-orange-600 disabled:bg-gray-400 transition-colors shadow-sm hover:shadow-md disabled:cursor-not-allowed"
-            >
-              {deferredPrompt ? 'Install' : 'Not Available'}
-            </button>
           </div>
         </div>
       </div>
-      
-
     </div>
   )
 }

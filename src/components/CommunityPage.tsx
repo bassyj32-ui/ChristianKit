@@ -6,12 +6,17 @@ import UserSearch from './UserSearch'
 import UserDiscoverySidebar from './UserDiscoverySidebar'
 import NotificationCenter from './NotificationCenter'
 import { 
-  getTrendingPosts, 
+  getTrendingPostsWithCache, 
   createPost, 
   addPostInteraction, 
   addPrayer, 
+  subscribeToCommunityUpdates,
+  searchPosts,
+  getTrendingHashtags,
   type CommunityPost,
-  type Prayer
+  type Prayer,
+  type PaginationCursor,
+  type RealtimeSubscription
 } from '../services/communityService'
 
 // Fallback seed content for when database is unavailable
@@ -192,7 +197,7 @@ export const CommunityPage: React.FC = () => {
   const [retryCount, setRetryCount] = useState(0)
   const [contentFilter, setContentFilter] = useState<'all' | 'prayer' | 'bible_study' | 'testimony'>('all')
   const [showModerationTools, setShowModerationTools] = useState(false)
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentCursor, setCurrentCursor] = useState<PaginationCursor | undefined>(undefined)
   const [hasMorePosts, setHasMorePosts] = useState(true)
   const [isLoadingMore, setIsLoadingMore] = useState(false)
   const [feedType, setFeedType] = useState<'all' | 'following' | 'trending'>('all')
@@ -203,83 +208,80 @@ export const CommunityPage: React.FC = () => {
   const [mentions, setMentions] = useState<string[]>([])
   const [showUserModal, setShowUserModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState<string | null>(null)
-  const POSTS_PER_PAGE = 10
+  const [realtimeSubscription, setRealtimeSubscription] = useState<RealtimeSubscription | null>(null)
+  const [trendingHashtags, setTrendingHashtags] = useState<Array<{tag: string, count: number}>>([])
+  const [searchQuery, setSearchQuery] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const POSTS_PER_PAGE = 20
 
   useEffect(() => {
     loadCommunityData()
     loadFollowedUsers()
-  }, [])
+    loadTrendingHashtags()
+    
+    // Set up real-time subscriptions
+    if (user) {
+      setupRealtimeSubscriptions()
+    }
+    
+    return () => {
+      // Cleanup real-time subscriptions
+      if (realtimeSubscription) {
+        realtimeSubscription.unsubscribe()
+      }
+    }
+  }, [user])
 
   // Infinite scroll effect
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerHeight + document.documentElement.scrollTop >= document.documentElement.offsetHeight - 1000) {
         if (hasMorePosts && !isLoadingMore) {
-          loadCommunityData(false, true)
+          loadMorePosts()
         }
       }
     }
 
     window.addEventListener('scroll', handleScroll)
     return () => window.removeEventListener('scroll', handleScroll)
-  }, [hasMorePosts, isLoadingMore])
+  }, [hasMorePosts, isLoadingMore, currentCursor])
 
-  // Auto-refresh every 30 seconds
+  // Auto-refresh trending hashtags every 5 minutes
   useEffect(() => {
     const interval = setInterval(() => {
       if (document.visibilityState === 'visible') {
-        refreshFeed()
+        loadTrendingHashtags()
       }
-    }, 30000)
+    }, 5 * 60 * 1000) // 5 minutes
 
     return () => clearInterval(interval)
   }, [])
 
-  const loadCommunityData = async (isRetry = false, loadMore = false) => {
+  const loadCommunityData = async (isRetry = false) => {
     try {
-      if (loadMore) {
-        setIsLoadingMore(true)
-      } else {
       setIsLoading(true)
-        setCurrentPage(1)
-      }
       setError(null)
+      setCurrentCursor(undefined) // Reset cursor for fresh load
       
-      // Try to load from cache first (only for initial load)
-      if (!loadMore && !isRetry) {
-        const cachedPosts = getCachedPosts()
-        if (cachedPosts) {
-          setCommunityPosts(cachedPosts)
-          setIsLoading(false)
-          return
-        }
-      }
-      
-      const result = await getTrendingPosts({ 
+      const result = await getTrendingPostsWithCache({ 
         limit: POSTS_PER_PAGE,
-        cursor: loadMore ? currentPage.toString() : undefined
+        feedType,
+        userId: user?.id,
+        useCache: !isRetry
       })
       
-      const formattedPosts = result.data.map((post: CommunityPost) => ({
-        ...post,
-        author_name: post.author_name || 'Anonymous',
-        author_avatar: post.author_avatar || '👤',
-        author_handle: post.author_handle || `@user${post.author_id?.slice(0, 8) || 'user'}`
-      }))
-      
-      if (loadMore) {
-        setCommunityPosts(prev => [...prev, ...formattedPosts])
-        setCurrentPage(prev => prev + 1)
-      } else {
-      setCommunityPosts(formattedPosts)
-        setCurrentPage(2) // Next page will be 2
-        // Cache the posts for future use
-        setCachedPosts(formattedPosts)
-      }
-      
+      setCommunityPosts(result.data)
+      setCurrentCursor(result.pagination.nextCursor)
       setHasMorePosts(result.pagination.hasNextPage)
       setRetryCount(0) // Reset retry count on success
+      
+      console.log('✅ Loaded community data:', {
+        posts: result.data.length,
+        hasNextPage: result.pagination.hasNextPage,
+        feedType
+      })
     } catch (error) {
+      console.error('❌ Error loading community data:', error)
       if (isRetry) {
         setError('Unable to load community posts. Please check your connection.')
       } else {
@@ -289,7 +291,82 @@ export const CommunityPage: React.FC = () => {
       }
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const loadMorePosts = async () => {
+    if (!currentCursor || isLoadingMore) return
+    
+    try {
+      setIsLoadingMore(true)
+      
+      const result = await getTrendingPostsWithCache({ 
+        limit: POSTS_PER_PAGE,
+        cursor: currentCursor,
+        feedType,
+        userId: user?.id
+      })
+      
+      setCommunityPosts(prev => [...prev, ...result.data])
+      setCurrentCursor(result.pagination.nextCursor)
+      setHasMorePosts(result.pagination.hasNextPage)
+      
+      console.log('✅ Loaded more posts:', {
+        newPosts: result.data.length,
+        totalPosts: communityPosts.length + result.data.length,
+        hasNextPage: result.pagination.hasNextPage
+      })
+    } catch (error) {
+      console.error('❌ Error loading more posts:', error)
+      setError('Failed to load more posts. Please try again.')
+    } finally {
       setIsLoadingMore(false)
+    }
+  }
+
+  const loadTrendingHashtags = async () => {
+    try {
+      const hashtags = await getTrendingHashtags(10)
+      setTrendingHashtags(hashtags)
+      console.log('✅ Loaded trending hashtags:', hashtags.length)
+    } catch (error) {
+      console.error('❌ Error loading trending hashtags:', error)
+    }
+  }
+
+  const setupRealtimeSubscriptions = () => {
+    if (!user) return
+
+    const subscription = subscribeToCommunityUpdates(
+      // onNewPost
+      (newPost) => {
+        console.log('🆕 New post received via real-time:', newPost)
+        setCommunityPosts(prev => [newPost, ...prev])
+        
+        // Show notification for new posts from other users
+        if (newPost.author_id !== user.id) {
+          // You can add a toast notification here
+          console.log('📢 New post from', newPost.author_name)
+        }
+      },
+      // onPostUpdate
+      (updatedPost) => {
+        console.log('🔄 Post updated via real-time:', updatedPost)
+        setCommunityPosts(prev => 
+          prev.map(post => 
+            post.id === updatedPost.id ? updatedPost : post
+          )
+        )
+      },
+      // onPostDelete
+      (postId) => {
+        console.log('🗑️ Post deleted via real-time:', postId)
+        setCommunityPosts(prev => prev.filter(post => post.id !== postId))
+      }
+    )
+
+    if (subscription) {
+      setRealtimeSubscription(subscription)
     }
   }
 
@@ -528,7 +605,43 @@ export const CommunityPage: React.FC = () => {
 
   const refreshFeed = async () => {
     setLastRefresh(Date.now())
-    await loadCommunityData(false, false)
+    await loadCommunityData(false)
+  }
+
+  const handleFeedTypeChange = async (newFeedType: 'all' | 'following' | 'trending') => {
+    setFeedType(newFeedType)
+    await loadCommunityData(false)
+  }
+
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchQuery('')
+      setIsSearching(false)
+      await loadCommunityData(false)
+      return
+    }
+
+    try {
+      setIsSearching(true)
+      setSearchQuery(query)
+      
+      const result = await searchPosts(query, {
+        limit: POSTS_PER_PAGE,
+        category: contentFilter !== 'all' ? contentFilter : undefined,
+        userId: user?.id
+      })
+      
+      setCommunityPosts(result.data)
+      setCurrentCursor(undefined)
+      setHasMorePosts(false) // Search results don't support pagination yet
+      
+      console.log('✅ Search results:', result.data.length)
+    } catch (error) {
+      console.error('❌ Search error:', error)
+      setError('Search failed. Please try again.')
+    } finally {
+      setIsSearching(false)
+    }
   }
 
   // Algorithm feed mixing following + trending
@@ -685,6 +798,16 @@ export const CommunityPage: React.FC = () => {
           </div>
         )}
 
+        {/* Real-time Status Indicator */}
+        {realtimeSubscription && (
+          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 mb-4">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <p className="text-green-300 text-sm font-medium">Live updates active</p>
+            </div>
+          </div>
+        )}
+
         {/* Error Display */}
         {error && (
           <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
@@ -704,6 +827,30 @@ export const CommunityPage: React.FC = () => {
                 className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1 rounded text-xs font-medium transition-all duration-300 disabled:opacity-50"
               >
                 {isLoading ? 'Retrying...' : 'Retry'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Search Results Indicator */}
+        {searchQuery && (
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <span className="text-blue-400 text-sm">🔍</span>
+                <p className="text-blue-300 text-sm font-medium">
+                  Search results for "{searchQuery}"
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setSearchQuery('')
+                  setIsSearching(false)
+                  loadCommunityData(false)
+                }}
+                className="text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors duration-200"
+              >
+                Clear
               </button>
             </div>
           </div>
@@ -740,7 +887,7 @@ export const CommunityPage: React.FC = () => {
             ].map((feed) => (
               <button
                 key={feed.key}
-                onClick={() => setFeedType(feed.key as any)}
+                onClick={() => handleFeedTypeChange(feed.key as any)}
                 className={`flex-1 flex items-center justify-center space-x-1 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
                   feedType === feed.key
                     ? 'bg-yellow-400/20 text-yellow-300'
@@ -752,6 +899,52 @@ export const CommunityPage: React.FC = () => {
               </button>
             ))}
           </div>
+
+          {/* Search Input */}
+          <div className="mb-4">
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search posts, hashtags, or users..."
+                value={searchQuery}
+                onChange={(e) => {
+                  const query = e.target.value
+                  setSearchQuery(query)
+                  // Debounce search
+                  clearTimeout((window as any).searchTimeout)
+                  ;(window as any).searchTimeout = setTimeout(() => {
+                    handleSearch(query)
+                  }, 500)
+                }}
+                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-all duration-300"
+              />
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                {isSearching ? (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
+                ) : (
+                  <span className="text-slate-400">🔍</span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Trending Hashtags */}
+          {trendingHashtags.length > 0 && !searchQuery && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-white mb-2">🔥 Trending</h4>
+              <div className="flex flex-wrap gap-2">
+                {trendingHashtags.slice(0, 5).map(({ tag, count }) => (
+                  <button
+                    key={tag}
+                    onClick={() => handleSearch(`#${tag}`)}
+                    className="px-3 py-1 bg-yellow-400/10 text-yellow-300 rounded-full text-xs font-medium hover:bg-yellow-400/20 transition-all duration-200"
+                  >
+                    #{tag} ({count})
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Content Filter */}
           <div className="flex space-x-2 overflow-x-auto pb-2">
