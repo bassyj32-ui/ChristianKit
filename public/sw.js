@@ -1,7 +1,7 @@
 // Service Worker for ChristianKit PWA
 // Handles push notifications, background sync, and offline functionality
 
-const CACHE_NAME = 'christiankit-v7-cache-clear';
+const CACHE_NAME = 'christiankit-v8-force-refresh';
 const urlsToCache = [
   '/',
   '/index.html',
@@ -42,7 +42,14 @@ self.addEventListener('activate', (event) => {
       );
     }).then(() => {
       console.log('✅ Service Worker activated successfully');
-      return self.clients.claim();
+      // Force all clients to reload to get fresh assets
+      return self.clients.claim().then(() => {
+        return self.clients.matchAll().then((clients) => {
+          clients.forEach((client) => {
+            client.postMessage({ type: 'FORCE_RELOAD' });
+          });
+        });
+      });
     })
   );
 });
@@ -62,25 +69,36 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // For development files and assets, always fetch fresh (bypass cache)
-  if (event.request.url.includes('/src/') || 
-      event.request.url.includes('/assets/js/') || 
-      event.request.url.includes('/assets/css/') ||
+  // For dynamic assets (JS, CSS with hashes), always fetch fresh and update cache
+  if (event.request.url.includes('/assets/') || 
       event.request.url.includes('.js') ||
       event.request.url.includes('.css') ||
-      event.request.url.includes('App.tsx') ||
-      event.request.url.includes('main.tsx')) {
+      event.request.url.match(/index-[A-Za-z0-9]+\.js/) ||
+      event.request.url.match(/index-[A-Za-z0-9]+\.css/) ||
+      event.request.url.match(/[A-Za-z0-9]+-[A-Za-z0-9]+\.js/) ||
+      event.request.url.match(/[A-Za-z0-9]+-[A-Za-z0-9]+\.css/)) {
     event.respondWith(
-      fetch(event.request, { cache: 'no-cache' }).catch((error) => {
-        console.log('Network fetch failed, trying cache:', event.request.url, error);
-        return caches.match(event.request).then((response) => {
-          if (response) {
-            return response;
+      fetch(event.request, { cache: 'no-cache' })
+        .then((response) => {
+          // If successful, update cache with new version
+          if (response && response.status === 200) {
+            const responseToCache = response.clone();
+            caches.open(CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache);
+            });
           }
-          // If no cache match, return a basic response to prevent errors
-          return new Response('Asset not found', { status: 404 });
-        });
-      })
+          return response;
+        })
+        .catch((error) => {
+          console.log('Network fetch failed, trying cache:', event.request.url, error);
+          return caches.match(event.request).then((response) => {
+            if (response) {
+              return response;
+            }
+            // If no cache match, return a basic response to prevent errors
+            return new Response('Asset not found', { status: 404 });
+          });
+        })
     );
     return;
   }
@@ -227,5 +245,20 @@ self.addEventListener('message', (event) => {
   
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  if (event.data && event.data.type === 'FORCE_RELOAD') {
+    // Clear all caches and force reload
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('🗑️ Force clearing cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => {
+      console.log('🔄 All caches cleared, forcing reload');
+      self.registration.update();
+    });
   }
 });
