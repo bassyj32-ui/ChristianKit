@@ -11,6 +11,21 @@ if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
           console.log('✅ Service Worker registered (prod):', registration);
+          
+          // Force clear all caches on app load to prevent stale assets
+          if ('caches' in window) {
+            caches.keys().then((cacheNames) => {
+              cacheNames.forEach((cacheName) => {
+                caches.delete(cacheName);
+                console.log('🧹 Cleared cache:', cacheName);
+              });
+            });
+          }
+          
+          // Send message to service worker to clear caches
+          if (registration.active) {
+            registration.active.postMessage({ type: 'CLEAR_ALL_CACHES' });
+          }
         })
         .catch((error) => {
           console.error('❌ Service Worker registration failed:', error);
