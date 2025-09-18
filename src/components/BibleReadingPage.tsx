@@ -164,14 +164,12 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
     // Record session in database for progress tracking
     if (user) {
       try {
-        await ProgressService.recordSession({
+                await ProgressService.saveSession({
           user_id: user.id,
-          activity_type: 'bible',
+          started_at: new Date().toISOString(),
           duration_minutes: selectedMinutes,
-          completed: true,
-          completed_duration: selectedMinutes, // Full duration completed
-          session_date: new Date().toISOString().split('T')[0],
-          notes: readingFocus ? `Focus: ${readingFocus}` : undefined
+          prayer_type: 'bible',
+          notes: readingFocus ? `Focus: ${readingFocus}` : 'Bible Quest completed'
         });
         console.log('✅ Bible reading session recorded successfully');
       } catch (error) {
@@ -344,45 +342,46 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
 
   return (
       <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden font-sans">
-      {/* Osmo-inspired Minimal Background */}
+      {/* Epic Quest Background */}
       <div className="absolute inset-0 bg-gradient-to-br from-[var(--bg-primary)] via-[var(--bg-secondary)] to-[var(--bg-primary)] pointer-events-none">
-        {/* Subtle Gradient Overlays - Osmo Style */}
-        <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-primary)]/3 via-transparent to-[var(--accent-primary)]/3"></div>
+        {/* Hero Journey Gradient Overlays */}
+        <div className="absolute inset-0 bg-gradient-to-r from-[var(--accent-primary)]/5 via-transparent to-[var(--accent-primary)]/5"></div>
         
-        {/* Minimal Glow Effects */}
-        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-[var(--accent-primary)]/5 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--color-primary-500)]/3 rounded-full blur-3xl"></div>
+        {/* Epic Glow Effects - Quest Style */}
+        <div className="absolute top-1/6 left-1/6 w-96 h-96 bg-[var(--accent-primary)]/8 rounded-full blur-3xl animate-pulse" style={{animationDuration: '4s'}}></div>
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-[var(--spiritual-blue)]/6 rounded-full blur-3xl animate-pulse" style={{animationDuration: '6s', animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/2 w-64 h-64 bg-[var(--spiritual-green)]/4 rounded-full blur-3xl animate-pulse" style={{animationDuration: '8s', animationDelay: '4s'}}></div>
       </div>
 
-      {/* Subtle Grid Pattern - Very Minimal */}
-      <div className="absolute inset-0 opacity-[0.02]">
+      {/* Quest Grid Pattern */}
+      <div className="absolute inset-0 opacity-[0.03]">
         <div className="absolute inset-0" style={{
-          backgroundImage: `linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)`,
-          backgroundSize: '60px 60px'
+          backgroundImage: `linear-gradient(rgba(251,191,36,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(251,191,36,0.1) 1px, transparent 1px)`,
+          backgroundSize: '80px 80px'
         }}></div>
       </div>
 
-      {/* Floating Interactive Particles */}
+      {/* Floating Quest Particles */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/6 left-1/4 w-2 h-2 bg-[var(--color-primary-500)] rounded-full animate-bounce" style={{animationDuration: '3s'}}></div>
-        <div className="absolute top-1/4 right-1/3 w-1.5 h-1.5 bg-[var(--color-info-500)] rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
-        <div className="absolute top-1/3 left-1/6 w-1 h-1 bg-[var(--color-success-500)] rounded-full animate-bounce" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
-        <div className="absolute top-2/5 right-1/5 w-1.5 h-1.5 bg-[var(--color-primary-500)]/80 rounded-full animate-bounce" style={{animationDuration: '3.5s', animationDelay: '2s'}}></div>
-        <div className="absolute top-1/2 left-1/3 w-1 h-1 bg-[var(--color-info-500)]/80 rounded-full animate-bounce" style={{animationDuration: '2s', animationDelay: '1.5s'}}></div>
-        <div className="absolute top-3/5 right-1/4 w-1 h-1 bg-[var(--color-success-500)]/80 rounded-full animate-bounce" style={{animationDuration: '4s', animationDelay: '0.5s'}}></div>
+        <div className="absolute top-1/6 left-1/4 w-3 h-3 bg-[var(--accent-primary)] rounded-full animate-bounce shadow-lg shadow-[var(--accent-primary)]/50" style={{animationDuration: '3s'}}></div>
+        <div className="absolute top-1/4 right-1/3 w-2 h-2 bg-[var(--spiritual-blue)] rounded-full animate-bounce shadow-lg shadow-[var(--spiritual-blue)]/50" style={{animationDuration: '4s', animationDelay: '1s'}}></div>
+        <div className="absolute top-1/3 left-1/6 w-2 h-2 bg-[var(--spiritual-green)] rounded-full animate-bounce shadow-lg shadow-[var(--spiritual-green)]/50" style={{animationDuration: '2.5s', animationDelay: '0.5s'}}></div>
+        <div className="absolute top-2/5 right-1/5 w-3 h-3 bg-[var(--accent-primary)]/80 rounded-full animate-bounce shadow-lg shadow-[var(--accent-primary)]/40" style={{animationDuration: '3.5s', animationDelay: '2s'}}></div>
+        <div className="absolute top-1/2 left-1/3 w-2 h-2 bg-[var(--spiritual-cyan)]/80 rounded-full animate-bounce shadow-lg shadow-[var(--spiritual-cyan)]/40" style={{animationDuration: '2s', animationDelay: '1.5s'}}></div>
+        <div className="absolute top-3/5 right-1/4 w-2 h-2 bg-[var(--spiritual-green)]/80 rounded-full animate-bounce shadow-lg shadow-[var(--spiritual-green)]/40" style={{animationDuration: '4s', animationDelay: '0.5s'}}></div>
       </div>
 
       {/* App Bar - Osmo Style */}
-      <div className="relative z-50 bg-[var(--color-neutral-800)] backdrop-blur-xl border-b border-[var(--color-neutral-700)] shadow-lg sticky top-0">
+      <div className="relative z-50 bg-[var(--bg-tertiary)] backdrop-blur-xl border-b border-[var(--border-primary)] shadow-lg sticky top-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6">
           <div className="flex items-center justify-between h-14 sm:h-16">
             {/* Osmo-style Logo */}
             <div className="flex items-center space-x-2 sm:space-x-3 group">
-              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--color-warning-500)] to-[var(--color-warning-600)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-[var(--color-warning-500)]/25">
+              <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-[var(--accent-primary)]/25">
                 <span className="text-[var(--color-neutral-50)] font-bold text-xs sm:text-sm">✝</span>
               </div>
-              <div className="text-base sm:text-lg font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
-                <span className="bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] bg-clip-text text-transparent">Christian</span>
+              <div className="text-base sm:text-lg font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--accent-primary)] transition-colors duration-300">
+                <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">Christian</span>
                 <span className="text-[var(--color-neutral-50)]">Kit</span>
               </div>
             </div>
@@ -391,42 +390,42 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
             <div className="hidden lg:flex items-center space-x-3">
               <button
                 onClick={() => onNavigate?.('dashboard')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)]/50 hover:border-[var(--text-tertiary)] transition-all duration-300 flex items-center space-x-2"
               >
                 <span>🏠</span>
                 <span>Home</span>
               </button>
               <button
                 onClick={() => onNavigate?.('prayer')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)]/50 hover:border-[var(--text-tertiary)] transition-all duration-300 flex items-center space-x-2"
               >
                 <span>✨</span>
                 <span>Prayer</span>
               </button>
               <button
                 onClick={() => onNavigate?.('community')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)]/50 hover:border-[var(--text-tertiary)] transition-all duration-300 flex items-center space-x-2"
               >
                 <span>👥</span>
                 <span>Community</span>
               </button>
               <button
-                onClick={() => onNavigate?.('bible')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-50)] bg-[var(--color-neutral-800)] hover:bg-[var(--color-neutral-700)] border border-[var(--color-neutral-700)] hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+                onClick={() => onNavigate?.('bible-reading')}
+                className="px-4 py-2 rounded-lg font-medium text-[var(--text-primary)] bg-[var(--bg-tertiary)] hover:bg-[var(--border-primary)] border border-[var(--border-primary)] hover:border-[var(--text-tertiary)] transition-all duration-300 flex items-center space-x-2"
               >
                 <span>📖</span>
-                <span>Bible</span>
+                <span>Bible Quest</span>
               </button>
               <button
                 onClick={() => onNavigate?.('meditation')}
-                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--color-neutral-800)] border border-[var(--color-neutral-700)]/50 hover:border-[var(--color-neutral-600)] transition-all duration-300 flex items-center space-x-2"
+                className="px-4 py-2 rounded-lg font-medium text-[var(--color-neutral-400)] hover:text-[var(--color-neutral-50)] hover:bg-[var(--bg-tertiary)] border border-[var(--border-primary)]/50 hover:border-[var(--text-tertiary)] transition-all duration-300 flex items-center space-x-2"
               >
                 <span>🧘</span>
                 <span>Meditation</span>
               </button>
               <button
                 onClick={() => onNavigate?.('subscription')}
-                className="px-4 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-[var(--color-warning-500)]/25"
+                className="px-4 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] hover:from-[var(--accent-secondary)] hover:to-[var(--accent-primary)] transition-all duration-300 flex items-center space-x-2 shadow-lg shadow-[var(--accent-primary)]/25"
               >
                 <span>⭐</span>
                 <span>Pro</span>
@@ -437,7 +436,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
             <div className="lg:hidden flex items-center space-x-2">
               <button
                 onClick={() => onNavigate?.('subscription')}
-                className="px-3 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 flex items-center space-x-1 shadow-lg shadow-[var(--color-warning-500)]/25 text-sm"
+                className="px-3 py-2 rounded-lg font-semibold text-[var(--color-neutral-50)] bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] hover:from-[var(--accent-secondary)] hover:to-[var(--accent-primary)] transition-all duration-300 flex items-center space-x-1 shadow-lg shadow-[var(--accent-primary)]/25 text-sm"
               >
                 <span>⭐</span>
                 <span className="hidden sm:inline">Pro</span>
@@ -448,155 +447,268 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
       </div>
 
       {/* Main Content */}
-      <div className="relative z-10 flex flex-col items-center justify-center p-4 pt-24">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl sm:text-6xl font-bold text-[var(--text-primary)] mb-4">
-            Bible Reading
+      <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 xl:px-12">
+        
+        {/* Hero Section - Epic Quest Style */}
+        <div className="pt-8 pb-12">
+          <div className="text-center max-w-4xl mx-auto">
+            {/* Quest Badge */}
+            <div className="inline-flex items-center px-4 py-2 bg-[var(--accent-primary)]/10 border border-[var(--accent-primary)]/20 rounded-full mb-6">
+              <div className="w-2 h-2 bg-[var(--accent-primary)] rounded-full animate-pulse mr-2"></div>
+              <span className="text-[var(--accent-primary)] font-semibold text-sm">BIBLE QUEST ACTIVE</span>
+            </div>
+            
+            <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight text-[var(--text-primary)]">
+              Begin Your{' '}
+              <span className="bg-gradient-to-r from-[var(--accent-primary)] via-[var(--accent-secondary)] to-[var(--accent-primary)] bg-clip-text text-transparent">
+                Bible Quest
+              </span>
           </h1>
-          <p className="text-lg sm:text-xl text-[var(--text-secondary)] mb-6">
-            Focused time in God's Word
-          </p>
+
+            <p className="text-lg text-[var(--text-secondary)] max-w-3xl mx-auto mb-8">
+              Embark on an epic journey through God's Word. Complete quests, earn XP, and unlock spiritual treasures as you grow in faith.
+            </p>
+
+            {/* Quest Stats */}
+            <div className="flex flex-wrap justify-center gap-6 mb-8">
+            <div className="bg-[var(--bg-tertiary)]/30 backdrop-blur-xl rounded-xl p-4 border border-[var(--border-primary)]/20">
+              <div className="text-2xl font-bold text-[var(--accent-primary)]">Level 3</div>
+              <div className="text-sm text-[var(--text-secondary)]">Bible Scholar</div>
+            </div>
+            <div className="bg-[var(--bg-tertiary)]/30 backdrop-blur-xl rounded-xl p-4 border border-[var(--border-primary)]/20">
+              <div className="text-2xl font-bold text-[var(--spiritual-green)]">1,250 XP</div>
+              <div className="text-sm text-[var(--text-secondary)]">Total Experience</div>
+            </div>
+            <div className="bg-[var(--bg-tertiary)]/30 backdrop-blur-xl rounded-xl p-4 border border-[var(--border-primary)]/20">
+              <div className="text-2xl font-bold text-[var(--spiritual-blue)]">7 Days</div>
+              <div className="text-sm text-[var(--text-secondary)]">Current Streak</div>
+            </div>
+            </div>
+          </div>
         </div>
 
-      {/* Timer Container - Now First and More Prominent */}
-      <div className="bg-white/10 rounded-3xl p-8 sm:p-12 border border-white/20 max-w-md w-full mb-8">
-        {/* Timer Controls */}
-        <div className="flex justify-center space-x-4 mb-6">
-          <button
-            onClick={() => setSelectedMinutes(5)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              selectedMinutes === 5 
-                ? 'bg-amber-500 text-black' 
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            5 min
-          </button>
-          <button
-            onClick={() => setSelectedMinutes(10)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              selectedMinutes === 10 
-                ? 'bg-amber-500 text-black' 
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            10 min
-          </button>
-          <button
-            onClick={() => setSelectedMinutes(15)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              selectedMinutes === 15 
-                ? 'bg-amber-500 text-black' 
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            15 min
-          </button>
-          <button
-            onClick={() => setSelectedMinutes(30)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 ${
-              selectedMinutes === 30 
-                ? 'bg-amber-500 text-black' 
-                : 'bg-white/10 text-white hover:bg-white/20'
-            }`}
-          >
-            30 min
-          </button>
-        </div>
-
-        {/* Progress Ring */}
-        <div className="relative w-48 h-48 mx-auto mb-6">
-          <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
-            {/* Background Circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="rgba(255,255,255,0.2)"
-              strokeWidth="8"
-            />
-            {/* Progress Circle */}
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#fbbf24"
-              strokeWidth="8"
-              strokeLinecap="round"
-              strokeDasharray={`${2 * Math.PI * 45}`}
-              strokeDashoffset={`${2 * Math.PI * 45 * (1 - ((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)))}`}
-              className="transition-all duration-1000 ease-out"
-            />
-          </svg>
+        {/* Quest Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
           
-          {/* Timer Display */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="text-5xl sm:text-6xl font-bold text-white mb-2">
-                {formatTime(timeRemaining)}
+          {/* Daily Reading Quest */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--accent-primary)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--accent-primary)]/10"
+               onClick={() => {
+                 setSelectedMinutes(15);
+                 setTimeRemaining(15 * 60);
+                 setIsReading(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">📖</span>
               </div>
-              <div className="text-base text-gray-300">
-                {isReading ? 'Reading...' : 'Ready'}
+              <div className="bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] px-3 py-1 rounded-full text-xs font-semibold">
+                +50 XP
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Daily Reading Quest</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Read God's Word for 15 minutes and earn spiritual XP</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-3/4 h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full"></div>
               </div>
             </div>
           </div>
 
-          {/* Progress Percentage */}
-          <div className="absolute -bottom-8 left-1/2 transform -translate-x-1/2">
-            <div className="bg-white/20 rounded-full px-4 py-2 text-sm font-medium text-white">
-              {Math.round(((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100)}%
+          {/* Psalm Meditation Quest */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--spiritual-blue)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--spiritual-blue)]/10"
+               onClick={() => {
+                 setSelectedMinutes(10);
+                 setTimeRemaining(10 * 60);
+                 setIsReading(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--spiritual-blue)] to-[var(--spiritual-blue)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">🎵</span>
+              </div>
+              <div className="bg-[var(--spiritual-blue)]/20 text-[var(--spiritual-blue)] px-3 py-1 rounded-full text-xs font-semibold">
+                +30 XP
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Psalm Meditation</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Meditate on the Psalms for 10 minutes of peace</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-full h-full bg-gradient-to-r from-[var(--spiritual-blue)] to-[var(--spiritual-blue)] rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* New Testament Journey */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--spiritual-green)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--spiritual-green)]/10"
+               onClick={() => {
+                 setSelectedMinutes(20);
+                 setTimeRemaining(20 * 60);
+                 setIsReading(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--spiritual-green)] to-[var(--spiritual-green)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">✝️</span>
+              </div>
+              <div className="bg-[var(--spiritual-green)]/20 text-[var(--spiritual-green)] px-3 py-1 rounded-full text-xs font-semibold">
+                +75 XP
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">New Testament Journey</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Explore the life and teachings of Jesus Christ</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐⭐⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-1/2 h-full bg-gradient-to-r from-[var(--spiritual-green)] to-[var(--spiritual-green)] rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Wisdom Quest */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--spiritual-cyan)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--spiritual-cyan)]/10"
+               onClick={() => {
+                 setSelectedMinutes(25);
+                 setTimeRemaining(25 * 60);
+                 setIsReading(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--spiritual-cyan)] to-[var(--spiritual-cyan)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">🧠</span>
+              </div>
+              <div className="bg-[var(--spiritual-cyan)]/20 text-[var(--spiritual-cyan)] px-3 py-1 rounded-full text-xs font-semibold">
+                +100 XP
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Wisdom Quest</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Dive deep into Proverbs and gain divine wisdom</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐⭐⭐⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-1/3 h-full bg-gradient-to-r from-[var(--spiritual-cyan)] to-[var(--spiritual-cyan)] rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Prayer & Reflection */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--accent-primary)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--accent-primary)]/10"
+               onClick={() => {
+                 setSelectedMinutes(12);
+                 setTimeRemaining(12 * 60);
+                 setIsReading(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">🙏</span>
+              </div>
+              <div className="bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] px-3 py-1 rounded-full text-xs font-semibold">
+                +40 XP
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Prayer & Reflection</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Combine reading with prayerful reflection</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-2/3 h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full"></div>
+              </div>
+            </div>
+          </div>
+
+          {/* Custom Quest */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30 hover:border-[var(--text-tertiary)]/50 transition-all duration-300 group cursor-pointer hover:scale-105 hover:shadow-2xl hover:shadow-[var(--text-tertiary)]/10"
+               onClick={() => {
+                 setShowAdvanced(true);
+               }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 bg-gradient-to-br from-[var(--text-tertiary)] to-[var(--text-tertiary)] rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-2xl">⚙️</span>
+              </div>
+              <div className="bg-[var(--text-tertiary)]/20 text-[var(--text-tertiary)] px-3 py-1 rounded-full text-xs font-semibold">
+                Custom
+              </div>
+            </div>
+            <h3 className="text-xl font-bold text-[var(--text-primary)] mb-2">Custom Quest</h3>
+            <p className="text-[var(--text-secondary)] mb-4">Create your own personalized Bible reading experience</p>
+            <div className="flex items-center justify-between">
+              <div className="text-sm text-[var(--text-secondary)]">Difficulty: ⭐⭐⭐⭐⭐</div>
+              <div className="w-16 h-2 bg-[var(--border-primary)] rounded-full overflow-hidden">
+                <div className="w-1/4 h-full bg-gradient-to-r from-[var(--text-tertiary)] to-[var(--text-tertiary)] rounded-full"></div>
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Timer Action Buttons */}
+        {/* Quest Progress & Content Section */}
+        <div className="space-y-6 max-w-4xl w-full">
+          
+          {/* Active Quest Timer */}
+          {isReading && (
+            <div className="bg-[var(--bg-tertiary)]/30 backdrop-blur-xl rounded-2xl p-6 border border-[var(--accent-primary)]/30">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center">
+                  <span className="w-3 h-3 bg-[var(--accent-primary)] rounded-full animate-pulse mr-3"></span>
+                  Quest in Progress
+                </h3>
+                <div className="text-[var(--accent-primary)] font-semibold">
+                  {formatTime(timeRemaining)}
+                </div>
+              </div>
+              
+              {/* Quest Progress Bar */}
+              <div className="w-full h-3 bg-[var(--border-primary)] rounded-full overflow-hidden mb-4">
+                <div 
+                  className="h-full bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] rounded-full transition-all duration-1000"
+                  style={{width: `${((selectedMinutes * 60 - timeRemaining) / (selectedMinutes * 60)) * 100}%`}}
+                ></div>
+              </div>
+              
         <div className="flex justify-center space-x-4">
-          {!isReading ? (
-            <button
-              onClick={() => {
-                setTimeRemaining(selectedMinutes * 60);
-                setIsReading(true);
-              }}
-              className="bg-amber-500 text-black px-6 py-3 rounded-xl font-semibold hover:bg-amber-400 transition-all duration-300"
-            >
-              Start Reading
-            </button>
-          ) : (
             <button
               onClick={() => setIsReading(false)}
-              className="bg-red-500 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-400 transition-all duration-300"
+                  className="bg-red-500/20 text-red-400 px-6 py-2 rounded-xl font-semibold hover:bg-red-500/30 transition-all duration-300 border border-red-500/30"
             >
-              Pause
+                  Pause Quest
             </button>
-          )}
-          
           <button
-            onClick={resetReading}
-            className="bg-white/10 text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/20 transition-all duration-300 border border-white/20"
+                  onClick={completeReading}
+                  className="bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] px-6 py-2 rounded-xl font-semibold hover:bg-[var(--accent-primary)]/30 transition-all duration-300 border border-[var(--accent-primary)]/30"
           >
-            Reset
+                  Complete Quest
           </button>
         </div>
       </div>
+          )}
 
-      {/* Bible Content Section - Now Below Timer */}
-      <div className="space-y-6 max-w-4xl w-full">
-                 {/* Verse of the Day */}
-         <div className="bg-white/10 border border-white/20 rounded-lg p-6">
-           <h3 className="text-lg font-semibold text-white mb-3">🎯 Today's Verse</h3>
-           <p className="text-white/80 text-sm mb-2">{verseOfTheDay?.reference || 'Psalm 46:10'}</p>
-           <p className="text-white text-base leading-relaxed">
+          {/* Quest Rewards - Verse of the Day */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center">
+                <span className="text-2xl mr-3">🎯</span>
+                Daily Quest Reward
+              </h3>
+              <div className="bg-[var(--accent-primary)]/20 text-[var(--accent-primary)] px-3 py-1 rounded-full text-xs font-semibold">
+                +25 XP
+              </div>
+            </div>
+            <p className="text-[var(--text-secondary)] text-sm mb-2">{verseOfTheDay?.reference || 'Psalm 46:10'}</p>
+            <p className="text-[var(--text-primary)] text-base leading-relaxed">
              {verseOfTheDay?.text || 'Be still, and know that I am God; I will be exalted among the nations, I will be exalted in the earth.'}
            </p>
          </div>
 
-         {/* Daily Reading Suggestion */}
-         <div className="bg-white/10 border border-white/20 rounded-lg p-6">
-           <h3 className="text-lg font-semibold text-white mb-3">📚 Daily Reading</h3>
-           <p className="text-white/80 text-sm mb-2">{dailyReading?.reference || 'Psalm 1'}</p>
+          {/* Quest Guide - Daily Reading */}
+          <div className="bg-[var(--bg-tertiary)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--border-primary)]/30">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-[var(--text-primary)] flex items-center">
+                <span className="text-2xl mr-3">📚</span>
+                Quest Guide
+              </h3>
+              <div className="bg-[var(--spiritual-blue)]/20 text-[var(--spiritual-blue)] px-3 py-1 rounded-full text-xs font-semibold">
+                Recommended
+              </div>
+            </div>
+            <p className="text-[var(--text-secondary)] text-sm mb-2">{dailyReading?.reference || 'Psalm 1'}</p>
            <p className="text-white text-base leading-relaxed mb-3">{dailyReading?.description || 'The Way of the Righteous'}</p>
            <p className="text-white/70 text-sm">
              💡 <strong>Available:</strong> Popular verses and readings
@@ -672,13 +784,13 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
 
       {/* Mobile Navigation Tabs - Side by Side Compact */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
-        <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
+        <div className="flex items-center space-x-2 bg-[var(--bg-tertiary)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--border-primary)] shadow-2xl">
           {/* Home Tab */}
           <button
             onClick={() => onNavigate?.('dashboard')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-neutral-700)]/30 to-[var(--color-neutral-800)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-neutral-600)]/50 border-2 border-[var(--color-neutral-600)]/80 group-hover:border-[var(--color-neutral-500)]">
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--border-primary)]/30 to-[var(--bg-tertiary)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--text-tertiary)]/50 border-2 border-[var(--text-tertiary)]/80 group-hover:border-[var(--text-tertiary)]">
               <span className="text-lg text-[var(--color-neutral-300)]">🏠</span>
             </div>
             <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-neutral-300)] transition-colors duration-300">Home</span>
@@ -689,10 +801,10 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
             onClick={() => onNavigate?.('prayer')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
-              <span className="text-lg text-[var(--color-primary-500)]">✨</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--spiritual-blue)]/30 to-[var(--spiritual-cyan)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--spiritual-blue)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
+              <span className="text-lg text-[var(--spiritual-blue)]">✨</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">Prayer</span>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--spiritual-blue)] transition-colors duration-300">Prayer</span>
           </button>
           
           {/* Bible Tab - Active */}
@@ -700,10 +812,10 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
             onClick={() => onNavigate?.('bible')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
-              <span className="text-lg text-[var(--color-warning-500)]">📖</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--accent-primary)]/30 to-[var(--accent-secondary)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--accent-primary)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
+              <span className="text-lg text-[var(--accent-primary)]">📖</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-warning-500)] group-hover:text-[var(--color-warning-400)] transition-colors duration-300">Bible</span>
+            <span className="text-xs font-bold text-[var(--accent-primary)] group-hover:text-[var(--color-warning-400)] transition-colors duration-300">Bible</span>
           </button>
           
           {/* Meditation Tab */}
@@ -711,10 +823,10 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
             onClick={() => onNavigate?.('meditation')}
             className="flex flex-col items-center space-y-1 group"
           >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-success-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-success-500)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
-              <span className="text-lg text-[var(--color-success-500)]">🧘</span>
+            <div className="w-10 h-10 bg-gradient-to-br from-[var(--spiritual-green)]/30 to-[var(--spiritual-cyan)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--spiritual-green)]/50 border-2 border-emerald-500/80 group-hover:border-emerald-500">
+              <span className="text-lg text-[var(--spiritual-green)]">🧘</span>
             </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-success-500)] transition-colors duration-300">Meditation</span>
+            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--spiritual-green)] transition-colors duration-300">Meditation</span>
           </button>
         </div>
       </div>

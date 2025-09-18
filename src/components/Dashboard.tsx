@@ -347,7 +347,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                 }
               }
               
-              onNavigate?.('bible', bibleTime);
+              onNavigate?.('bible-reading', bibleTime);
             }}>
               {/* Bible Images - Animated Collection */}
               <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-warning-600)]/20 relative overflow-hidden">

@@ -227,14 +227,14 @@ export const SubscriptionPage: React.FC = () => {
                   <p className="text-slate-300 text-sm ml-8">Focus on one spiritual habit each month (e.g., "Fear of God")</p>
                 </div>
                 
-                <div className="border-l-4 border-amber-400 pl-4 py-3 bg-amber-500/10 rounded-r-lg">
+                <div className="border-l-4 border-green-400 pl-4 py-3 bg-green-500/10 rounded-r-lg">
                   <div className="flex items-center gap-3 mb-2">
-                    <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                    <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
-                    <span className="text-amber-100 font-semibold">Community Prayer Requests</span>
+                    <span className="text-green-100 font-semibold">Community Features (Free for Everyone)</span>
                   </div>
-                  <p className="text-slate-300 text-sm ml-8">Special prayer posts with "I Prayed" button for encouragement</p>
+                  <p className="text-slate-300 text-sm ml-8">Share prayers, encourage others, and connect with the community</p>
                 </div>
 
                 {/* EXISTING FEATURES */}
@@ -341,14 +341,14 @@ export const SubscriptionPage: React.FC = () => {
                 <p className="text-slate-300 text-sm ml-8">Focus on one spiritual habit each month (e.g., "Fear of God")</p>
               </div>
               
-              <div className="border-l-4 border-amber-400 pl-4 py-3 bg-amber-500/10 rounded-r-lg">
+              <div className="border-l-4 border-green-400 pl-4 py-3 bg-green-500/10 rounded-r-lg">
                 <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-5 h-5 text-amber-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  <svg className="w-5 h-5 text-green-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                   </svg>
-                  <span className="text-amber-100 font-semibold">Community Prayer Requests</span>
+                  <span className="text-green-100 font-semibold">Community Features (Free for Everyone)</span>
                 </div>
-                <p className="text-slate-300 text-sm ml-8">Special prayer posts with "I Prayed" button for encouragement</p>
+                <p className="text-slate-300 text-sm ml-8">Share prayers, encourage others, and connect with the community</p>
               </div>
 
               <div className="flex items-center gap-3">
@@ -425,6 +425,10 @@ export const SubscriptionPage: React.FC = () => {
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-green-400 text-xl">✓</span>
+                <span className="text-slate-200">Community features (always free)</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-green-400 text-xl">✓</span>
                 <span className="text-slate-200">Simple weekly overview</span>
               </div>
               
@@ -445,7 +449,7 @@ export const SubscriptionPage: React.FC = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-red-400 text-xl">✗</span>
-                  <span className="text-slate-500">🙏 Community Prayer Requests</span>
+                  <span className="text-slate-500">📧 Daily habit notifications</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <span className="text-red-400 text-xl">✗</span>
@@ -558,7 +562,7 @@ export const SubscriptionPage: React.FC = () => {
                 What's included in the Pro plan?
               </h4>
                 <p className="text-[var(--text-secondary)]">
-                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Community Prayer Requests ("I Prayed" encouragement), plus premium support.
+                Pro includes 4 premium features: Daily Re-Engagement System (uplifting messages & reminders), Weekly Progress Tracking (detailed analytics), Monthly Habit Builder (focused spiritual growth), Daily habit notifications, plus premium support. Community features are free for everyone!
               </p>
             </div>
 

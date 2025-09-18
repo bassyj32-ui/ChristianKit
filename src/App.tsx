@@ -201,7 +201,7 @@ const AppContent: React.FC = () => {
       'home': '/',
       'dashboard': '/dashboard',
       'community': '/community',
-      'runner': '/faith-runner',
+      'runner': '/bible-quest',
       // HIDDEN PAGES - Commented out to simplify app
       // 'journal': '/journal',
       // 'store': '/store',
@@ -228,7 +228,7 @@ const AppContent: React.FC = () => {
       '/': 'home',
       '/dashboard': 'dashboard',
       '/community': 'community',
-      '/faith-runner': 'runner',
+      '/bible-quest': 'runner',
       // HIDDEN PAGES - Commented out to simplify app
       // '/journal': 'journal',
       // '/store': 'store',
@@ -343,7 +343,7 @@ const AppContent: React.FC = () => {
             </CommunityErrorBoundary>
           )
         case 'runner':
-        case 'faith-runner': // accept alias and route to the same view
+        case 'bible-quest': // accept alias and route to the same view
           return <BibleQuest />
         // HIDDEN PAGES - Commented out to simplify app
         // case 'journal':

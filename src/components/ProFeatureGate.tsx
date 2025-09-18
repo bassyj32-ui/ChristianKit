@@ -56,14 +56,14 @@ export const ProFeatureGate: React.FC<ProFeatureGateProps> = ({
       description: 'Focus on one spiritual habit each month with guided practices and resources.'
     },
     communityPrayerRequests: {
-      name: 'Community Prayer Requests',
-      emoji: '🙏',
-      description: 'Share prayer requests and encourage others with the "I Prayed" feature.'
+      name: 'Community Features (Free for Everyone)',
+      emoji: '👥',
+      description: 'Share prayers, encourage others, and connect with the community - available to all users!'
     },
     communityFeatures: {
-      name: 'Advanced Community Features',
+      name: 'Community Features (Free for Everyone)',
       emoji: '👥',
-      description: 'Join private groups, attend premium events, access community analytics, and use moderation tools.'
+      description: 'Share prayers, encourage others, and connect with the community - available to all users!'
     },
     premiumSupport: {
       name: 'Premium Support',

@@ -512,7 +512,7 @@ export const CommunityPage: React.FC = () => {
               <span 
                 key={index} 
                 onClick={() => handleMentionClick(username)}
-                className="text-blue-400 font-medium hover:text-blue-300 cursor-pointer"
+                className="text-blue-500 font-medium hover:text-blue-400 cursor-pointer transition-colors duration-200"
               >
                 {part}
               </span>
@@ -689,44 +689,31 @@ export const CommunityPage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white relative overflow-hidden">
-      {/* Osmo Background Elements */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-yellow-400/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute top-40 right-20 w-24 h-24 bg-amber-500/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '1s'}}></div>
-        <div className="absolute bottom-40 left-1/4 w-20 h-20 bg-yellow-300/10 rounded-full blur-2xl animate-pulse" style={{animationDelay: '2s'}}></div>
+    <div className="min-h-screen bg-black text-white">
+      {/* Header - Clean X-style */}
+      <div className="sticky top-0 z-50 bg-black/80 backdrop-blur-xl border-b border-gray-800">
+        <div className="max-w-2xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            {/* Title */}
+            <div>
+              <h1 className="text-xl font-bold text-white">Community</h1>
+              <p className="text-gray-500 text-sm">Share your faith journey</p>
       </div>
 
-      {/* Header - Enhanced with Search and Notifications */}
-      <div className="relative z-10 bg-black/20 backdrop-blur-2xl border-b border-yellow-400/20">
-        <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
-            {/* Title Section - Simplified */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-xl sm:text-2xl font-bold mb-1 text-white">
-                Community
-              </h1>
-              <p className="text-slate-400 text-sm">
-                Share your faith journey
-              </p>
-            </div>
-
-            {/* Search and Notifications */}
-            <div className="flex items-center space-x-4">
-              {/* User Search */}
-              <div className="flex-1 lg:w-80">
+            {/* Search */}
+            <div className="flex-1 max-w-md ml-8">
                 <UserSearch 
                   onUserSelect={openUserProfile}
                   className="w-full"
                 />
               </div>
 
-              {/* Notification Center */}
+            {/* Notifications */}
+            <div className="ml-4">
               <NotificationCenter 
                 onUserSelect={openUserProfile}
                 onPostSelect={(postId) => {
                   // Scroll to post or handle post selection
-                  // Implementation for post navigation
                 }}
               />
             </div>
@@ -734,28 +721,23 @@ export const CommunityPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Main Content - Mobile Optimized */}
-      <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
-        <div className="flex flex-col lg:flex-row lg:space-x-8">
-          {/* Main Feed */}
-          <div className="flex-1 max-w-4xl">
-        
-        {/* Simple Post Creation - Mobile Optimized */}
+      {/* Main Content - X-style single column */}
+      <div className="max-w-2xl mx-auto px-4 py-2">
+        {/* Post Creation - Compact X-style */}
         {!user ? (
-          <div className="bg-black/30 backdrop-blur-2xl border border-yellow-400/20 rounded-3xl p-6 sm:p-8 text-center mb-6 sm:mb-8 shadow-2xl">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-2xl sm:text-3xl mx-auto mb-4 shadow-2xl">
-              🔐
+          <div className="bg-black border-b border-gray-800 p-4 text-center">
+            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg mx-auto mb-3">
+              ✝️
             </div>
-            <h3 className="text-lg sm:text-xl font-bold mb-2 text-white">Sign In to Share Your Faith</h3>
-            <p className="text-slate-300 text-sm sm:text-base mb-6">Join the community to share your prayers and encouragement</p>
+            <h3 className="text-base font-bold mb-1 text-white">Sign In to Share Your Faith</h3>
+            <p className="text-gray-500 text-sm mb-4">Join the community to share your prayers and encouragement</p>
             <AuthButton />
           </div>
         ) : (
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 mb-8 shadow-2xl hover:border-yellow-400/30 transition-all duration-300">
-            <div className="flex items-start space-x-4">
-              {/* User Avatar - Enhanced */}
-              <div className="relative">
-                <div className="w-14 h-14 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-full flex items-center justify-center text-black text-xl shadow-lg ring-2 ring-yellow-400/20">
+          <div className="bg-black border-b border-gray-800 p-3">
+            <div className="flex items-start space-x-3">
+              {/* User Avatar - Compact */}
+              <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-black text-sm font-medium flex-shrink-0">
                   {user?.user_metadata?.avatar_url ? (
                     <img 
                       src={user.user_metadata.avatar_url} 
@@ -765,258 +747,138 @@ export const CommunityPage: React.FC = () => {
                   ) : (
                     <span>{user?.user_metadata?.display_name?.[0] || user.email?.[0] || '👤'}</span>
                   )}
-                </div>
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-slate-900 flex items-center justify-center">
-                  <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
-                </div>
               </div>
               
-              {/* Post Form - Simplified */}
+              {/* Post Form - Compact */}
               <div className="flex-1">
-                <div className="mb-3">
                   <textarea
                     value={newPostContent}
                     onChange={(e) => setNewPostContent(e.target.value)}
-                    placeholder="Share your faith journey, prayers, or encouragement..."
-                    className="w-full p-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 text-sm min-h-[80px] transition-all duration-300"
+                  placeholder="What's on your heart today?"
+                  className="w-full p-3 bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-lg min-h-[80px] leading-relaxed"
                     rows={3}
                     maxLength={500}
                   />
-                  <div className="flex items-center justify-between mt-2">
-                    <span className="text-xs text-slate-400">{newPostContent.length}/500</span>
+                <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center space-x-3">
+                    {/* Christian-themed icons - Compact */}
+                    <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    </button>
+                    <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                      </svg>
+                    </button>
+                    <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                      </svg>
+                    </button>
+                  </div>
                     <button
                       onClick={handleCreatePost}
                       disabled={!newPostContent.trim() || isCreatingPost}
-                      className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black px-4 py-2 rounded-lg font-medium text-sm hover:from-amber-500 hover:to-yellow-400 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black px-5 py-1.5 rounded-full font-bold text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isCreatingPost ? 'Posting...' : 'Post'}
                     </button>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* Real-time Status Indicator */}
-        {realtimeSubscription && (
-          <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-3 mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <p className="text-green-300 text-sm font-medium">Live updates active</p>
-            </div>
+        {/* Show more posts link - X-style */}
+        {communityPosts.length > 0 && (
+          <div className="bg-black border-b border-gray-800 p-4 text-center">
+            <button className="text-blue-500 hover:text-blue-400 text-sm font-medium transition-colors duration-200">
+              Show {communityPosts.length + 100} posts
+              </button>
           </div>
         )}
 
-        {/* Error Display */}
-        {error && (
-          <div className="bg-red-500/10 border border-red-500/20 rounded-xl p-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <div className="w-6 h-6 bg-red-500/20 rounded-full flex items-center justify-center">
-                  <span className="text-red-400 text-sm">⚠️</span>
-                </div>
-                <div>
-                  <p className="text-red-300 font-medium text-sm">Connection Issue</p>
-                  <p className="text-red-400 text-xs">{error}</p>
-                </div>
-              </div>
-              <button
-                onClick={handleRetry}
-                disabled={isLoading}
-                className="bg-red-500/20 hover:bg-red-500/30 text-red-300 px-3 py-1 rounded text-xs font-medium transition-all duration-300 disabled:opacity-50"
-              >
-                {isLoading ? 'Retrying...' : 'Retry'}
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Search Results Indicator */}
-        {searchQuery && (
-          <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-3 mb-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-2">
-                <span className="text-blue-400 text-sm">🔍</span>
-                <p className="text-blue-300 text-sm font-medium">
-                  Search results for "{searchQuery}"
-                </p>
-              </div>
-              <button
-                onClick={() => {
-                  setSearchQuery('')
-                  setIsSearching(false)
-                  loadCommunityData(false)
-                }}
-                className="text-blue-400 hover:text-blue-300 text-xs font-medium transition-colors duration-200"
-              >
-                Clear
-              </button>
-            </div>
-          </div>
-        )}
-
-        {/* Feed Type Selector - Twitter-like */}
-        <div className="mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-white">Feed</h3>
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={refreshFeed}
-                className="text-xs text-slate-400 hover:text-yellow-400 transition-colors duration-200"
-              >
-                🔄 Refresh
-              </button>
-              {user && (
-                <button
-                  onClick={() => setShowModerationTools(!showModerationTools)}
-                  className="text-xs text-slate-400 hover:text-yellow-400 transition-colors duration-200"
-                >
-                  {showModerationTools ? 'Hide' : 'Show'} Mod Tools
-                </button>
-              )}
-            </div>
-          </div>
-          
-          {/* Feed Type Tabs */}
-          <div className="flex space-x-1 mb-3 bg-white/5 rounded-lg p-1">
+        {/* Feed Controls - Exact X-style */}
+        <div className="mb-0">
+          {/* Feed Type Tabs - X-style */}
+          <div className="flex border-b border-gray-800">
             {[
-              { key: 'all', label: 'For You', icon: '🌟' },
-              { key: 'following', label: 'Following', icon: '👥' },
-              { key: 'trending', label: 'Trending', icon: '🔥' }
+              { key: 'all', label: 'For you' },
+              { key: 'following', label: 'Following' }
             ].map((feed) => (
               <button
                 key={feed.key}
                 onClick={() => handleFeedTypeChange(feed.key as any)}
-                className={`flex-1 flex items-center justify-center space-x-1 px-3 py-2 rounded-md text-xs font-medium transition-all duration-200 ${
+                className={`flex-1 px-3 sm:px-4 py-3 sm:py-4 text-sm sm:text-base font-medium transition-colors duration-200 relative ${
                   feedType === feed.key
-                    ? 'bg-yellow-400/20 text-yellow-300'
-                    : 'text-slate-400 hover:text-white hover:bg-white/10'
+                    ? 'text-white'
+                    : 'text-gray-500 hover:text-gray-300'
                 }`}
               >
-                <span>{feed.icon}</span>
-                <span>{feed.label}</span>
-              </button>
-            ))}
-          </div>
-
-          {/* Search Input */}
-          <div className="mb-4">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search posts, hashtags, or users..."
-                value={searchQuery}
-                onChange={(e) => {
-                  const query = e.target.value
-                  setSearchQuery(query)
-                  // Debounce search
-                  clearTimeout((window as any).searchTimeout)
-                  ;(window as any).searchTimeout = setTimeout(() => {
-                    handleSearch(query)
-                  }, 500)
-                }}
-                className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-all duration-300"
-              />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                {isSearching ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-yellow-400"></div>
-                ) : (
-                  <span className="text-slate-400">🔍</span>
+                {feed.label}
+                {feedType === feed.key && (
+                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-yellow-500 rounded-full"></div>
                 )}
-              </div>
-            </div>
-          </div>
-
-          {/* Trending Hashtags */}
-          {trendingHashtags.length > 0 && !searchQuery && (
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-white mb-2">🔥 Trending</h4>
-              <div className="flex flex-wrap gap-2">
-                {trendingHashtags.slice(0, 5).map(({ tag, count }) => (
-                  <button
-                    key={tag}
-                    onClick={() => handleSearch(`#${tag}`)}
-                    className="px-3 py-1 bg-yellow-400/10 text-yellow-300 rounded-full text-xs font-medium hover:bg-yellow-400/20 transition-all duration-200"
-                  >
-                    #{tag} ({count})
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Content Filter */}
-          <div className="flex space-x-2 overflow-x-auto pb-2">
-            {[
-              { key: 'all', label: 'All', icon: '📝' },
-              { key: 'prayer', label: 'Prayers', icon: '🙏' },
-              { key: 'bible_study', label: 'Bible', icon: '📖' },
-              { key: 'testimony', label: 'Testimonies', icon: '✨' }
-            ].map((filter) => (
-              <button
-                key={filter.key}
-                onClick={() => setContentFilter(filter.key as any)}
-                className={`flex items-center space-x-1 px-3 py-2 rounded-lg text-xs font-medium transition-all duration-200 whitespace-nowrap ${
-                  contentFilter === filter.key
-                    ? 'bg-yellow-400/20 text-yellow-300 border border-yellow-400/30'
-                    : 'bg-white/5 text-slate-400 hover:bg-white/10 hover:text-white'
-                }`}
-              >
-                <span>{filter.icon}</span>
-                <span>{filter.label}</span>
               </button>
             ))}
           </div>
+
         </div>
 
-        {/* Posts Feed - Mobile Optimized */}
-        <div className="space-y-4 sm:space-y-6">
+        {/* Posts Feed - Clean X-style */}
+        <div className="space-y-0">
           {isLoading ? (
-            <div className="space-y-6">
-              {/* Skeleton Loading */}
+            <div className="space-y-0">
+              {/* Skeleton Loading - X-style */}
               {[1, 2, 3].map((i) => (
-                <div key={i} className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-6 animate-pulse">
-                  <div className="flex items-start space-x-4 mb-5">
-                    <div className="w-14 h-14 bg-white/10 rounded-full"></div>
+                <div key={i} className="bg-black border-b border-gray-800 p-4 animate-pulse">
+                  <div className="flex items-start space-x-3 mb-3">
+                    <div className="w-12 h-12 bg-gray-700 rounded-full"></div>
                     <div className="flex-1">
-                      <div className="h-4 bg-white/10 rounded w-32 mb-2"></div>
-                      <div className="h-3 bg-white/10 rounded w-20"></div>
+                      <div className="h-4 bg-gray-700 rounded w-32 mb-2"></div>
+                      <div className="h-3 bg-gray-700 rounded w-20"></div>
                     </div>
                   </div>
-                  <div className="space-y-3 mb-6">
-                    <div className="h-4 bg-white/10 rounded w-full"></div>
-                    <div className="h-4 bg-white/10 rounded w-3/4"></div>
-                    <div className="h-4 bg-white/10 rounded w-1/2"></div>
+                  <div className="space-y-2 mb-4">
+                    <div className="h-4 bg-gray-700 rounded w-full"></div>
+                    <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                    <div className="h-4 bg-gray-700 rounded w-1/2"></div>
                   </div>
-                  <div className="flex items-center space-x-3 pt-4 border-t border-white/5">
-                    <div className="h-10 bg-white/10 rounded-xl w-20"></div>
-                    <div className="h-10 bg-white/10 rounded-xl w-20"></div>
-                    <div className="h-10 bg-white/10 rounded-xl w-20"></div>
+                  <div className="flex items-center space-x-8 pt-3">
+                    <div className="h-5 bg-gray-700 rounded w-12"></div>
+                    <div className="h-5 bg-gray-700 rounded w-12"></div>
+                    <div className="h-5 bg-gray-700 rounded w-12"></div>
+                    <div className="h-5 bg-gray-700 rounded w-12"></div>
                   </div>
                 </div>
               ))}
             </div>
           ) : communityPosts.length === 0 ? (
             <div className="text-center py-12">
-              <div className="w-16 h-16 bg-black/30 rounded-full flex items-center justify-center mx-auto mb-4 border border-yellow-400/20">
+              <div className="w-16 h-16 bg-gray-800 rounded-full flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl">✝️</span>
               </div>
               <h3 className="text-lg font-semibold mb-2 text-white">No posts yet</h3>
-              <p className="text-slate-300">Be the first to share your faith journey!</p>
+              <p className="text-gray-500">Be the first to share your faith journey!</p>
             </div>
           ) : (
             filterPosts(communityPosts).map((post, index) => (
               <div 
                 key={post.id} 
-                className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-xl p-4 mb-4 hover:bg-white/10 transition-all duration-300"
+                className="bg-black border-b border-gray-800 p-3 sm:p-4 hover:bg-gray-900/50 transition-colors duration-200"
               >
-                {/* Post Header - Twitter-like */}
+                {/* Post Header - Mobile Responsive */}
                 <div className="flex items-start space-x-3 mb-3">
-                    <button
-                      onClick={() => openUserProfile(post.author_id)}
-                    className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-sm font-bold hover:scale-105 transition-transform duration-200"
-                    >
+                  <button
+                    onClick={() => openUserProfile(post.author_id)}
+                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium hover:opacity-80 transition-opacity duration-200 flex-shrink-0 ${
+                      user && post.author_id === user.id 
+                        ? 'bg-yellow-500 text-black' 
+                        : 'bg-blue-500 text-white'
+                    }`}
+                  >
                       {post.author_avatar}
                     </button>
                   <div className="flex-1 min-w-0">
@@ -1024,22 +886,22 @@ export const CommunityPage: React.FC = () => {
                       <div className="flex items-center space-x-2">
                       <button
                         onClick={() => openUserProfile(post.author_id)}
-                          className="font-medium text-white text-sm truncate hover:text-yellow-300 transition-colors duration-200"
+                          className="font-bold text-white text-sm sm:text-base hover:underline transition-colors duration-200"
                       >
                         {post.author_name}
                       </button>
-                        <span className="text-xs text-slate-400">•</span>
-                        <span className="text-xs text-slate-400">{formatTimestamp(post.created_at)}</span>
+                        <span className="text-gray-500 text-sm sm:text-base">•</span>
+                        <span className="text-gray-500 text-sm sm:text-base">{formatTimestamp(post.created_at)}</span>
                       </div>
                       
-                      {/* Follow Button */}
+                      {/* Follow Button - Hidden on mobile */}
                       {user && post.author_id !== user.id && (
                         <button
                           onClick={() => toggleFollow(post.author_id)}
-                          className={`px-3 py-1 rounded-full text-xs font-medium transition-all duration-200 ${
+                          className={`hidden sm:block px-3 sm:px-4 py-1.5 rounded-full text-xs sm:text-sm font-bold transition-colors duration-200 ${
                             followedUsers.includes(post.author_id)
-                              ? 'bg-slate-600 text-white hover:bg-slate-700'
-                              : 'bg-yellow-400 text-black hover:bg-yellow-500'
+                              ? 'bg-gray-700 text-white hover:bg-gray-600'
+                              : 'bg-white text-black hover:bg-gray-200'
                           }`}
                         >
                           {followedUsers.includes(post.author_id) ? 'Following' : 'Follow'}
@@ -1049,79 +911,85 @@ export const CommunityPage: React.FC = () => {
                   </div>
                 </div>
                 
-                {/* Post Content - With Mentions */}
-                <div className="text-sm mb-4 leading-relaxed text-slate-100">
+                {/* Post Content - Mobile Responsive */}
+                <div className="text-sm sm:text-base mb-3 sm:mb-4 leading-relaxed text-white">
                   <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
                 </div>
                 
-                {/* Post Actions - Twitter-like */}
-                <div className="flex items-center justify-between pt-3 border-t border-white/5">
-                  <div className="flex items-center space-x-6">
+                {/* Post Actions - Mobile Responsive */}
+                <div className="flex items-center justify-between pt-3">
+                  <div className="flex items-center space-x-4 sm:space-x-6">
+                    <button
+                      onClick={() => setShowCommentInput(showCommentInput === post.id ? null : post.id)}
+                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
+                    >
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
+                      </svg>
+                      <span className="text-xs sm:text-sm">{post.prayers_count || 0}</span>
+                    </button>
+                    
                     <button
                       onClick={() => handleAmenPost(post.id)}
-                      className="flex items-center space-x-1 text-slate-400 hover:text-blue-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
+                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
                     >
-                      <span className="text-base">🙏</span>
-                      <span className="text-sm font-medium">{post.amens_count || 0}</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                      </svg>
+                      <span className="text-xs sm:text-sm">{post.amens_count || 0}</span>
                     </button>
                     
                     <button
                       onClick={() => handleLovePost(post.id)}
-                      className="flex items-center space-x-1 text-slate-400 hover:text-red-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
+                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
                     >
-                      <span className="text-base">❤️</span>
-                      <span className="text-sm font-medium">{post.loves_count || 0}</span>
-                    </button>
-                    
-                    <button
-                      onClick={() => setShowCommentInput(showCommentInput === post.id ? null : post.id)}
-                      className="flex items-center space-x-1 text-slate-400 hover:text-green-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
-                    >
-                      <span className="text-base">💬</span>
-                      <span className="text-sm font-medium">{post.prayers_count || 0}</span>
+                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                      </svg>
+                      <span className="text-xs sm:text-sm">{post.loves_count || 0}</span>
                     </button>
 
-                    {/* Show Replies Button */}
-                    {replyChains[post.id] && replyChains[post.id].length > 0 && (
-                      <button
-                        onClick={() => toggleReplies(post.id)}
-                        className="flex items-center space-x-1 text-slate-400 hover:text-purple-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] justify-center touch-manipulation"
-                      >
-                        <span className="text-base">💭</span>
-                        <span className="text-sm font-medium">{replyChains[post.id].length}</span>
+                    <button className="hidden sm:flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors duration-200">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                      </svg>
+                      <span className="text-sm">1.2K</span>
                       </button>
-                    )}
-                  </div>
-                  
-                  {/* Report Button - Mobile Friendly */}
-                  <button
-                    onClick={() => handleReportPost(post.id)}
-                    className="text-slate-400 hover:text-red-400 active:scale-95 transition-all duration-200 min-h-[44px] min-w-[44px] flex items-center justify-center touch-manipulation"
-                  >
-                    <span className="text-sm">⚠️</span>
+
+                    <button className="hidden sm:block text-gray-500 hover:text-blue-500 transition-colors duration-200">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M17 3H7c-1.1 0-2 .9-2 2v16l7-3 7 3V5c0-1.1-.9-2-2-2z"/>
+                      </svg>
+                    </button>
+
+                    <button className="hidden sm:block text-gray-500 hover:text-blue-500 transition-colors duration-200">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
+                      </svg>
                   </button>
+                  </div>
                 </div>
 
                 {/* Moderation Tools - Admin Only */}
                 {showModerationTools && user && (
-                  <div className="mt-3 pt-3 border-t border-white/5">
+                  <div className="mt-3 pt-3 border-t border-gray-800">
                     <div className="flex items-center space-x-2">
-                      <span className="text-xs text-slate-400">Moderation:</span>
+                      <span className="text-xs text-gray-500">Moderation:</span>
                       <button
                         onClick={() => handleModeratePost(post.id, 'approve')}
-                        className="bg-green-500/20 text-green-300 px-2 py-1 rounded text-xs hover:bg-green-500/30 transition-colors duration-200"
+                        className="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 transition-colors duration-200"
                       >
                         ✓ Approve
                       </button>
                       <button
                         onClick={() => handleModeratePost(post.id, 'reject')}
-                        className="bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded text-xs hover:bg-yellow-500/30 transition-colors duration-200"
+                        className="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 transition-colors duration-200"
                       >
                         ✗ Reject
                       </button>
                       <button
                         onClick={() => handleModeratePost(post.id, 'delete')}
-                        className="bg-red-500/20 text-red-300 px-2 py-1 rounded text-xs hover:bg-red-500/30 transition-colors duration-200"
+                        className="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 transition-colors duration-200"
                       >
                         🗑️ Delete
                       </button>
@@ -1129,22 +997,22 @@ export const CommunityPage: React.FC = () => {
                   </div>
                 )}
 
-                {/* Reply Thread - Twitter-like */}
+                {/* Reply Thread - Clean X-style */}
                 {showReplies[post.id] && replyChains[post.id] && (
-                  <div className="mt-4 pt-3 border-t border-white/5">
+                  <div className="mt-4 pt-3 border-t border-gray-800">
                     <div className="space-y-3">
                       {replyChains[post.id].map((reply, replyIndex) => (
-                        <div key={reply.id} className="flex items-start space-x-2 pl-4 border-l-2 border-white/10">
-                          <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-xs flex-shrink-0">
+                        <div key={reply.id} className="flex items-start space-x-3 pl-4">
+                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0">
                             {reply.author_avatar}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-xs font-medium text-white">{reply.author_name}</span>
-                              <span className="text-xs text-slate-400">•</span>
-                              <span className="text-xs text-slate-400">{formatTimestamp(reply.created_at)}</span>
+                              <span className="text-sm font-medium text-white">{reply.author_name}</span>
+                              <span className="text-gray-500 text-sm">•</span>
+                              <span className="text-gray-500 text-sm">{formatTimestamp(reply.created_at)}</span>
                             </div>
-                            <p className="text-xs text-slate-200 leading-relaxed">{highlightMentions(reply.content)}</p>
+                            <p className="text-sm text-gray-300 leading-relaxed">{highlightMentions(reply.content)}</p>
                           </div>
                         </div>
                       ))}
@@ -1152,11 +1020,11 @@ export const CommunityPage: React.FC = () => {
                   </div>
                 )}
                 
-                {/* Comment Input - Simplified */}
+                {/* Comment Input - Clean X-style */}
                 {showCommentInput === post.id && (
-                  <div className="mt-4 pt-3 border-t border-white/5">
-                    <div className="flex items-start space-x-2">
-                      <div className="w-6 h-6 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-xs flex-shrink-0">
+                  <div className="mt-4 pt-3 border-t border-gray-800">
+                    <div className="flex items-start space-x-3">
+                      <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0">
                         {user?.user_metadata?.display_name?.[0] || user?.email?.[0] || '👤'}
                         </div>
                         <div className="flex-1">
@@ -1164,26 +1032,26 @@ export const CommunityPage: React.FC = () => {
                             value={newPostComment}
                             onChange={(e) => setNewPostComment(e.target.value)}
                           placeholder="Share your prayers..."
-                          className="w-full p-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-yellow-400/50 focus:border-yellow-400/50 transition-all duration-300 resize-none text-sm"
+                          className="w-full p-3 bg-transparent text-white placeholder-gray-500 focus:outline-none resize-none text-sm leading-relaxed"
                           rows={2}
                           maxLength={200}
                         />
                         <div className="flex items-center justify-between mt-2">
-                          <span className="text-xs text-slate-400">{newPostComment.length}/200</span>
+                          <span className="text-xs text-gray-500">{newPostComment.length}/200</span>
                             <div className="flex items-center space-x-2">
                               <button
                                 onClick={() => {
                                   setShowCommentInput(null)
                                   setNewPostComment('')
                                 }}
-                              className="text-xs text-slate-400 hover:text-white transition-colors duration-200"
+                              className="text-xs text-gray-500 hover:text-white transition-colors duration-200"
                               >
                                 Cancel
                               </button>
                               <button
                                 onClick={() => handleAddPrayer(post.id)}
                                 disabled={!newPostComment.trim()}
-                              className="bg-green-500 text-white px-3 py-1 rounded text-xs font-medium hover:bg-green-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="bg-blue-500 text-white px-4 py-1.5 rounded-full text-xs font-medium hover:bg-blue-600 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                               Pray
                               </button>
@@ -1200,24 +1068,12 @@ export const CommunityPage: React.FC = () => {
         
         {/* Infinite Scroll Loading Indicator */}
         {isLoadingMore && (
-          <div className="text-center mt-6 mb-6">
-            <div className="bg-white/10 backdrop-blur-xl border border-white/20 text-white px-4 py-2 rounded-lg text-sm font-medium">
+          <div className="text-center py-8">
+            <div className="bg-gray-900 border border-gray-800 text-white px-4 py-2 rounded-full text-sm font-medium">
               📄 Loading more posts...
         </div>
           </div>
         )}
-          </div>
-
-          {/* Discovery Sidebar - Hidden on Mobile */}
-          <div className="hidden lg:block lg:w-80 flex-shrink-0">
-            <div className="sticky top-8">
-              <UserDiscoverySidebar 
-                onUserSelect={openUserProfile}
-                className="space-y-6"
-              />
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* User Profile Modal */}
@@ -1230,26 +1086,26 @@ export const CommunityPage: React.FC = () => {
         />
       )}
 
-      {/* User Mention Modal - Simple */}
+      {/* User Mention Modal - Clean X-style */}
       {showUserModal && selectedUser && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl p-6 max-w-sm w-full">
+          <div className="bg-gray-900 border border-gray-800 rounded-2xl p-6 max-w-sm w-full">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-white">User Profile</h3>
               <button
                 onClick={() => setShowUserModal(false)}
-                className="text-slate-400 hover:text-white transition-colors duration-200"
+                className="text-gray-500 hover:text-white transition-colors duration-200"
               >
                 ✕
               </button>
             </div>
             
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-amber-500 rounded-full flex items-center justify-center text-black text-2xl font-bold mx-auto mb-4">
+              <div className="w-16 h-16 bg-blue-500 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-4">
                 👤
               </div>
               <h4 className="text-white font-medium text-lg mb-2">@{selectedUser}</h4>
-              <p className="text-slate-400 text-sm mb-4">Christian believer</p>
+              <p className="text-gray-500 text-sm mb-4">Christian believer</p>
               
               <div className="flex space-x-3">
                 <button
@@ -1257,17 +1113,17 @@ export const CommunityPage: React.FC = () => {
                     toggleFollow(selectedUser)
                     setShowUserModal(false)
                   }}
-                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-200 ${
+                  className={`flex-1 px-4 py-2 rounded-full font-medium transition-colors duration-200 ${
                     followedUsers.includes(selectedUser)
-                      ? 'bg-slate-600 text-white hover:bg-slate-700'
-                      : 'bg-yellow-400 text-black hover:bg-yellow-500'
+                      ? 'bg-gray-700 text-white hover:bg-gray-600'
+                      : 'bg-white text-black hover:bg-gray-200'
                   }`}
                 >
                   {followedUsers.includes(selectedUser) ? 'Following' : 'Follow'}
                 </button>
                 <button
                   onClick={() => setShowUserModal(false)}
-                  className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 transition-all duration-200"
+                  className="px-4 py-2 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition-colors duration-200"
                 >
                   Close
                 </button>
