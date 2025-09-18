@@ -266,8 +266,8 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
       {/* Main Timer Content */}
       <div className="flex flex-col items-center justify-center h-screen px-4 py-4 pb-24 relative z-10">
 
-        {/* Time Selection Bar - Osmo Style */}
-        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50">
+        {/* Time Selection Bar - Osmo Style (Restored for Mobile) */}
+        <div className="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 sm:hidden">
           <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
             <div className="flex items-center space-x-1">
             {/* 5 Minutes Tab */}
@@ -369,23 +369,80 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
                 </div>
               </div>
 
-              {/* Left Side - Prayer Message (Hidden on Mobile) */}
+              {/* Left Side - Time Selection Buttons with Icons (Hidden on Mobile) */}
               <div className="absolute left-[-140px] sm:left-[-160px] lg:left-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
-                <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px] shadow-lg">
-                  <p className="text-sm sm:text-base font-black text-white leading-tight">
-                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">Let's pray for {selectedMinutes} minutes</span>
-                  </p>
+                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 text-center max-w-[140px] sm:max-w-[160px]">
+                  <div className="flex flex-col space-y-2">
+                    {/* 5 Minutes Tab */}
+                    <button
+                      onClick={() => handleTimeSelect(5)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-300 flex items-center justify-center space-x-1 ${
+                        selectedMinutes === 5
+                          ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black shadow-lg shadow-amber-400/25'
+                          : 'text-white hover:bg-white/10 border border-white/20'
+                      }`}
+                    >
+                      <span>⏱️</span>
+                      <span>5 min</span>
+                    </button>
+                    
+                    {/* 10 Minutes Tab */}
+                    <button
+                      onClick={() => handleTimeSelect(10)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-300 flex items-center justify-center space-x-1 ${
+                        selectedMinutes === 10
+                          ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black shadow-lg shadow-amber-400/25'
+                          : 'text-white hover:bg-white/10 border border-white/20'
+                      }`}
+                    >
+                      <span>⏰</span>
+                      <span>10 min</span>
+                    </button>
+                    
+                    {/* 30 Minutes Tab */}
+                    <button
+                      onClick={() => handleTimeSelect(30)}
+                      className={`px-3 py-2 rounded-xl text-xs font-medium transition-all duration-300 flex items-center justify-center space-x-1 ${
+                        selectedMinutes === 30
+                          ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-black shadow-lg shadow-amber-400/25'
+                          : 'text-white hover:bg-white/10 border border-white/20'
+                      }`}
+                    >
+                      <span>🕐</span>
+                      <span>30 min</span>
+                    </button>
+
+                    {/* Custom Timer Input */}
+                    <div className="pt-2 border-t border-white/10">
+                      <div className="text-xs text-white/70 mb-1">Custom</div>
+                      <div className="flex items-center space-x-1">
+                        <input
+                          type="number"
+                          min="1"
+                          max="120"
+                          placeholder="min"
+                          className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-center w-12 text-xs placeholder-white/50 focus:outline-none focus:border-amber-400"
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            if (value >= 1 && value <= 120) {
+                              handleTimeSelect(value);
+                            }
+                          }}
+                        />
+                        <span className="text-white/70 text-xs">min</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Right Side - Prayer Time Title (Hidden on Mobile) */}
+              {/* Right Side - Dynamic Prayer Message (Hidden on Mobile) */}
               <div className="absolute right-[-140px] sm:right-[-160px] lg:right-[-180px] top-1/2 transform -translate-y-1/2 hidden sm:block">
-                <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-4 text-center max-w-[120px] sm:max-w-[140px]">
-                  <div className="text-2xl sm:text-3xl font-black text-white mb-2">
-                    Prayer Time
-                  </div>
-                  <div className="text-lg sm:text-xl font-bold text-amber-400">
-                    {selectedMinutes} min
+                <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 text-center max-w-[140px] sm:max-w-[160px] shadow-lg">
+                  <div className="text-sm font-black text-white leading-tight">
+                    <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black">
+                      We will pray for {selectedMinutes} minutes
+                    </span>
                   </div>
                 </div>
               </div>
@@ -400,6 +457,29 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
               </div>
               <div className="text-sm font-bold text-amber-400">
                 {selectedMinutes} min
+              </div>
+            </div>
+          </div>
+
+          {/* Mobile Custom Timer Input */}
+          <div className="text-center mt-3 sm:hidden">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 mx-4">
+              <div className="text-sm font-medium text-white mb-2">Custom Duration</div>
+              <div className="flex items-center justify-center space-x-2">
+                <input
+                  type="number"
+                  min="1"
+                  max="120"
+                  placeholder="Enter minutes"
+                  className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-center w-24 placeholder-white/50 focus:outline-none focus:border-amber-400"
+                  onChange={(e) => {
+                    const value = parseInt(e.target.value);
+                    if (value >= 1 && value <= 120) {
+                      handleTimeSelect(value);
+                    }
+                  }}
+                />
+                <span className="text-white text-sm">min</span>
               </div>
             </div>
           </div>

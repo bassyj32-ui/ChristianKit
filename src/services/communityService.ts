@@ -15,6 +15,7 @@ export interface CommunityPost {
   author_name?: string;
   author_avatar?: string;
   author_handle?: string;
+  author_profile_image?: string;
   engagement_score?: number;
 }
 
@@ -82,9 +83,10 @@ export const getTrendingPosts = async (
       .from('community_posts')
       .select(`
         *,
-        profiles!inner(
+        profiles(
           display_name,
-          avatar_url
+          avatar_url,
+          email
         )
       `)
       .eq('moderation_status', 'approved')
@@ -146,12 +148,18 @@ export const getTrendingPosts = async (
         return { data: [], pagination: { hasNextPage: false, limit } };
       }
 
-      const transformedFallback = (fallbackPosts || []).map((post: any) => ({
-        ...post,
-        author_name: post.author_name || 'Anonymous',
-        author_avatar: post.author_avatar || '👤',
-        author_handle: `@user${post.author_id?.slice(0, 8) || 'user'}`
-      }));
+      const transformedFallback = (fallbackPosts || []).map((post: any) => {
+        // Use existing author_name if available, otherwise use email-based name
+        const emailName = post.author_name?.includes('@') ? post.author_name.split('@')[0] : post.author_name || 'user';
+        const displayName = post.author_name || emailName;
+        
+        return {
+          ...post,
+          author_name: displayName,
+          author_avatar: post.author_avatar || '👤',
+          author_handle: `@${emailName}`
+        };
+      });
 
       const hasNextPage = transformedFallback.length > limit;
       const data = hasNextPage ? transformedFallback.slice(0, limit) : transformedFallback;
@@ -172,15 +180,40 @@ export const getTrendingPosts = async (
     }
 
     console.log('✅ Fetched posts:', posts?.length || 0, 'posts found');
+    
+    // Debug: Log first post's profile data
+    if (posts && posts.length > 0) {
+      console.log('🔍 First post profile data:', {
+        author_id: posts[0].author_id,
+        profiles: posts[0].profiles,
+        hasDisplayName: !!posts[0].profiles?.display_name,
+        hasEmail: !!posts[0].profiles?.email,
+        rawPost: posts[0]
+      });
+    }
+
+    // Debug: Log all posts to see what's happening
+    console.log('🔍 All posts raw data:', posts?.map(p => ({
+      id: p.id,
+      author_id: p.author_id,
+      profiles: p.profiles,
+      resolved_name: p.profiles?.display_name || p.profiles?.email?.split('@')[0] || 'fallback'
+    })));
 
     // Transform data
-    const transformedPosts = (posts || []).map((post: any) => ({
-      ...post,
-      author_name: post.profiles?.display_name || post.author_name || 'Anonymous',
-      author_avatar: post.profiles?.avatar_url || post.author_avatar || '👤',
-      author_handle: `@user${post.author_id?.slice(0, 8) || 'user'}`,
-      engagement_score: (post.amens_count || 0) + (post.loves_count || 0) * 2 + (post.prayers_count || 0) * 3
-    }));
+    const transformedPosts = (posts || []).map((post: any) => {
+      // Prioritize display_name from profiles table, then fallback to email name
+      const emailName = post.profiles?.email?.split('@')[0] || 'user';
+      const displayName = post.profiles?.display_name || emailName;
+      
+      return {
+        ...post,
+        author_name: displayName,
+        author_avatar: post.profiles?.avatar_url || post.author_avatar || '👤',
+        author_handle: `@${emailName}`,
+        engagement_score: (post.amens_count || 0) + (post.loves_count || 0) * 2 + (post.prayers_count || 0) * 3
+      };
+    });
 
     // Check if there are more posts
     const hasNextPage = transformedPosts.length > limit;

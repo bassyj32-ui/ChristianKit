@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
+import { supabase } from '../utils/supabase'
 import { AuthButton } from './AuthButton'
-import UserProfileModal from './UserProfileModal'
 import UserSearch from './UserSearch'
 import UserDiscoverySidebar from './UserDiscoverySidebar'
 import NotificationCenter from './NotificationCenter'
@@ -184,6 +185,7 @@ const getFallbackPosts = (): CommunityPost[] => [
 ]
 
 export const CommunityPage: React.FC = () => {
+  const navigate = useNavigate()
   const { user } = useSupabaseAuth()
   const [communityPosts, setCommunityPosts] = useState<CommunityPost[]>([])
   const [newPostContent, setNewPostContent] = useState('')
@@ -191,8 +193,6 @@ export const CommunityPage: React.FC = () => {
   const [isCreatingPost, setIsCreatingPost] = useState(false)
   const [showCommentInput, setShowCommentInput] = useState<string | null>(null)
   const [newPostComment, setNewPostComment] = useState('')
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-  const [showProfileModal, setShowProfileModal] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [retryCount, setRetryCount] = useState(0)
   const [contentFilter, setContentFilter] = useState<'all' | 'prayer' | 'bible_study' | 'testimony'>('all')
@@ -219,8 +219,9 @@ export const CommunityPage: React.FC = () => {
     loadFollowedUsers()
     loadTrendingHashtags()
     
-    // Set up real-time subscriptions
+    // Ensure user has a profile record
     if (user) {
+      ensureUserProfile()
       setupRealtimeSubscriptions()
     }
     
@@ -231,6 +232,61 @@ export const CommunityPage: React.FC = () => {
       }
     }
   }, [user])
+
+  // Ensure user has a profile record
+  const ensureUserProfile = async () => {
+    if (!user || !supabase) return
+    
+    try {
+      // Check if profile exists
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id, display_name')
+        .eq('id', user.id)
+        .single()
+
+      if (!existingProfile) {
+        // Create profile record
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            display_name: (user as any).displayName || user.email?.split('@')[0] || 'User',
+            avatar_url: (user as any).avatarUrl,
+            bio: (user as any).bio,
+            favorite_verse: (user as any).favoriteVerse,
+            location: (user as any).location,
+            custom_links: (user as any).customLinks || [],
+            banner_image: (user as any).bannerImage,
+            profile_image: (user as any).profileImage
+          })
+
+        if (error) {
+          console.error('Error creating profile:', error)
+        } else {
+          console.log('✅ Profile record created for user:', user.id)
+        }
+      } else if (!existingProfile.display_name) {
+        // Update profile with display name if missing
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            display_name: (user as any).displayName || user.email?.split('@')[0] || 'User',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', user.id)
+
+        if (error) {
+          console.error('Error updating profile:', error)
+        } else {
+          console.log('✅ Profile record updated for user:', user.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring user profile:', error)
+    }
+  }
 
   // Infinite scroll effect
   useEffect(() => {
@@ -278,7 +334,12 @@ export const CommunityPage: React.FC = () => {
       console.log('✅ Loaded community data:', {
         posts: result.data.length,
         hasNextPage: result.pagination.hasNextPage,
-        feedType
+        feedType,
+        firstPost: result.data[0] ? {
+          id: result.data[0].id,
+          author_name: result.data[0].author_name,
+          author_handle: result.data[0].author_handle
+        } : null
       })
     } catch (error) {
       console.error('❌ Error loading community data:', error)
@@ -451,9 +512,9 @@ export const CommunityPage: React.FC = () => {
         const newReply: CommunityPost = {
           id: `reply_${Date.now()}`,
           author_id: user.id,
-          author_name: user.user_metadata?.full_name || 'You',
+          author_name: (user as any).displayName || user.email?.split('@')[0] || user.id.slice(0, 8),
           author_avatar: user.user_metadata?.avatar_url ? '🖼️' : '👤',
-          author_handle: `@${user.email?.split('@')[0] || 'user'}`,
+          author_handle: `@${user.email?.split('@')[0] || user.id.slice(0, 8)}`,
           content: newPostComment.trim(),
           created_at: new Date().toISOString(),
           amens_count: 0,
@@ -679,14 +740,10 @@ export const CommunityPage: React.FC = () => {
   }
 
   const openUserProfile = (userId: string) => {
-    setSelectedUserId(userId)
-    setShowProfileModal(true)
+    // Navigate to the profile page instead of opening modal
+    navigate('/profile')
   }
 
-  const closeUserProfile = () => {
-    setSelectedUserId(null)
-    setShowProfileModal(false)
-  }
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -698,7 +755,8 @@ export const CommunityPage: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-white">Community</h1>
               <p className="text-gray-500 text-sm">Share your faith journey</p>
-      </div>
+            </div>
+
 
             {/* Search */}
             <div className="flex-1 max-w-md ml-8">
@@ -867,28 +925,37 @@ export const CommunityPage: React.FC = () => {
             filterPosts(communityPosts).map((post, index) => (
               <div 
                 key={post.id} 
-                className="bg-black border-b border-gray-800 p-3 sm:p-4 hover:bg-gray-900/50 transition-colors duration-200"
+                className="bg-black border-b border-gray-800 p-4 sm:p-6 hover:bg-gray-900/30 transition-colors duration-200"
               >
                 {/* Post Header - Mobile Responsive */}
                 <div className="flex items-start space-x-3 mb-3">
                   <button
                     onClick={() => openUserProfile(post.author_id)}
-                    className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium hover:opacity-80 transition-opacity duration-200 flex-shrink-0 ${
-                      user && post.author_id === user.id 
-                        ? 'bg-yellow-500 text-black' 
-                        : 'bg-blue-500 text-white'
-                    }`}
+                    className="w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-sm font-medium hover:opacity-80 transition-opacity duration-200 flex-shrink-0 overflow-hidden bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg border-2 border-[var(--bg-primary)]"
                   >
-                      {post.author_avatar}
-                    </button>
+                    {post.author_profile_image ? (
+                      <img 
+                        src={post.author_profile_image} 
+                        alt={post.author_name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="text-black text-lg sm:text-xl font-bold">
+                        ✝️
+                      </div>
+                    )}
+                  </button>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-2">
                       <button
                         onClick={() => openUserProfile(post.author_id)}
-                          className="font-bold text-white text-sm sm:text-base hover:underline transition-colors duration-200"
+                          className="font-bold text-white text-sm sm:text-base hover:underline transition-colors duration-200 flex items-center gap-1"
                       >
                         {post.author_name}
+                        <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
+                        </div>
                       </button>
                         <span className="text-gray-500 text-sm sm:text-base">•</span>
                         <span className="text-gray-500 text-sm sm:text-base">{formatTimestamp(post.created_at)}</span>
@@ -912,49 +979,49 @@ export const CommunityPage: React.FC = () => {
                 </div>
                 
                 {/* Post Content - Mobile Responsive */}
-                <div className="text-sm sm:text-base mb-3 sm:mb-4 leading-relaxed text-white">
+                <div className="text-sm sm:text-base mb-4 sm:mb-5 leading-relaxed text-white">
                   <p className="whitespace-pre-wrap">{highlightMentions(post.content)}</p>
                 </div>
                 
                 {/* Post Actions - Mobile Responsive */}
-                <div className="flex items-center justify-between pt-3">
-                  <div className="flex items-center space-x-4 sm:space-x-6">
+                <div className="flex items-center justify-between pt-3 border-t border-gray-800/50">
+                  <div className="flex items-center space-x-6 sm:space-x-8">
                     <button
                       onClick={() => setShowCommentInput(showCommentInput === post.id ? null : post.id)}
-                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
+                      className="flex items-center space-x-2 text-gray-500 hover:text-blue-400 transition-colors duration-200"
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h14l4 4V4c0-1.1-.9-2-2-2zm-2 12H6v-2h12v2zm0-3H6V9h12v2zm0-3H6V6h12v2z"/>
                       </svg>
-                      <span className="text-xs sm:text-sm">{post.prayers_count || 0}</span>
+                      <span className="text-sm">{post.prayers_count || 0}</span>
                     </button>
                     
                     <button
                       onClick={() => handleAmenPost(post.id)}
-                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
+                      className="flex items-center space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
                       </svg>
-                      <span className="text-xs sm:text-sm">{post.amens_count || 0}</span>
+                      <span className="text-sm">{post.amens_count || 0}</span>
                     </button>
                     
                     <button
                       onClick={() => handleLovePost(post.id)}
-                      className="flex items-center space-x-1 sm:space-x-2 text-gray-500 hover:text-yellow-500 transition-colors duration-200"
+                      className="flex items-center space-x-2 text-gray-500 hover:text-pink-500 transition-colors duration-200"
                     >
-                      <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                       </svg>
-                      <span className="text-xs sm:text-sm">{post.loves_count || 0}</span>
+                      <span className="text-sm">{post.loves_count || 0}</span>
                     </button>
 
                     <button className="hidden sm:flex items-center space-x-2 text-gray-500 hover:text-blue-500 transition-colors duration-200">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                         <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
                       </svg>
-                      <span className="text-sm">1.2K</span>
-                      </button>
+                      <span className="text-sm">{Math.floor(Math.random() * 1000) + 100}</span>
+                    </button>
 
                     <button className="hidden sm:block text-gray-500 hover:text-blue-500 transition-colors duration-200">
                       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -1003,12 +1070,27 @@ export const CommunityPage: React.FC = () => {
                     <div className="space-y-3">
                       {replyChains[post.id].map((reply, replyIndex) => (
                         <div key={reply.id} className="flex items-start space-x-3 pl-4">
-                          <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white text-xs flex-shrink-0">
-                            {reply.author_avatar}
+                          <div className="w-8 h-8 bg-gradient-to-br from-amber-400 to-amber-500 rounded-full flex items-center justify-center text-xs flex-shrink-0 overflow-hidden shadow-md border border-[var(--bg-primary)]">
+                            {reply.author_profile_image ? (
+                              <img 
+                                src={reply.author_profile_image} 
+                                alt={reply.author_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="text-black text-sm font-bold">
+                                ✝️
+                              </div>
+                            )}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-1">
-                              <span className="text-sm font-medium text-white">{reply.author_name}</span>
+                              <span className="text-sm font-medium text-white flex items-center gap-1">
+                                {reply.author_name}
+                                <div className="w-3 h-3 bg-blue-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs">✓</span>
+                                </div>
+                              </span>
                               <span className="text-gray-500 text-sm">•</span>
                               <span className="text-gray-500 text-sm">{formatTimestamp(reply.created_at)}</span>
                             </div>
@@ -1076,15 +1158,6 @@ export const CommunityPage: React.FC = () => {
         )}
       </div>
 
-      {/* User Profile Modal */}
-      {showProfileModal && selectedUserId && (
-        <UserProfileModal
-          userId={selectedUserId}
-          isOpen={showProfileModal}
-          onClose={closeUserProfile}
-          currentUserId={user?.id}
-        />
-      )}
 
       {/* User Mention Modal - Clean X-style */}
       {showUserModal && selectedUser && (

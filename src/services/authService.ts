@@ -23,6 +23,9 @@ class AuthService {
       }
 
       if (session?.user) {
+        // Ensure profile record exists
+        await this.ensureProfileExists(session.user)
+        
         const user = this.transformUser(session.user)
         this.currentUser = user
         useAppStore.getState().setUser(user)
@@ -33,6 +36,43 @@ class AuthService {
     } catch (error) {
       console.error('Auth initialization error:', error)
       return null
+    }
+  }
+
+  // Ensure profile record exists for user
+  private async ensureProfileExists(user: any): Promise<void> {
+    try {
+      const { data: existingProfile } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .single()
+
+      if (!existingProfile) {
+        // Create profile record
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
+            avatar_url: user.user_metadata?.avatar_url,
+            bio: user.user_metadata?.bio,
+            favorite_verse: user.user_metadata?.favoriteVerse,
+            location: user.user_metadata?.location,
+            custom_links: user.user_metadata?.customLinks || [],
+            banner_image: user.user_metadata?.bannerImage,
+            profile_image: user.user_metadata?.profileImage
+          })
+
+        if (error) {
+          console.error('Error creating profile:', error)
+        } else {
+          console.log('✅ Profile record created for user:', user.id)
+        }
+      }
+    } catch (error) {
+      console.error('Error ensuring profile exists:', error)
     }
   }
 
@@ -215,10 +255,17 @@ class AuthService {
   async updateProfile(updates: {
     displayName?: string
     avatarUrl?: string
+    bio?: string
+    favoriteVerse?: string
+    location?: string
+    customLinks?: Array<{title: string, url: string}>
+    bannerImage?: string
+    profileImage?: string
   }): Promise<AuthUser | null> {
     try {
       useAppStore.getState().setLoading(true)
       
+      // Update auth user metadata
       const { data, error } = await supabase.auth.updateUser({
         data: updates
       })
@@ -228,7 +275,29 @@ class AuthService {
         throw error
       }
 
+      // Also update the profiles table
       if (data.user) {
+        const { error: profileError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: data.user.email,
+            display_name: updates.displayName,
+            avatar_url: updates.avatarUrl,
+            bio: updates.bio,
+            favorite_verse: updates.favoriteVerse,
+            location: updates.location,
+            custom_links: updates.customLinks,
+            banner_image: updates.bannerImage,
+            profile_image: updates.profileImage,
+            updated_at: new Date().toISOString()
+          })
+
+        if (profileError) {
+          console.error('Profile table update error:', profileError)
+          // Don't throw here, as the auth update succeeded
+        }
+
         const user = this.transformUser(data.user)
         this.currentUser = user
         useAppStore.getState().setUser(user)

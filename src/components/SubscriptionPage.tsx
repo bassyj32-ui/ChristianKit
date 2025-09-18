@@ -73,32 +73,6 @@ export const SubscriptionPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      {/* Top Navigation Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50">
-        <div className="bg-[var(--glass-dark)] backdrop-blur-xl border-b border-[var(--glass-border)] shadow-2xl">
-          <OsmoContainer size="lg" padding={true}>
-            <div className="flex items-center justify-between py-4">
-            <div className="flex items-center space-x-4">
-              <button 
-                  onClick={() => navigate('/')}
-                className="text-[var(--text-primary)] font-semibold hover:text-[var(--accent-primary)] transition-colors duration-300"
-              >
-                🏠 Home
-              </button>
-            </div>
-            <div className="flex items-center space-x-3">
-                <OsmoButton 
-                onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                  size="sm"
-              >
-                Pro
-                </OsmoButton>
-              </div>
-            </div>
-          </OsmoContainer>
-        </div>
-      </div>
-
       <div className="pt-20 pb-8">
         <OsmoContainer size="lg">
         {/* Header */}

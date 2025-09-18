@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
 import EditProfileModal from './EditProfileModal';
+import { UserProfile } from './UserProfile';
 
-interface UserProfile {
+interface CommunityUserProfile {
   id: string;
   display_name: string;
   avatar_url?: string;
@@ -17,6 +18,9 @@ interface UserProfile {
   followers_count: number;
   favorite_verse?: string;
   is_following?: boolean;
+  profileImage?: string;
+  bannerImage?: string;
+  customLinks?: Array<{title: string, url: string}>;
 }
 
 interface UserProfileModalProps {
@@ -32,12 +36,13 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   onClose,
   currentUserId
 }) => {
-  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [profile, setProfile] = useState<CommunityUserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isFollowing, setIsFollowing] = useState(false);
   const [userPosts, setUserPosts] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState<'posts' | 'about'>('posts');
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showFullProfile, setShowFullProfile] = useState(false);
 
   useEffect(() => {
     if (isOpen && userId) {
@@ -96,7 +101,10 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
         following_count: 0, // TODO: Implement
         followers_count: 0, // TODO: Implement
         favorite_verse: userData.favorite_verse,
-        is_following: isFollowingUser
+        is_following: isFollowingUser,
+        profileImage: userData.profileImage || '/assets/images/default-profile.jpg.png',
+        bannerImage: userData.bannerImage || '/assets/images/default-banner.jpg.png',
+        customLinks: userData.customLinks || []
       });
 
       setIsFollowing(isFollowingUser);
@@ -182,12 +190,18 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             <div className="flex items-end space-x-4 -mt-16">
               {/* Avatar */}
               <div className="relative">
-                <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-full flex items-center justify-center text-black text-2xl font-bold border-4 border-gray-900">
-                  {profile?.avatar_url ? (
+                <div className="w-24 h-24 bg-gradient-to-br from-yellow-400 via-amber-500 to-orange-500 rounded-full flex items-center justify-center text-black text-2xl font-bold border-4 border-gray-900 overflow-hidden">
+                  {profile?.profileImage ? (
+                    <img 
+                      src={profile.profileImage} 
+                      alt={profile.display_name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : profile?.avatar_url ? (
                     <img 
                       src={profile.avatar_url} 
                       alt={profile.display_name}
-                      className="w-full h-full object-cover rounded-full"
+                      className="w-full h-full object-cover"
                     />
                   ) : (
                     <span>{profile?.display_name?.[0] || '👤'}</span>
@@ -200,6 +214,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
               {/* Action Buttons */}
               <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setShowFullProfile(true)}
+                  className="bg-gradient-to-r from-yellow-400 to-amber-500 text-black hover:from-amber-500 hover:to-yellow-400 px-6 py-2 rounded-xl font-semibold transition-all duration-300"
+                >
+                  View Full Profile
+                </button>
                 {currentUserId === userId ? (
                   <button
                     onClick={() => setShowEditModal(true)}
@@ -377,6 +397,26 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             setShowEditModal(false);
           }}
         />
+      )}
+
+      {/* Full Profile Modal */}
+      {showFullProfile && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <div className="bg-[var(--bg-primary)] rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="flex justify-between items-center p-6 border-b border-[var(--glass-border)]">
+              <h2 className="text-xl font-bold text-[var(--text-primary)]">Full Profile</h2>
+              <button
+                onClick={() => setShowFullProfile(false)}
+                className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+              <UserProfile />
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
