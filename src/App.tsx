@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeProvider, useThemeMode } from './theme/ThemeProvider'
 import { PWAInstallPrompt } from './components/PWAInstallPrompt'
 import { FloatingAuthTab } from './components/FloatingAuthTab'
+import { AppLayout } from './components/AppLayout'
 import { PersistentNavigation } from './components/PersistentNavigation'
 import { UnifiedTimerPage } from './components/UnifiedTimerPage'
 import { OfflineIndicator } from './components/OfflineIndicator'
@@ -19,6 +20,7 @@ import { authService } from './services/authService'
 import { cloudSyncService } from './services/cloudSyncService'
 import { useSEO } from './hooks/useSEO'
 import { initPerformanceOptimizations } from './utils/performance'
+import { realNotificationService } from './services/RealNotificationService'
 
 // Import components directly to fix lazy loading issue
 import { Dashboard } from './components/Dashboard'
@@ -28,7 +30,7 @@ import BibleVerseMemoryMatch from './components/BibleVerseMemoryMatch'
 import { BlogPage } from './components/BlogPage'
 import { JournalPage } from './components/JournalPage'
 import { StorePage } from './components/StorePage'
-import { SubscriptionPage } from './components/SubscriptionPage'
+import { OsmoPricingPage } from './components/OsmoPricingPage'
 import { SettingsPage } from './components/SettingsPage'
 import { PrayerHistory } from './components/PrayerHistory'
 import { PrayerSettings } from './components/PrayerSettings'
@@ -148,6 +150,9 @@ const AppContent: React.FC = () => {
 
         // Initialize cloud sync
         await cloudSyncService.initialize()
+
+        // Initialize anonymous notification service (works for all users)
+        await realNotificationService.initialize()
 
         // Set up auth state listener
         authService.onAuthStateChange((user) => {
@@ -286,18 +291,8 @@ const AppContent: React.FC = () => {
     )
   }
 
-  // Show prayer timer page as the first page for signed-out users, but allow tab navigation away
-  if (!user && activeTab === 'prayer') {
-    return (
-      <UnifiedTimerPage 
-        timerType="prayer"
-        onNavigate={handleNavigate}
-        onTimerComplete={handleTimerComplete}
-        selectedMinutes={selectedMinutes}
-        isFirstTimeUser={determineIsFirstTimeUser()} // Check localStorage properly
-      />
-    )
-  }
+  // Show dashboard for all users (pre and post signin)
+  // Dashboard will handle showing placeholder data for pre-signin users
 
   // Show questionnaire if needed
   if (showQuestionnaire) {
@@ -351,7 +346,7 @@ const AppContent: React.FC = () => {
         // case 'store':
         //   return <StorePage />
         case 'subscription':
-          return <SubscriptionPage />
+          return <OsmoPricingPage />
         case 'settings':
           return <SettingsPage />
         // case 'prayer-history':
@@ -423,13 +418,9 @@ const AppContent: React.FC = () => {
           return <BlogPage />
         default:
           return (
-            <UnifiedTimerPage 
-              timerType="prayer"
+            <Dashboard
+              userPlan={userPlan}
               onNavigate={handleNavigate}
-              onTimerComplete={handleTimerComplete}
-              selectedMinutes={selectedMinutes}
-              isFirstTimeUser={determineIsFirstTimeUser()}
-              onStartQuestionnaire={() => setShowQuestionnaire(true)}
             />
           )
       }
@@ -460,10 +451,12 @@ const AppContent: React.FC = () => {
         {/* PWA Install Prompt - Top of screen */}
         <PWAInstallPrompt />
         
-        {/* Floating Auth Tab - ensure always visible above content */}
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[70] pointer-events-auto">
-          <FloatingAuthTab />
-        </div>
+        {/* Floating Auth Tab - show only when not signed in */}
+        {!user && (
+          <div className="fixed top-16 left-8 z-[70] pointer-events-auto">
+            <FloatingAuthTab />
+          </div>
+        )}
         {/* Floating Search Link - HIDDEN */}
         {/* {user && location.pathname !== '/auth/callback' && (
           <div className="fixed top-36 right-4 z-10">
@@ -486,10 +479,15 @@ const AppContent: React.FC = () => {
         {/* Notification Manager - HIDDEN */}
         {/* <NotificationManager user={user} /> */}
 
-        {/* Main Content */}
-        <div className="flex-1 pt-20 pb-20 lg:pb-0 lg:pt-20">
-          {renderContent()}
-        </div>
+        {/* Main Content with Global Progress Tab */}
+        <AppLayout 
+          showProgressTab={!['login', 'auth-callback', 'questionnaire'].includes(activeTab)}
+          onPrayerStart={() => handleNavigate('prayer-system')}
+        >
+          <div className="flex-1 pt-16 pb-20 lg:pb-0 lg:pt-16">
+            {renderContent()}
+          </div>
+        </AppLayout>
         
         {/* Persistent Navigation */}
         <PersistentNavigation 

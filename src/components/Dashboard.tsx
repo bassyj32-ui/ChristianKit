@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react'
 import { WeeklyProgress } from './WeeklyProgress'
 import { CommunityPage } from './CommunityPage'
-import { WeeklyProgressBot } from './WeeklyProgressBot'
 import { DailyReEngagementCard } from './DailyReEngagementCard'
+import { TestNotificationButton } from './TestNotificationButton'
+// import { CleanNotificationTest } from './CleanNotificationTest' // HIDDEN
 import { AdvancedWeeklyProgress } from './AdvancedWeeklyProgress'
 import { MonthlyHabitBuilder } from './MonthlyHabitBuilder'
 import { CommunityPrayerRequests } from './CommunityPrayerRequests'
@@ -17,6 +18,7 @@ import { subscriptionService } from '../services/subscriptionService'
 import { dailyReEngagementService } from '../services/dailyReEngagementService'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import ProgressService from '../services/ProgressService'
+import { unifiedProgressService } from '../services/UnifiedProgressService'
 
 interface DashboardProps {
   onNavigate?: (page: string, duration?: number) => void;
@@ -68,17 +70,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   const [prayerProgress, setPrayerProgress] = useState({
     currentStreak: 0,
     totalPrayers: 0,
-    currentLevel: 'beginner',
-    daysThisMonth: 0
+    currentLevel: 'beginner' as 'beginner' | 'intermediate' | 'advanced',
+    daysThisMonth: 0,
+    weeklyGoal: 0,
+    dataSource: 'empty' as string
   })
   const [loading, setLoading] = useState(true)
-  const { user, signOut: logout } = useSupabaseAuth()
+  const { user, signOut: logout, signInWithGoogle } = useSupabaseAuth()
+
+  // Show placeholder data for pre-signin users
+  const isSignedIn = !!user
 
   useEffect(() => {
     const loadTodayProgress = async () => {
       try {
         console.log('🔍 Dashboard: Loading today\'s progress...')
         setLoading(true)
+        
+        // Only load data if user is signed in
+        if (!isSignedIn) {
+          setLoading(false)
+          return
+        }
         
         // Initialize subscription service if user is logged in
         if (user?.id) {
@@ -105,22 +118,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         let bibleProgress = 0
         let meditationProgress = 0
 
-        // Load prayer system progress
-        if (user?.id) {
-          try {
-            const { prayerSystemService } = await import('../services/PrayerSystemService')
-            const userProfile = prayerSystemService.getUserProfile(user.id)
-            if (userProfile) {
-              setPrayerProgress({
-                currentStreak: userProfile.currentStreak,
-                totalPrayers: userProfile.completedDays,
-                currentLevel: userProfile.currentLevel,
-                daysThisMonth: userProfile.completedDays % 30 // Approximate monthly count
-              })
-            }
-          } catch (error) {
-            console.log('Prayer system not yet initialized for this user')
-          }
+        // Load REAL prayer progress using UnifiedProgressService
+        console.log('🔍 Dashboard: Loading unified progress stats...')
+        try {
+          const realStats = await unifiedProgressService.getProgressStats(user?.id)
+          console.log('✅ Dashboard: Real progress loaded:', realStats)
+          
+          setPrayerProgress({
+            currentStreak: realStats.currentStreak,
+            totalPrayers: realStats.totalPrayers,
+            currentLevel: realStats.currentLevel,
+            daysThisMonth: realStats.daysThisMonth,
+            weeklyGoal: realStats.weeklyGoal,
+            dataSource: realStats.dataSource
+          })
+          
+          console.log('🎯 Dashboard: Progress updated:', {
+            streak: realStats.currentStreak,
+            total: realStats.totalPrayers,
+            level: realStats.currentLevel,
+            source: realStats.dataSource
+          })
+        } catch (error) {
+          console.error('❌ Dashboard: Error loading unified progress:', error)
+          // Keep default values on error
         }
         
         todaySessions.forEach(session => {
@@ -233,6 +254,30 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
             <p className="text-lg text-[var(--color-neutral-400)] max-w-3xl mx-auto mb-8 hidden md:block">
               ChristianKit helps believers grow in faith through daily prayer, Bible reading, and community connection. Join thousands building consistent spiritual practices.
             </p>
+
+            {/* Sign In Prompt for Pre-signin Users */}
+            {!isSignedIn && (
+              <div className="bg-[var(--color-neutral-800)]/20 backdrop-blur-xl rounded-2xl p-6 border border-[var(--color-neutral-700)]/20 max-w-md mx-auto mb-8">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-warning-600)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <span className="text-2xl">🙏</span>
+                  </div>
+                  <h3 className="text-xl font-bold text-[var(--color-neutral-50)] mb-2">
+                    Sign In to Start Your Journey
+                  </h3>
+                  <p className="text-[var(--color-neutral-400)] mb-4 text-sm">
+                    Track your progress, save your data, and connect with the community
+                  </p>
+                  <button
+                    onClick={signInWithGoogle}
+                    disabled={loading}
+                    className="bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] text-white px-6 py-3 rounded-lg font-semibold hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-700)] transition-all duration-300 disabled:opacity-50"
+                  >
+                    {loading ? 'Signing In...' : 'Sign In with Google'}
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
@@ -325,88 +370,68 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
             </div>
 
-                        {/* Personalized Bible Reading Card */}
+                        {/* Community Card */}
             <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl overflow-hidden border border-[var(--color-neutral-700)]/10 hover:border-[var(--color-neutral-700)]/20 transition-all duration-300 group cursor-pointer"
-            onClick={async () => {
-              const bibleTime = userPlan?.customPlan?.reading?.duration || userPlan?.bibleTime || 20;
-              
-              // Record session start for progress tracking
-              if (user) {
-                try {
-                  await ProgressService.saveSession({
-                    user_id: user.id,
-                    started_at: new Date().toISOString(),
-                    duration_minutes: bibleTime,
-                    prayer_type: 'bible',
-                    notes: userPlan?.customPlan?.reading?.topics?.join(', ') || undefined
-                  });
-                  console.log('✅ Bible reading session started and recorded');
-                } catch (error) {
-                  console.error('❌ Error recording bible reading session start:', error);
-                  // Continue even if database recording fails
-                }
-              }
-              
-              onNavigate?.('bible-reading', bibleTime);
+            onClick={() => {
+              onNavigate?.('community');
             }}>
-              {/* Bible Images - Animated Collection */}
-              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-warning-600)]/20 relative overflow-hidden">
-                {/* Image 1 - Ancient scrolls with divine light */}
+              {/* Community Images - Animated Collection */}
+              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-success-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
+                {/* Image 1 - Community gathering */}
                 <img 
-                  src="https://images.unsplash.com/photo-1481627834876-b7833e8f5570?w=400&h=200&fit=crop&crop=center"
-                  alt="Ancient scrolls with divine light"
+                  src="https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=400&h=200&fit=crop&crop=center"
+                  alt="Community gathering"
                   className="w-full h-full object-cover opacity-85 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
                   style={{animationDuration: '5s'}}
                 />
-                {/* Image 2 - Golden Bible with heavenly glow */}
+                {/* Image 2 - People in prayer circle */}
                 <img 
-                  src="https://images.unsplash.com/photo-1519491050282-cf00c82424b4?w=400&h=200&fit=crop&crop=center"
-                  alt="Golden Bible with heavenly glow"
+                  src="https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=400&h=200&fit=crop&crop=center"
+                  alt="People in prayer circle"
                   className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 absolute inset-0 animate-pulse"
                   style={{animationDuration: '7s', animationDelay: '2.5s'}}
                 />
-                {/* Image 3 - Sacred texts with angelic light */}
+                {/* Image 3 - Church community */}
                 <img 
-                  src="https://images.unsplash.com/photo-1571043733612-d5444db4e10b?w=400&h=200&fit=crop&crop=faces"
-                  alt="Sacred texts with angelic light"
+                  src="https://images.unsplash.com/photo-1438032005730-c779502df39b?w=400&h=200&fit=crop&crop=center"
+                  alt="Church community"
                   className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-1000 absolute inset-0 animate-pulse"
                   style={{animationDuration: '9s', animationDelay: '5s'}}
                 />
-                {/* Image 4 - Divine wisdom scrolls */}
+                {/* Image 4 - Fellowship and connection */}
                 <img 
-                  src="https://images.unsplash.com/photo-1517154421773-0529f29ea451?w=400&h=200&fit=crop&crop=center"
-                  alt="Divine wisdom scrolls"
+                  src="https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?w=400&h=200&fit=crop&crop=center"
+                  alt="Fellowship and connection"
                   className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-all duration-1200 absolute inset-0 animate-pulse"
                   style={{animationDuration: '11s', animationDelay: '7s'}}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-3 left-3">
-                  <div className="w-8 h-8 bg-[var(--color-warning-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '4s'}}>
+                  <div className="w-8 h-8 bg-[var(--color-success-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '4s'}}>
                     <svg className="w-4 h-4 text-[var(--color-neutral-50)]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M21 4H3c-1.1 0-2 .9-2 2v13c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zM3 19V6h8v13H3zm18 0h-8V6h8v13zm-7-9.5h6V11h-6V9.5zm0 2.5h6v1.5h-6V12zm0 2.5h6V16h-6v-1.5z"/>
+                      <path d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                     </svg>
                   </div>
                 </div>
               </div>
               <div className="p-2 md:p-6">
                 <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
-                  My Bible Study
+                  My Community
                 </h3>
                 <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
-                  Your scripture reading time
+                  Connect with believers
                 </p>
-                {userPlan?.customPlan?.reading?.topics && (
-                  <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
-                    {userPlan.customPlan.reading.topics.slice(0, 2).map((topic: string, index: number) => (
-                      <span key={index} className="px-1.5 py-0.5 bg-[var(--color-success-500)]/20 text-[var(--color-success-400)] text-xs rounded-full animate-pulse" style={{animationDelay: `${index * 0.2}s`}}>
-                        {topic}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
+                  <span className="px-1.5 py-0.5 bg-[var(--color-success-500)]/20 text-[var(--color-success-400)] text-xs rounded-full animate-pulse">
+                    Prayer Requests
+                  </span>
+                  <span className="px-1.5 py-0.5 bg-[var(--color-info-500)]/20 text-[var(--color-info-400)] text-xs rounded-full animate-pulse" style={{animationDelay: '0.2s'}}>
+                    Fellowship
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[var(--color-neutral-400)]">
-                    {userPlan?.customPlan?.reading?.duration || userPlan?.bibleTime || 20} min
+                    12 active members
                   </span>
                   <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[var(--color-neutral-50)]/10 flex items-center justify-center">
                     <svg className="w-2 h-2 md:w-3 md:h-3 text-[var(--color-neutral-400)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -417,69 +442,68 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
               </div>
             </div>
 
-                        {/* Core Prayer System Card - SECOND MOST IMPORTANT FEATURE */}
+                        {/* Games Card */}
             <div className="bg-gradient-to-br from-purple-500/20 via-blue-500/15 to-indigo-500/20 backdrop-blur-xl rounded-2xl overflow-hidden border-2 border-purple-500/30 hover:border-purple-500/50 transition-all duration-500 group cursor-pointer shadow-lg hover:shadow-purple-500/25"
             onClick={() => {
-              setCurrentView('prayerSystem');
+              onNavigate?.('bible-quest');
             }}>
-              {/* Meditation Images - Peaceful Animation */}
-              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-success-500)]/20 to-[var(--color-info-500)]/20 relative overflow-hidden">
-                {/* Image 1 - Heavenly light through clouds */}
+              {/* Games Images - Interactive Learning */}
+              <div className="h-16 sm:h-20 md:h-28 lg:h-32 bg-gradient-to-br from-[var(--color-warning-500)]/20 to-[var(--color-primary-500)]/20 relative overflow-hidden">
+                {/* Image 1 - Interactive Bible learning */}
                 <img 
-                  src="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=200&fit=crop&crop=center"
-                  alt="Heavenly light breaking through clouds"
+                  src="https://images.unsplash.com/photo-1606092195730-5d7b9af1efc5?w=400&h=200&fit=crop&crop=center"
+                  alt="Interactive Bible learning"
                   className="w-full h-full object-cover opacity-80 group-hover:opacity-95 transition-all duration-500 absolute inset-0 animate-pulse"
                   style={{animationDuration: '6s'}}
                 />
-                {/* Image 2 - Divine peace and tranquility */}
+                {/* Image 2 - Bible quest adventure */}
                 <img 
-                  src="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400&h=200&fit=crop&crop=center"
-                  alt="Divine peace and tranquility"
+                  src="https://images.unsplash.com/photo-1578662996442-48f60103fc96?w=400&h=200&fit=crop&crop=center"
+                  alt="Bible quest adventure"
                   className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-all duration-700 absolute inset-0 animate-pulse"
                   style={{animationDuration: '8s', animationDelay: '3s'}}
                 />
-                {/* Image 3 - Angelic meditation space */}
+                {/* Image 3 - Learning through games */}
                 <img 
-                  src="https://images.unsplash.com/photo-1545389336-cf090694435e?w=400&h=200&fit=crop&crop=faces"
-                  alt="Angelic meditation space"
+                  src="https://images.unsplash.com/photo-1513475382585-d06e58bcb0e0?w=400&h=200&fit=crop&crop=center"
+                  alt="Learning through games"
                   className="w-full h-full object-cover opacity-60 group-hover:opacity-85 transition-all duration-1000 absolute inset-0 animate-pulse"
                   style={{animationDuration: '10s', animationDelay: '6s'}}
                 />
-                {/* Image 4 - Sacred reflection garden */}
+                {/* Image 4 - Digital Bible exploration */}
                 <img 
-                  src="https://images.unsplash.com/photo-1593811167562-9cef47bfc4d7?w=400&h=200&fit=crop&crop=center"
-                  alt="Sacred reflection garden"
+                  src="https://images.unsplash.com/photo-1551650975-87deedd944c3?w=400&h=200&fit=crop&crop=center"
+                  alt="Digital Bible exploration"
                   className="w-full h-full object-cover opacity-50 group-hover:opacity-80 transition-all duration-1200 absolute inset-0 animate-pulse"
                   style={{animationDuration: '12s', animationDelay: '9s'}}
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
                 <div className="absolute bottom-3 left-3">
-                  <div className="w-8 h-8 bg-[var(--color-success-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '5s'}}>
+                  <div className="w-8 h-8 bg-[var(--color-warning-500)]/30 backdrop-blur-sm rounded-lg flex items-center justify-center animate-bounce group-hover:scale-110 transition-transform duration-300" style={{animationDuration: '5s'}}>
                     <svg className="w-4 h-4 text-[var(--color-neutral-50)]" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
                     </svg>
                   </div>
                 </div>
               </div>
               <div className="p-2 md:p-6">
                 <h3 className="text-sm md:text-lg font-semibold text-[var(--color-neutral-50)] mb-0.5 md:mb-1">
-                  My Prayer Time
+                  My Games
                 </h3>
                 <p className="text-[var(--color-neutral-400)] text-xs mb-1 md:mb-2 hidden md:block">
-                  Your daily prayer journey
+                  Interactive Bible learning
                 </p>
-                {userPlan?.customPlan?.reflection?.prompts && (
-                  <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
-                    {userPlan.customPlan.reflection.prompts.slice(0, 2).map((prompt: string, index: number) => (
-                      <span key={index} className="px-1.5 py-0.5 bg-[var(--color-warning-500)]/20 text-[var(--color-warning-400)] text-xs rounded-full animate-pulse" style={{animationDelay: `${index * 0.2}s`}}>
-                        {prompt}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div className="hidden md:flex flex-wrap gap-1 mb-1 md:mb-2">
+                  <span className="px-1.5 py-0.5 bg-[var(--color-warning-500)]/20 text-[var(--color-warning-400)] text-xs rounded-full animate-pulse">
+                    Bible Quest
+                  </span>
+                  <span className="px-1.5 py-0.5 bg-[var(--color-primary-500)]/20 text-[var(--color-primary-400)] text-xs rounded-full animate-pulse" style={{animationDelay: '0.2s'}}>
+                    Memory Match
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-[var(--color-neutral-400)]">
-                    {userPlan?.customPlan?.reflection?.duration || userPlan?.prayerTime || 10} min
+                    Level 3
                   </span>
                   <div className="w-4 h-4 md:w-6 md:h-6 rounded-full bg-[var(--color-neutral-50)]/10 flex items-center justify-center">
                     <svg className="w-2 h-2 md:w-3 md:h-3 text-[var(--color-neutral-500)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -492,62 +516,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
         </div>
 
-                {/* SPIRITUAL GROWTH PROGRESS - CORE FEATURE #2 */}
-                <div className="mt-8 mb-8 w-full">
-                  <div className="bg-gradient-to-r from-purple-500/20 via-blue-500/15 to-indigo-500/20 backdrop-blur-xl rounded-2xl p-6 border border-purple-500/30 shadow-lg">
-                    <div className="text-center mb-6">
-                      <h2 className="text-2xl md:text-3xl font-bold text-white mb-2 flex items-center justify-center">
-                        <span className="text-3xl mr-3">🙏</span>
-                        Your Spiritual Journey
-                      </h2>
-                      <p className="text-white/70">Grow in faith through daily prayer</p>
-                    </div>
 
-                    <div className="grid md:grid-cols-4 gap-4 mb-6">
-                      {/* Prayer Streak */}
-                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
-                        <div className="text-3xl mb-2">🔥</div>
-                        <div className="text-2xl font-bold text-amber-400">{prayerProgress.currentStreak}</div>
-                        <div className="text-white/70 text-sm">Day Streak</div>
-                      </div>
-
-                      {/* Total Prayers */}
-                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
-                        <div className="text-3xl mb-2">📚</div>
-                        <div className="text-2xl font-bold text-blue-400">{prayerProgress.totalPrayers}</div>
-                        <div className="text-white/70 text-sm">Total Prayers</div>
-                      </div>
-
-                      {/* Current Level */}
-                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
-                        <div className="text-3xl mb-2">
-                          {prayerProgress.currentLevel === 'beginner' ? '🌱' :
-                           prayerProgress.currentLevel === 'intermediate' ? '🌿' : '🌳'}
-                        </div>
-                        <div className="text-lg font-bold text-purple-400 capitalize">{prayerProgress.currentLevel}</div>
-                        <div className="text-white/70 text-sm">Prayer Level</div>
-                      </div>
-
-                      {/* Monthly Progress */}
-                      <div className="bg-white/10 rounded-xl p-4 text-center border border-white/20">
-                        <div className="text-3xl mb-2">📅</div>
-                        <div className="text-2xl font-bold text-green-400">{prayerProgress.daysThisMonth}</div>
-                        <div className="text-white/70 text-sm">This Month</div>
-                      </div>
-                    </div>
-
-                    {/* Quick Prayer Access */}
-                    <div className="text-center">
-                      <button
-                        onClick={() => setCurrentView('prayerSystem')}
-                        className="bg-gradient-to-r from-purple-500 to-blue-600 hover:from-purple-600 hover:to-blue-700 text-white px-8 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-purple-500/50"
-                      >
-                        🙏 Start Today's Prayer Journey
-                      </button>
-                      <p className="text-white/60 text-sm mt-2">5-20 minutes • Scripture + Reflection + Growth</p>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Weekly Analysis - Polished Osmo Style */}
         <div className="mt-12 mb-12 w-full">
@@ -562,6 +531,80 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           
           <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl border border-[var(--color-neutral-700)]/10 rounded-2xl p-4 md:p-6 hover:bg-[var(--color-neutral-800)]/8 transition-all duration-300">
             <WeeklyProgress showSummary={true} embedded={true} />
+          </div>
+        </div>
+
+        {/* Your Spiritual Journey Section */}
+        <div className="mt-12 mb-12 w-full">
+          <div className="text-center mb-6">
+            <h2 className="text-xl md:text-2xl font-bold text-[var(--color-neutral-50)] mb-2">
+              🙏 Your Spiritual Journey
+            </h2>
+            <p className="text-[var(--color-neutral-400)] text-sm max-w-xl mx-auto">
+              Grow in faith through daily prayer
+            </p>
+          </div>
+          
+          <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl border border-[var(--color-neutral-700)]/10 rounded-2xl p-6">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              {/* Day Streak */}
+              <div className="text-center">
+                <div className="text-2xl mb-1">🔥</div>
+                <div className="text-2xl font-bold text-[var(--color-neutral-50)] mb-1">
+                  {prayerProgress.currentStreak}
+                </div>
+                <div className="text-[var(--color-neutral-400)] text-xs">Day Streak</div>
+              </div>
+              
+              {/* Total Prayers */}
+              <div className="text-center">
+                <div className="text-2xl mb-1">📚</div>
+                <div className="text-2xl font-bold text-[var(--color-neutral-50)] mb-1">
+                  {prayerProgress.totalPrayers}
+                </div>
+                <div className="text-[var(--color-neutral-400)] text-xs">Total Prayers</div>
+              </div>
+              
+              {/* Prayer Level */}
+              <div className="text-center">
+                <div className="text-2xl mb-1">
+                  {prayerProgress.currentLevel === 'beginner' ? '🌱' :
+                   prayerProgress.currentLevel === 'intermediate' ? '🌿' : '🌳'}
+                </div>
+                <div className="text-2xl font-bold text-[var(--color-neutral-50)] mb-1 capitalize">
+                  {prayerProgress.currentLevel}
+                </div>
+                <div className="text-[var(--color-neutral-400)] text-xs">Prayer Level</div>
+              </div>
+              
+              {/* This Month */}
+              <div className="text-center">
+                <div className="text-2xl mb-1">📅</div>
+                <div className="text-2xl font-bold text-[var(--color-neutral-50)] mb-1">
+                  {prayerProgress.daysThisMonth}
+                </div>
+                <div className="text-[var(--color-neutral-400)] text-xs">This Month</div>
+              </div>
+            </div>
+            
+            {/* Start Prayer Journey Button */}
+            <div className="text-center">
+              <button 
+                onClick={() => setCurrentView('prayerSystem')}
+                className="bg-gradient-to-r from-[var(--color-primary-500)] to-[var(--color-primary-600)] text-[var(--color-neutral-50)] py-3 px-8 rounded-xl font-semibold hover:from-[var(--color-primary-600)] hover:to-[var(--color-primary-500)] transition-all duration-300 shadow-lg shadow-[var(--color-primary-500)]/25"
+              >
+                🙏 Start Today's Prayer Journey
+              </button>
+              <p className="text-[var(--color-neutral-400)] text-xs mt-2">
+                5-20 minutes • Scripture + Reflection + Growth
+              </p>
+              {/* Debug info - shows data source */}
+              {prayerProgress.dataSource && prayerProgress.dataSource !== 'empty' && (
+                <p className="text-[var(--color-neutral-500)] text-xs mt-1">
+                  📊 Data from: {prayerProgress.dataSource}
+                </p>
+              )}
+            </div>
           </div>
         </div>
 
@@ -597,8 +640,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                   </svg>
                   PRO
                 </div>
-                <div className="text-3xl font-bold text-[var(--color-neutral-50)] mb-1">$2.50</div>
-                <div className="text-[var(--color-warning-600)] text-sm mb-2">per month</div>
+                <div className="text-3xl font-bold text-[var(--color-neutral-50)] mb-1">$30</div>
+                <div className="text-[var(--color-warning-600)] text-sm mb-2">$30/year • $3/month</div>
                 <p className="text-[var(--color-neutral-400)] text-sm">All spiritual growth tools</p>
               </div>
 
@@ -663,8 +706,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           </div>
         </div>
 
-        {/* Call-to-Action Banner */}
-        <div className="bg-gradient-to-r from-[var(--color-warning-500)]/10 via-[var(--color-warning-600)]/10 to-[var(--color-warning-500)]/10 border border-[var(--color-warning-500)]/20 rounded-2xl p-6 text-center mb-12">
+        {/* Call-to-Action Banner - REMOVED */}
+        {/* <div className="bg-gradient-to-r from-[var(--color-warning-500)]/10 via-[var(--color-warning-600)]/10 to-[var(--color-warning-500)]/10 border border-[var(--color-warning-500)]/20 rounded-2xl p-6 text-center mb-12">
           <h3 className="text-2xl font-bold text-[var(--color-neutral-50)] mb-3">
             Join thousands growing their faith with Pro features
           </h3>
@@ -677,7 +720,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           >
             🚀 Start Your Pro Journey - $2.50/month
           </button>
-        </div>
+        </div> */}
 
 
 
@@ -763,23 +806,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
 
 
         {/* Theme Showcase */}
-        <div className="mt-16 w-full">
-          <div className="bg-[var(--color-neutral-800)]/5 backdrop-blur-xl rounded-2xl p-8 text-[var(--color-neutral-50)] border border-[var(--color-neutral-700)] text-center">
-            <div className="w-16 h-16 bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] rounded-2xl flex items-center justify-center mx-auto mb-6">
-              <span className="text-2xl">🎨</span>
-        </div>
-            <h3 className="text-2xl font-bold mb-4 text-[var(--color-neutral-50)]">Experience our new design</h3>
-            <p className="text-[var(--color-neutral-400)] mb-6 max-w-md mx-auto">
-              Inspired by world-class design, crafted for your spiritual journey
-            </p>
-            <button
-              onClick={() => onNavigate?.('osmo-landing')}
-              className="bg-gradient-to-r from-[var(--color-warning-500)] to-[var(--color-warning-600)] text-[var(--color-neutral-50)] py-3 px-8 rounded-lg font-semibold hover:from-[var(--color-warning-600)] hover:to-[var(--color-warning-500)] transition-all duration-300 shadow-lg shadow-[var(--color-warning-500)]/25"
-            >
-              View Landing Page
-            </button>
-          </div>
-        </div>
 
 
 
@@ -835,64 +861,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         </div>
       </div>
 
-      {/* Weekly Progress Bot - Desktop Version (Original Size) */}
-      <div className="hidden lg:block fixed bottom-8 right-8 z-40">
-        <WeeklyProgressBot position="bottom-right" showNotifications={true} />
-      </div>
+      {/* Clean Notification Test - HIDDEN */}
+      {/* <div className="hidden lg:block fixed bottom-8 left-8 z-40">
+        <CleanNotificationTest />
+      </div> */}
 
       {/* Mobile Bottom Spacing */}
       <div className="h-24 lg:hidden"></div>
 
-      {/* Weekly Progress Bot - Mobile Version (Smaller & Compact) */}
-      <div className="lg:hidden fixed bottom-20 right-3 z-40 transform scale-75 origin-bottom-right">
-        <WeeklyProgressBot position="bottom-right" showNotifications={true} />
-      </div>
 
 
-
-      {/* Main Navigation Tabs - Beautiful Osmo Style */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 flex items-center justify-center pb-4">
-        <div className="flex items-center space-x-2 bg-[var(--color-neutral-800)]/80 backdrop-blur-xl rounded-2xl p-2 border border-[var(--color-neutral-700)] shadow-2xl">
-          {/* Analysis Tab */}
-          <button
-            onClick={() => onNavigate?.('analysis')}
-            className="flex flex-col items-center space-y-1 group"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-primary-500)]/30 to-[var(--color-info-500)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-primary-500)]/50 border-2 border-blue-500/80 group-hover:border-blue-500">
-              <span className="text-lg">📊</span>
-            </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-primary-500)] transition-colors duration-300">
-              Analysis
-            </span>
-          </button>
-          
-          {/* Prayer Tab - CORE FEATURE #2 */}
-          <button
-            onClick={() => setCurrentView('prayerSystem')}
-            className="flex flex-col items-center space-y-1 group"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-purple-500/30 to-blue-500/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-purple-500/50 border-2 border-purple-500/80 group-hover:border-purple-500">
-              <span className="text-lg">🙏</span>
-            </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-purple-400 transition-colors duration-300">
-              Prayer
-            </span>
-          </button>
-          
-          {/* Community Tab */}
-          <button
-            onClick={() => onNavigate?.('community')}
-            className="flex flex-col items-center space-y-1 group"
-          >
-            <div className="w-10 h-10 bg-gradient-to-br from-[var(--color-warning-500)]/30 to-[var(--color-warning-600)]/40 backdrop-blur-xl rounded-xl flex items-center justify-center group-hover:scale-105 transition-all duration-300 shadow-lg group-hover:shadow-[var(--color-warning-500)]/50 border-2 border-amber-500/80 group-hover:border-amber-500">
-              <span className="text-lg">👥</span>
-            </div>
-            <span className="text-xs font-bold text-[var(--color-neutral-50)] group-hover:text-[var(--color-warning-500)] transition-colors duration-300">
-              Community
-            </span>
-          </button>
-        </div>
-      </div>
     </div>
   )
 }
