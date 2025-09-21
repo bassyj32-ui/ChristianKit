@@ -108,11 +108,13 @@ export interface AppState {
   isDrawerOpen: boolean
   showQuestionnaire: boolean
   isFirstTimeUser: boolean
+  isLoading: boolean
   
   // Actions
   setUser: (user: User | null) => void
   setUserPlan: (plan: UserPlan | null) => void
   setActiveTab: (tab: string) => void
+  setLoading: (loading: boolean) => void
   
   // Data Actions
   addPrayerSession: (session: PrayerSession) => void
@@ -150,6 +152,7 @@ export const useAppStore = create<AppState>()(
       isDrawerOpen: false,
       showQuestionnaire: false,
       isFirstTimeUser: true,
+      isLoading: false,
       
       // Actions
       setUser: (user) => set({ 
@@ -163,6 +166,8 @@ export const useAppStore = create<AppState>()(
         previousTab: state.activeTab,
         activeTab: tab
       })),
+      
+      setLoading: (loading) => set({ isLoading: loading }),
       
       // Data Actions
       addPrayerSession: (session) => set((state) => ({
