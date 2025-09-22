@@ -124,7 +124,7 @@ export const getLeaderboard = async (limit: number = 10): Promise<GameScore[] | 
       .from('game_scores')
       .select(`
         *,
-        user_profiles!inner(display_name, avatar_url, handle)
+        profiles!inner(display_name, avatar_url)
       `)
       .eq('game_type', 'faith-runner')
       .order('score', { ascending: false })

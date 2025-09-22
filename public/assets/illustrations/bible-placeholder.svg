@@ -1,0 +1,44 @@
+<svg width="200" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bibleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#059669;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="bibleIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#10B981" />
+      <stop offset="100%" style="stop-color:#059669" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="150" rx="12" fill="url(#bibleGradient)"/>
+
+  <!-- Bible book -->
+  <rect x="75" y="35" width="50" height="35" rx="2" fill="url(#bibleIconGradient)" opacity="0.8"/>
+  <rect x="80" y="40" width="40" height="25" rx="1" fill="#ffffff" opacity="0.9"/>
+
+  <!-- Book spine -->
+  <rect x="70" y="35" width="8" height="35" fill="url(#bibleIconGradient)"/>
+
+  <!-- Bookmark -->
+  <rect x="110" y="40" width="2" height="20" fill="#EF4444" opacity="0.8"/>
+
+  <!-- Text lines -->
+  <line x1="85" y1="47" x2="110" y2="47" stroke="#10B981" stroke-width="1" opacity="0.6"/>
+  <line x1="85" y1="52" x2="105" y2="52" stroke="#10B981" stroke-width="1" opacity="0.6"/>
+  <line x1="85" y1="57" x2="115" y2="57" stroke="#10B981" stroke-width="1" opacity="0.6"/>
+
+  <!-- Decorative elements -->
+  <circle cx="160" cy="30" r="2" fill="#10B981" opacity="0.6"/>
+  <circle cx="40" cy="120" r="1.5" fill="#059669" opacity="0.6"/>
+  <circle cx="170" cy="110" r="1" fill="#10B981" opacity="0.8"/>
+
+  <!-- Subtle pattern -->
+  <pattern id="biblePattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <circle cx="10" cy="10" r="1" fill="#10B981" opacity="0.1"/>
+  </pattern>
+  <rect width="200" height="150" fill="url(#biblePattern)"/>
+</svg>
+
+
+

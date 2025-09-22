@@ -44,15 +44,25 @@ export const getCurrentUserProfile = async (): Promise<UserProfile | null> => {
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   try {
     const { data, error } = await supabase
-      .from('user_stats')
+      .from('profiles')
       .select('*')
       .eq('id', userId)
       .single();
 
-    if (error) throw error;
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.log('ℹ️ No profile found for user:', userId)
+        return null
+      }
+      throw error;
+    }
     return data;
   } catch (error) {
-    console.error('Error fetching user profile:', error);
+    console.error('❌ Error fetching user profile:', {
+      code: (error as any)?.code,
+      message: (error as any)?.message,
+      userId
+    });
     return null;
   }
 };
@@ -67,16 +77,26 @@ export const updateUserProfile = async (
   try {
     const { error } = await supabase
       .from('profiles')
-      .upsert({
-        id: userId,
+      .update({
         ...updates,
         updated_at: new Date().toISOString()
-      });
+      })
+      .eq('id', userId);
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error updating user profile:', {
+        code: error.code,
+        message: error.message,
+        userId,
+        updates
+      });
+      return false;
+    }
+
+    console.log('✅ Profile updated successfully:', userId);
     return true;
   } catch (error) {
-    console.error('Error updating user profile:', error);
+    console.error('❌ Error updating user profile:', error);
     return false;
   }
 };
@@ -244,15 +264,24 @@ export const getUserPosts = async (userId: string, limit: number = 10) => {
 export const searchUsers = async (query: string, limit: number = 10): Promise<UserProfile[]> => {
   try {
     const { data, error } = await supabase
-      .from('user_stats')
+      .from('profiles')
       .select('*')
       .ilike('display_name', `%${query}%`)
       .limit(limit);
 
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error searching users:', {
+        code: error.code,
+        message: error.message,
+        query
+      });
+      return [];
+    }
+
+    console.log(`✅ Found ${data?.length || 0} users matching: ${query}`);
     return data || [];
   } catch (error) {
-    console.error('Error searching users:', error);
+    console.error('❌ Error searching users:', error);
     return [];
   }
 };

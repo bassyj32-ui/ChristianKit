@@ -583,7 +583,7 @@ const BibleVerseMemoryMatch = () => {
                     >
                       <div className="text-2xl mb-2">
                         {category.icon}
-                      </div>
+          </div>
                       <div className={`font-semibold text-sm ${
                         isUnlocked ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'
                       }`}>
@@ -597,10 +597,10 @@ const BibleVerseMemoryMatch = () => {
                     </div>
                   );
                 })}
+                  </div>
+                </OsmoCard>
               </div>
-            </OsmoCard>
-          </div>
-        )}
+            )}
 
         {/* Game in Progress */}
         {gameState.gameStarted && !gameState.gameCompleted && (
@@ -790,17 +790,17 @@ const BibleVerseMemoryMatch = () => {
 
             {/* Auto Continue Timer */}
             <OsmoCard className="p-6 text-center">
-              <div className="text-lg font-semibold text-[var(--text-primary)] mb-4">
+                  <div className="text-lg font-semibold text-[var(--text-primary)] mb-4">
                 🎮 Next Level Starting in...
-              </div>
-              <div className="text-4xl font-bold text-[var(--accent-primary)] mb-4">
-                {autoContinueTimer}
-              </div>
-              <div className="text-[var(--text-secondary)] text-sm mb-4">
+                  </div>
+                  <div className="text-4xl font-bold text-[var(--accent-primary)] mb-4">
+                    {autoContinueTimer}
+                  </div>
+                  <div className="text-[var(--text-secondary)] text-sm mb-4">
                 The game will automatically continue to the next challenge
-              </div>
+                  </div>
               <div className="flex flex-col md:flex-row gap-4 justify-center">
-                <OsmoButton
+                    <OsmoButton
                   onClick={initializeGame}
                   variant="primary"
                   size="lg"

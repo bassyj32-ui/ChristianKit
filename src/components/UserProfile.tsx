@@ -80,8 +80,13 @@ export const UserProfile: React.FC = () => {
             updated_at: new Date().toISOString()
           })
           console.log('✅ Default images saved for new user')
-        } catch (saveError) {
-          console.error('Error saving default images:', saveError)
+        } catch (saveError: any) {
+          console.error('❌ Error saving default images:', {
+            code: saveError?.code,
+            message: saveError?.message,
+            userId: user.id
+          })
+          // This is not critical, so we don't show error to user
         }
       } else {
         // Use database profile data
@@ -111,13 +116,27 @@ export const UserProfile: React.FC = () => {
         }
       }
     } catch (error) {
-      console.error('Error loading profile:', error)
+      console.error('❌ Error loading profile:', {
+        code: (error as any)?.code,
+        message: (error as any)?.message,
+        userId: user.id
+      })
+
+      // Provide specific error feedback
+      if ((error as any)?.code === 'PGRST301') {
+        console.log('ℹ️ Profiles table does not exist - using auth metadata as fallback')
+      } else if ((error as any)?.code === 'PGRST116') {
+        console.log('ℹ️ No profile found - will create default profile')
+      } else {
+        console.log('ℹ️ Using auth metadata as fallback due to error')
+      }
+
       // Fallback to auth metadata
       setBio((user as any).bio || '')
       setFavoriteVerse((user as any).favoriteVerse || '')
       setLocation((user as any).location || '')
       setCustomLinks((user as any).customLinks || [])
-      
+
       // Set default images on error
       const defaultProfileImage = getConsistentDefaultProfileImage(user.id)
       const defaultBannerImage = getConsistentDefaultBannerImage(user.id)
@@ -127,23 +146,55 @@ export const UserProfile: React.FC = () => {
   }
 
   const handleSaveProfile = async () => {
-    if (!user) return
+    if (!user) {
+      console.error('❌ No user found when saving profile')
+      return
+    }
 
     try {
       setLoading(true)
-      await authService.updateProfile({
-        displayName: displayName.trim() || undefined,
+
+      // Validate required fields
+      if (!displayName.trim()) {
+        alert('Display name is required.')
+        return
+      }
+
+      const profileUpdates = {
+        displayName: displayName.trim(),
         ...(bio.trim() && { bio: bio.trim() }),
         ...(favoriteVerse.trim() && { favoriteVerse: favoriteVerse.trim() }),
         ...(location.trim() && { location: location.trim() }),
         ...(customLinks.length > 0 && { customLinks: customLinks }),
         ...(bannerImage && { bannerImage: bannerImage }),
         ...(profileImage && { profileImage: profileImage })
-      })
+      }
+
+      await authService.updateProfile(profileUpdates)
+
+      console.log('✅ Profile saved successfully for user:', user.id)
       setIsEditing(false)
-    } catch (error) {
-      console.error('Failed to update profile:', error)
-      alert('Failed to update profile. Please try again.')
+    } catch (error: any) {
+      console.error('❌ Failed to update profile:', {
+        code: error?.code,
+        message: error?.message,
+        userId: user.id
+      })
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to update profile. Please try again.'
+
+      if (error?.code === '23505') {
+        errorMessage = 'This display name is already taken. Please choose another one.'
+      } else if (error?.code === '42P01') {
+        errorMessage = 'Database connection issue. Please check your internet connection.'
+      } else if (error?.code === '42703') {
+        errorMessage = 'Invalid profile data. Please check your inputs.'
+      } else if (error?.message) {
+        errorMessage = `Update failed: ${error.message}`
+      }
+
+      alert(errorMessage)
     } finally {
       setLoading(false)
     }
@@ -263,9 +314,31 @@ export const UserProfile: React.FC = () => {
         
         console.log('✅ Banner image saved successfully')
       }
-    } catch (error) {
-      console.error('Banner upload error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to upload banner image')
+    } catch (error: any) {
+      console.error('❌ Banner upload error:', {
+        code: error?.code,
+        message: error?.message,
+        userId: user?.id
+      })
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to upload banner image.'
+
+      if (error instanceof Error) {
+        if (error.message.includes('size')) {
+          errorMessage = 'Banner image must be less than 2MB.'
+        } else if (error.message.includes('type')) {
+          errorMessage = 'Only JPG, PNG, and WebP images are allowed.'
+        } else if (error.message.includes('read')) {
+          errorMessage = 'Failed to read the image file. Please try again.'
+        } else {
+          errorMessage = error.message
+        }
+      } else if (error?.code === '42P01') {
+        errorMessage = 'Database connection issue. Please check your internet connection.'
+      }
+
+      alert(errorMessage)
       // Revert local state on error
       setBannerImage('')
     } finally {
@@ -299,9 +372,31 @@ export const UserProfile: React.FC = () => {
         
         console.log('✅ Profile image saved successfully')
       }
-    } catch (error) {
-      console.error('Profile upload error:', error)
-      alert(error instanceof Error ? error.message : 'Failed to upload profile image')
+    } catch (error: any) {
+      console.error('❌ Profile upload error:', {
+        code: error?.code,
+        message: error?.message,
+        userId: user?.id
+      })
+
+      // Provide specific error messages
+      let errorMessage = 'Failed to upload profile image.'
+
+      if (error instanceof Error) {
+        if (error.message.includes('size')) {
+          errorMessage = 'Profile image must be less than 1MB.'
+        } else if (error.message.includes('type')) {
+          errorMessage = 'Only JPG, PNG, and WebP images are allowed.'
+        } else if (error.message.includes('read')) {
+          errorMessage = 'Failed to read the image file. Please try again.'
+        } else {
+          errorMessage = error.message
+        }
+      } else if (error?.code === '42P01') {
+        errorMessage = 'Database connection issue. Please check your internet connection.'
+      }
+
+      alert(errorMessage)
       // Revert local state on error
       setProfileImage('')
     } finally {
@@ -312,8 +407,15 @@ export const UserProfile: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut()
-    } catch (error) {
-      console.error('Failed to sign out:', error)
+      console.log('✅ User signed out successfully')
+    } catch (error: any) {
+      console.error('❌ Failed to sign out:', {
+        code: error?.code,
+        message: error?.message
+      })
+
+      // Even if sign out fails, we can still redirect to login
+      alert('There was an issue signing out. Please close and reopen the app.')
     }
   }
 

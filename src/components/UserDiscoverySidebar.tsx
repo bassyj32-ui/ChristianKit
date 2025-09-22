@@ -78,7 +78,7 @@ export const UserDiscoverySidebar: React.FC<UserDiscoverySidebarProps> = ({
     try {
       // Get users with high engagement that current user isn't following
       const { data, error } = await supabase
-        .from('user_stats')
+        .from('profiles')
         .select('*')
         .neq('id', user.id)
         .not('id', 'in', `(

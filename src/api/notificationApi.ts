@@ -1,3 +1,8 @@
+// DEPRECATED: This API is DISABLED in favor of RealNotificationService
+// DO NOT USE - Use RealNotificationService instead
+console.warn('⚠️ NotificationAPI is DEPRECATED. Use RealNotificationService instead.');
+
+/*
 import { supabase } from '../utils/supabase';
 
 export interface NotificationPayload {
@@ -244,9 +249,14 @@ export class NotificationAPI {
     }
   }
 }
+*/
 
-
-
+// Export disabled version
+export class NotificationAPI {
+  static async sendToUser() { throw new Error('NotificationAPI is DEPRECATED. Use RealNotificationService instead.'); }
+  static async getUserPreferences() { throw new Error('NotificationAPI is DEPRECATED. Use RealNotificationService instead.'); }
+  static async updateUserPreferences() { throw new Error('NotificationAPI is DEPRECATED. Use RealNotificationService instead.'); }
+}
 
 
 

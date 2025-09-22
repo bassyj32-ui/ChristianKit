@@ -79,7 +79,7 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           
           // Create profile in background without blocking auth flow
           supabase
-            .from('user_profiles')
+            .from('profiles')
             .upsert({
               id: session.user.id,
               email: session.user.email,

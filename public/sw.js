@@ -1,281 +1,174 @@
-// Service Worker for ChristianKit PWA
-// Handles push notifications, background sync, and offline functionality
+// Service Worker for Push Notifications
+// This handles background push notifications when the app is closed
 
-const CACHE_NAME = 'christiankit-v9-clear-all-cache';
+const CACHE_NAME = 'christiankit-v1';
 const urlsToCache = [
   '/',
-  '/index.html',
-  '/manifest.json',
-  '/icon-192x192.png',
-  '/icon-512x512.png',
-  '/icon-72x72.png'
+  '/static/js/bundle.js',
+  '/static/css/main.css',
+  '/manifest.json'
 ];
 
-// Install event - cache essential files
+// Install event
 self.addEventListener('install', (event) => {
-  console.log('🔄 Service Worker installing...');
+  console.log('Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then((cache) => {
-        console.log('📦 Caching essential files');
+        console.log('Opened cache');
         return cache.addAll(urlsToCache);
-      })
-      .then(() => {
-        console.log('✅ Service Worker installed successfully');
-        return self.skipWaiting();
       })
   );
 });
 
-// Activate event - clean up old caches
+// Activate event
 self.addEventListener('activate', (event) => {
-  console.log('🔄 Service Worker activating...');
+  console.log('Service Worker activating...');
   event.waitUntil(
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          console.log('🗑️ Deleting ALL old caches:', cacheName);
-          return caches.delete(cacheName);
+          if (cacheName !== CACHE_NAME) {
+            console.log('Deleting old cache:', cacheName);
+            return caches.delete(cacheName);
+          }
         })
       );
-    }).then(() => {
-      console.log('✅ Service Worker activated successfully - ALL caches cleared');
-      // Force all clients to reload to get fresh assets
-      return self.clients.claim().then(() => {
-        return self.clients.matchAll().then((clients) => {
-          clients.forEach((client) => {
-            client.postMessage({ type: 'FORCE_RELOAD' });
-          });
-        });
-      });
     })
   );
 });
 
-// Fetch event - serve from cache when offline
+// Fetch event
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') return;
-
-  // Skip chrome-extension requests
-  if (event.request.url.startsWith('chrome-extension://')) return;
-
-  // Skip analytics and external requests
-  if (event.request.url.includes('google-analytics.com') || 
-      event.request.url.includes('googletagmanager.com') ||
-      event.request.url.includes('doubleclick.net')) {
-    return;
-  }
-
-  // For dynamic assets (JS, CSS with hashes), always fetch fresh and update cache
-  if (event.request.url.includes('/assets/') || 
-      event.request.url.includes('.js') ||
-      event.request.url.includes('.css') ||
-      event.request.url.match(/index-[A-Za-z0-9]+\.js/) ||
-      event.request.url.match(/index-[A-Za-z0-9]+\.css/) ||
-      event.request.url.match(/[A-Za-z0-9]+-[A-Za-z0-9]+\.js/) ||
-      event.request.url.match(/[A-Za-z0-9]+-[A-Za-z0-9]+\.css/)) {
-    event.respondWith(
-      fetch(event.request, { 
-        cache: 'no-cache',
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      })
-        .then((response) => {
-          // If successful, update cache with new version
-          if (response && response.status === 200) {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then((cache) => {
-              cache.put(event.request, responseToCache);
-            });
-          }
-          return response;
-        })
-        .catch((error) => {
-          console.log('Network fetch failed for:', event.request.url, error);
-          // Don't serve from cache for dynamic assets - force fresh fetch
-          return new Response('Asset not found - please refresh page', { 
-            status: 404,
-            statusText: 'Asset not found'
-          });
-        })
-    );
-    return;
-  }
-
   event.respondWith(
     caches.match(event.request)
       .then((response) => {
-        // Return cached version if available
-        if (response) {
-          console.log('📦 Serving from cache:', event.request.url);
-          return response;
-        }
-
-        // Clone the request
-        const fetchRequest = event.request.clone();
-
-        return fetch(fetchRequest).then(
-          (response) => {
-            // Check if we received a valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
-
-            // Clone the response
-            const responseToCache = response.clone();
-
-            // Cache the response
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
-          }
-        );
+        // Return cached version or fetch from network
+        return response || fetch(event.request);
       })
-      .catch(() => {
-        // If both cache and network fail, show offline page
-        if (event.request.destination === 'document') {
-          return caches.match('/index.html');
+  );
+});
+
+// Push event - Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('Push event received:', event);
+
+  let notificationData = {
+    title: 'ChristianKit',
+    body: 'You have a new spiritual message!',
+    icon: '/icon-192x192.png',
+    badge: '/icon-72x72.png',
+    tag: 'daily-spiritual-message',
+    requireInteraction: true,
+    actions: [
+      { action: 'open', title: 'Open App', icon: '/icon-192x192.png' },
+      { action: 'dismiss', title: 'Dismiss' }
+    ],
+    data: {
+      url: '/',
+      type: 'daily_spiritual_message'
+    }
+  };
+
+  // Parse push data if available
+  if (event.data) {
+    try {
+      const pushData = event.data.json();
+      notificationData = {
+        ...notificationData,
+        title: pushData.title || notificationData.title,
+        body: pushData.body || notificationData.body,
+        data: {
+          ...notificationData.data,
+          ...pushData.data
+        }
+      };
+    } catch (error) {
+      console.error('Error parsing push data:', error);
+    }
+  }
+
+  // Show notification
+  event.waitUntil(
+    self.registration.showNotification(notificationData.title, notificationData)
+  );
+});
+
+// Notification click event
+self.addEventListener('notificationclick', (event) => {
+  console.log('Notification clicked:', event);
+
+  event.notification.close();
+
+  if (event.action === 'dismiss') {
+    return;
+  }
+
+  // Default action or 'open' action
+  const urlToOpen = event.notification.data?.url || '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((clientList) => {
+        // Check if app is already open
+        for (const client of clientList) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            client.focus();
+            client.navigate(urlToOpen);
+            return;
+          }
+        }
+        
+        // Open new window if app is not open
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
         }
       })
   );
 });
 
-// Push notification event
-self.addEventListener('push', (event) => {
-  console.log('📱 Push notification received:', event);
-  
-  if (event.data) {
-    try {
-      const data = event.data.json();
-      const options = {
-        body: data.body || 'Time for your daily spiritual practice',
-        icon: '/icon-192x192.png',
-        badge: '/icon-72x72.png',
-        vibrate: [200, 100, 200],
-        data: {
-          url: data.url || '/',
-          reminderType: data.reminderType || 'prayer'
-        },
-        actions: [
-          {
-            action: 'open',
-            title: 'Open App',
-            icon: '/icon-72x72.png'
-          },
-          {
-            action: 'dismiss',
-            title: 'Dismiss',
-            icon: '/icon-72x72.png'
-          }
-        ],
-        requireInteraction: true,
-        tag: 'christiankit-reminder',
-        renotify: true
-      };
-
-      event.waitUntil(
-        self.registration.showNotification(data.title || 'ChristianKit Reminder', options)
-      );
-      
-      console.log('✅ Push notification displayed');
-    } catch (error) {
-      console.error('❌ Error processing push notification:', error);
-      
-      // Fallback notification
-      const fallbackOptions = {
-        body: 'Time for your daily spiritual practice',
-        icon: '/icon-192x192.png',
-        badge: '/icon-72x72.png',
-        vibrate: [200, 100, 200],
-        data: { url: '/' }
-      };
-      
-      event.waitUntil(
-        self.registration.showNotification('ChristianKit Reminder', fallbackOptions)
-      );
-    }
-  } else {
-    // No data, show default notification
-    const defaultOptions = {
-      body: 'Time for your daily spiritual practice',
-      icon: '/icon-192x192.png',
-      badge: '/icon-72x72.png',
-      vibrate: [200, 100, 200],
-      data: { url: '/' }
-    };
-    
-    event.waitUntil(
-      self.registration.showNotification('ChristianKit Reminder', defaultOptions)
-    );
-  }
-});
-
-// Notification click event
-self.addEventListener('notificationclick', (event) => {
-  console.log('📱 Notification clicked:', event);
-  
-  event.notification.close();
-  
-  if (event.action === 'open') {
-    event.waitUntil(
-      clients.openWindow(event.notification.data.url || '/')
-    );
-  }
-});
-
-// Background sync event
+// Background sync for offline functionality
 self.addEventListener('sync', (event) => {
-  console.log('🔄 Background sync event:', event);
+  console.log('Background sync event:', event.tag);
   
-  if (event.tag === 'prayer-sync') {
+  if (event.tag === 'background-sync') {
     event.waitUntil(
-      // Handle prayer data sync
-      console.log('🔄 Syncing prayer data...')
+      // Handle background sync tasks
+      handleBackgroundSync()
     );
   }
 });
 
-// Message event for communication with main thread
+// Handle background sync
+async function handleBackgroundSync() {
+  try {
+    console.log('Handling background sync...');
+    // Add any background sync logic here
+  } catch (error) {
+    console.error('Background sync error:', error);
+  }
+}
+
+// Message event - Handle messages from main thread
 self.addEventListener('message', (event) => {
-  console.log('📨 Message received in service worker:', event.data);
-  
-  if (event.data && event.data.type === 'SKIP_WAITING') {
-    self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'FORCE_RELOAD') {
-    // Clear all caches and force reload
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          console.log('🗑️ Force clearing cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => {
-      console.log('🔄 All caches cleared, forcing reload');
-      self.registration.update();
-    });
-  }
-  
-  if (event.data && event.data.type === 'CLEAR_ALL_CACHES') {
-    // Clear all caches immediately
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.map((cacheName) => {
-          console.log('🗑️ Clearing cache:', cacheName);
-          return caches.delete(cacheName);
-        })
-      );
-    }).then(() => {
-      console.log('✅ All caches cleared');
+  console.log('Service Worker received message:', event.data);
+
+  if (event.data && event.data.type === 'SHOW_NOTIFICATION') {
+    const notificationData = event.data.data;
+    
+    self.registration.showNotification(notificationData.title, {
+      body: notificationData.body,
+      icon: notificationData.icon || '/icon-192x192.png',
+      badge: notificationData.badge || '/icon-72x72.png',
+      tag: notificationData.tag || 'daily-spiritual-message',
+      requireInteraction: notificationData.requireInteraction || true,
+      actions: [
+        { action: 'open', title: 'Open App', icon: '/icon-192x192.png' },
+        { action: 'dismiss', title: 'Dismiss' }
+      ],
+      data: notificationData.data || { url: '/' }
     });
   }
 });
+
+console.log('Service Worker loaded successfully');

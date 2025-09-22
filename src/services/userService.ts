@@ -4,10 +4,20 @@ import { User } from '@supabase/supabase-js'
 export interface UserProfile {
   id: string
   email: string
-  full_name?: string
+  display_name: string
   avatar_url?: string
+  bio?: string
+  location?: string
+  favorite_verse?: string
+  phone?: string
+  church_denomination?: string
+  spiritual_maturity?: string
+  is_verified?: boolean
+  is_private?: boolean
   created_at: string
   updated_at: string
+  // Legacy fields for backward compatibility
+  full_name?: string
 }
 
 export interface UserSession {
@@ -27,26 +37,37 @@ export class UserService {
   private supabase = supabase
 
   /**
-   * Get current user profile
+   * Get current user profile with enhanced error handling
    */
   async getCurrentUserProfile(): Promise<UserProfile | null> {
     if (!this.supabase) {
-      console.warn('⚠️ Supabase not available')
+      console.error('❌ Supabase client not initialized')
       return null
     }
 
     try {
       const { data: { user } } = await this.supabase.auth.getUser()
-      if (!user) return null
+      if (!user) {
+        console.log('ℹ️ No authenticated user found')
+        return null
+      }
 
       const { data, error } = await this.supabase
-        .from('user_profiles')
+        .from('profiles')
         .select('*')
         .eq('id', user.id)
         .single()
 
       if (error) {
-        console.error('❌ Error fetching user profile:', error)
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No profile found for user, creating default profile')
+          return await this.createDefaultProfile(user)
+        }
+        console.error('❌ Error fetching user profile:', {
+          code: error.code,
+          message: error.message,
+          userId: user.id
+        })
         return null
       }
 
@@ -58,26 +79,84 @@ export class UserService {
   }
 
   /**
-   * Create or update user profile
+   * Create default profile for new users
    */
-  async upsertUserProfile(profile: Partial<UserProfile>): Promise<UserProfile | null> {
-    if (!this.supabase) {
-      console.warn('⚠️ Supabase not available')
-      return null
-    }
-
+  private async createDefaultProfile(user: User): Promise<UserProfile | null> {
     try {
-      const { data, error } = await this.supabase
-        .from('user_profiles')
-        .upsert(profile, { onConflict: 'id' })
+      const defaultProfile: Partial<UserProfile> = {
+        id: user.id,
+        email: user.email!,
+        display_name: user.email?.split('@')[0] || 'User',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+
+      const { data, error } = await this.supabase!
+        .from('profiles')
+        .insert(defaultProfile)
         .select()
         .single()
 
       if (error) {
-        console.error('❌ Error upserting user profile:', error)
+        console.error('❌ Error creating default profile:', error)
         return null
       }
 
+      console.log('✅ Default profile created for user:', user.id)
+      return data
+    } catch (error) {
+      console.error('❌ Error in createDefaultProfile:', error)
+      return null
+    }
+  }
+
+  /**
+   * Create or update user profile with enhanced error handling
+   */
+  async upsertUserProfile(profile: Partial<UserProfile>): Promise<UserProfile | null> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client not initialized')
+      return null
+    }
+
+    try {
+      // Ensure required fields are present
+      if (!profile.id) {
+        console.error('❌ Profile ID is required for upsert')
+        return null
+      }
+
+      const profileData = {
+        ...profile,
+        updated_at: new Date().toISOString()
+      }
+
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .upsert(profileData, { onConflict: 'id' })
+        .select()
+        .single()
+
+      if (error) {
+        console.error('❌ Error upserting user profile:', {
+          code: error.code,
+          message: error.message,
+          profileId: profile.id
+        })
+
+        // Provide specific error messages
+        if (error.code === '23505') {
+          console.error('❌ Profile already exists with different data')
+        } else if (error.code === '42P01') {
+          console.error('❌ Profiles table does not exist')
+        } else if (error.code === '42703') {
+          console.error('❌ Invalid column in profile data')
+        }
+
+        return null
+      }
+
+      console.log('✅ Profile upserted successfully:', profile.id)
       return data
     } catch (error) {
       console.error('❌ Error in upsertUserProfile:', error)
@@ -195,13 +274,164 @@ export class UserService {
    */
   async getCurrentUser(): Promise<User | null> {
     if (!this.supabase) return null
-    
+
     try {
       const { data: { user } } = await this.supabase.auth.getUser()
       return user
     } catch (error) {
       console.error('❌ Error getting current user:', error)
       return null
+    }
+  }
+
+  /**
+   * Get user profile by ID with enhanced error handling
+   */
+  async getUserProfile(userId: string): Promise<UserProfile | null> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client not initialized')
+      return null
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .single()
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          console.log('ℹ️ No profile found for user:', userId)
+          return null
+        }
+        console.error('❌ Error fetching user profile:', {
+          code: error.code,
+          message: error.message,
+          userId
+        })
+        return null
+      }
+
+      return data
+    } catch (error) {
+      console.error('❌ Error in getUserProfile:', error)
+      return null
+    }
+  }
+
+  /**
+   * Update user profile with validation
+   */
+  async updateUserProfile(userId: string, updates: Partial<UserProfile>): Promise<boolean> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client not initialized')
+      return false
+    }
+
+    try {
+      const { error } = await this.supabase
+        .from('profiles')
+        .update({
+          ...updates,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', userId)
+
+      if (error) {
+        console.error('❌ Error updating user profile:', {
+          code: error.code,
+          message: error.message,
+          userId,
+          updates
+        })
+        return false
+      }
+
+      console.log('✅ Profile updated successfully:', userId)
+      return true
+    } catch (error) {
+      console.error('❌ Error in updateUserProfile:', error)
+      return false
+    }
+  }
+
+  /**
+   * Search users by display name with pagination
+   */
+  async searchUsers(query: string, limit: number = 10): Promise<UserProfile[]> {
+    if (!this.supabase) {
+      console.error('❌ Supabase client not initialized')
+      return []
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('*')
+        .ilike('display_name', `%${query}%`)
+        .limit(limit)
+
+      if (error) {
+        console.error('❌ Error searching users:', {
+          code: error.code,
+          message: error.message,
+          query
+        })
+        return []
+      }
+
+      return data || []
+    } catch (error) {
+      console.error('❌ Error in searchUsers:', error)
+      return []
+    }
+  }
+
+  /**
+   * Upload profile image (placeholder - would need storage integration)
+   */
+  async uploadProfileImage(userId: string, imageData: string): Promise<string | null> {
+    try {
+      // This would typically upload to Supabase Storage
+      // For now, just update the profile with the base64 data
+      const success = await this.updateUserProfile(userId, { avatar_url: imageData })
+
+      if (success) {
+        return imageData
+      }
+
+      return null
+    } catch (error) {
+      console.error('❌ Error uploading profile image:', error)
+      return null
+    }
+  }
+
+  /**
+   * Check if user profile exists
+   */
+  async profileExists(userId: string): Promise<boolean> {
+    if (!this.supabase) {
+      return false
+    }
+
+    try {
+      const { data, error } = await this.supabase
+        .from('profiles')
+        .select('id')
+        .eq('id', userId)
+        .single()
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('❌ Error checking profile existence:', error)
+        return false
+      }
+
+      return !!data
+    } catch (error) {
+      console.error('❌ Error in profileExists:', error)
+      return false
     }
   }
 }

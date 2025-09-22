@@ -122,7 +122,7 @@ export class ReminderAutomationService {
         .from('reminder_schedules')
         .select(`
           *,
-          user_profiles!inner(email, full_name)
+          profiles!inner(email, display_name)
         `)
         .eq('reminder_type', reminderType)
         .eq('is_active', true)
@@ -152,7 +152,7 @@ export class ReminderAutomationService {
    */
   private async sendPrayerReminderToUser(user: any) {
     try {
-      const userProfile = user.user_profiles
+      const userProfile = user.profiles || user
       
       // Send email reminder
       await emailAutomationService.sendDailyPrayerReminder(
@@ -176,7 +176,7 @@ export class ReminderAutomationService {
    */
   private async sendBibleReminderToUser(user: any) {
     try {
-      const userProfile = user.user_profiles
+      const userProfile = user.profiles || user
       
       // Send Bible reading reminder email
       await emailAutomationService.sendEmail({
@@ -208,7 +208,7 @@ export class ReminderAutomationService {
    */
   private async sendMeditationReminderToUser(user: any) {
     try {
-      const userProfile = user.user_profiles
+      const userProfile = user.profiles || user
       
       // Send meditation reminder email
       await emailAutomationService.sendEmail({

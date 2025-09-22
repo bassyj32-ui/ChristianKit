@@ -81,14 +81,7 @@ export const getTrendingPosts = async (
 
     let query = supabase
       .from('community_posts')
-      .select(`
-        *,
-        profiles(
-          display_name,
-          avatar_url,
-          email
-        )
-      `)
+      .select('*')
       .eq('moderation_status', 'approved')
       .eq('is_live', true);
 
@@ -181,36 +174,28 @@ export const getTrendingPosts = async (
 
     console.log('✅ Fetched posts:', posts?.length || 0, 'posts found');
     
-    // Debug: Log first post's profile data
+    // Debug: Log first post's data
     if (posts && posts.length > 0) {
-      console.log('🔍 First post profile data:', {
+      console.log('🔍 First post data:', {
         author_id: posts[0].author_id,
-        profiles: posts[0].profiles,
-        hasDisplayName: !!posts[0].profiles?.display_name,
-        hasEmail: !!posts[0].profiles?.email,
+        author_name: posts[0].author_name,
+        author_avatar: posts[0].author_avatar,
+        hasAuthorName: !!posts[0].author_name,
         rawPost: posts[0]
       });
     }
 
-    // Debug: Log all posts to see what's happening
-    console.log('🔍 All posts raw data:', posts?.map(p => ({
-      id: p.id,
-      author_id: p.author_id,
-      profiles: p.profiles,
-      resolved_name: p.profiles?.display_name || p.profiles?.email?.split('@')[0] || 'fallback'
-    })));
-
     // Transform data
     const transformedPosts = (posts || []).map((post: any) => {
-      // Prioritize display_name from profiles table, then fallback to email name
-      const emailName = post.profiles?.email?.split('@')[0] || 'user';
-      const displayName = post.profiles?.display_name || emailName;
+      // Use existing author_name and author_avatar from the post
+      const displayName = post.author_name || 'Anonymous';
+      const avatar = post.author_avatar || '👤';
       
       return {
         ...post,
         author_name: displayName,
-        author_avatar: post.profiles?.avatar_url || post.author_avatar || '👤',
-        author_handle: `@${emailName}`,
+        author_avatar: avatar,
+        author_handle: `@${displayName.toLowerCase().replace(/\s+/g, '')}`,
         engagement_score: (post.amens_count || 0) + (post.loves_count || 0) * 2 + (post.prayers_count || 0) * 3
       };
     });
@@ -279,6 +264,8 @@ export const createPost = async (postData: {
       .from('community_posts')
       .insert({
         author_id: user.id,
+        author_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'Anonymous',
+        author_avatar: user.user_metadata?.avatar_url || '👤',
         content: postData.content,
         category: postData.category,
         hashtags,
@@ -575,13 +562,19 @@ export const subscribeToCommunityUpdates = (
 };
 
 // Helper function to transform post data
-const transformPostData = (post: any): CommunityPost => ({
-  ...post,
-  author_name: post.author_name || 'Anonymous',
-  author_avatar: post.author_avatar || '👤',
-  author_handle: `@user${post.author_id?.slice(0, 8) || 'user'}`,
-  engagement_score: (post.amens_count || 0) + (post.loves_count || 0) * 2 + (post.prayers_count || 0) * 3
-});
+const transformPostData = (post: any): CommunityPost => {
+  // Use existing author_name or fallback to generic name
+  const displayName = post.author_name || 'Anonymous';
+  const avatar = post.author_avatar || '👤';
+  
+  return {
+    ...post,
+    author_name: displayName,
+    author_avatar: avatar,
+    author_handle: `@${displayName.toLowerCase().replace(/\s+/g, '')}`,
+    engagement_score: (post.amens_count || 0) + (post.loves_count || 0) * 2 + (post.prayers_count || 0) * 3
+  };
+};
 
 // ================================================================
 // ENHANCED SEARCH FUNCTIONALITY
@@ -607,13 +600,7 @@ export const searchPosts = async (
 
     let searchQuery = supabase
       .from('community_posts')
-      .select(`
-        *,
-        profiles!inner(
-          display_name,
-          avatar_url
-        )
-      `)
+      .select('*')
       .eq('moderation_status', 'approved')
       .eq('is_live', true)
       .textSearch('content', query)

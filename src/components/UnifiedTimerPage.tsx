@@ -313,8 +313,8 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
         <div className="text-center w-full relative z-10 pt-2">
           
           {/* Mobile-First Prayer Message Above Timer - Bigger and Closer to App Bar */}
-          <div className="text-center mb-2 mt-16 sm:hidden">
-            <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-4 mx-3 shadow-lg">
+          <div className="text-center mb-1 mt-12 sm:hidden">
+            <div className="bg-white/10 backdrop-blur-xl border-2 border-white/30 rounded-2xl p-3 mx-3 shadow-lg">
               <p className="text-base font-black text-white leading-tight">
                 <span className="bg-gradient-to-r from-amber-400 via-yellow-500 to-amber-400 bg-clip-text text-transparent font-black text-lg">Let's pray for {selectedMinutes} minutes</span>
               </p>
@@ -322,7 +322,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
           </div>
           
           {/* Timer Container - Optimized for Mobile Visibility */}
-          <div className="relative flex items-center justify-center mb-4 w-full px-4 sm:px-40 lg:px-48 xl:px-56">
+          <div className="relative flex items-center justify-center mb-2 w-full px-4 sm:px-40 lg:px-48 xl:px-56">
             
             {/* Timer Circle with Enhanced Bold Design - Bigger for Attention */}
             <div className="relative w-[280px] h-[280px] sm:w-[400px] sm:h-[400px] lg:w-[450px] lg:h-[450px] xl:w-[500px] xl:h-[500px]">
@@ -421,7 +421,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
                           min="1"
                           max="120"
                           placeholder="min"
-                          className="bg-white/10 border border-white/20 rounded-lg px-2 py-1 text-white text-center w-12 text-xs placeholder-white/50 focus:outline-none focus:border-amber-400"
+                          className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-center w-16 text-sm placeholder-white/50 focus:outline-none focus:border-amber-400"
                           onChange={(e) => {
                             const value = parseInt(e.target.value);
                             if (value >= 1 && value <= 120) {
@@ -450,7 +450,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
           </div>
 
           {/* Mobile-First Prayer Time Below Timer */}
-          <div className="text-center mt-3 sm:hidden">
+          <div className="text-center mt-1 sm:hidden">
             <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 mx-4">
               <div className="text-base font-black text-white mb-1">
                 Prayer Time
@@ -462,8 +462,8 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
           </div>
 
           {/* Mobile Custom Timer Input */}
-          <div className="text-center mt-3 sm:hidden">
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-3 mx-4">
+          <div className="text-center mt-2 sm:hidden">
+            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2 mx-4">
               <div className="text-sm font-medium text-white mb-2">Custom Duration</div>
               <div className="flex items-center justify-center space-x-2">
                 <input
@@ -471,7 +471,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
                   min="1"
                   max="120"
                   placeholder="Enter minutes"
-                  className="bg-white/10 border border-white/20 rounded-lg px-3 py-2 text-white text-center w-24 placeholder-white/50 focus:outline-none focus:border-amber-400"
+                  className="bg-white/10 border border-white/20 rounded-lg px-4 py-3 text-white text-center w-32 text-lg placeholder-white/50 focus:outline-none focus:border-amber-400"
                   onChange={(e) => {
                     const value = parseInt(e.target.value);
                     if (value >= 1 && value <= 120) {
@@ -493,74 +493,6 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
         </div>
       </div>
 
-      {/* Simple Bottom Navigation Tabs - Clean Osmo Style */}
-      <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 z-[60] pointer-events-auto">
-        <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl p-2">
-          <div className="flex items-center space-x-2 sm:space-x-1">
-            {/* Community Tab */}
-            <button
-              onClick={() => onNavigate?.('community')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H16c-.8 0-1.54.37-2.01.99L12 11l-1.99-2.01A2.5 2.5 0 0 0 8 8H5.46c-.8 0-1.54.37-2.01.99L1 15.5V22h2v-6h2.5l2.5 7.5h2L10 16h4l1.5 7.5h2L18 16h2v6h2zM12 7.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5-1.5.67-1.5 1.5.67 1.5 1.5 1.5z"/>
-              </svg>
-              <span className="text-sm font-medium">Community</span>
-            </button>
-            
-            {/* Bible Quest Tab */}
-            <button
-              onClick={() => onNavigate?.('runner')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M17.5 2c.83 0 1.5.67 1.5 1.5v17c0 .83-.67 1.5-1.5 1.5s-1.5-.67-1.5-1.5v-17c0-.83.67-1.5 1.5-1.5zM12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-              <span className="text-sm font-medium">Bible Quest</span>
-            </button>
-
-            {/* My Prayer Time Tab */}
-            <button
-              onClick={() => onNavigate?.('prayer-time')}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/>
-              </svg>
-              <span className="text-sm font-medium">My Prayer Time</span>
-            </button>
-            
-            {/* Home Tab */}
-            <button
-              onClick={() => {
-                console.log('Home tab clicked!')
-                console.log('isFirstTimeUser:', isFirstTimeUser)
-                console.log('onStartQuestionnaire function:', onStartQuestionnaire)
-                console.log('onNavigate function:', onNavigate)
-                console.log('localStorage hasCompletedQuestionnaire:', localStorage.getItem('hasCompletedQuestionnaire'))
-                
-                // Check if user has already completed questionnaire in localStorage
-                const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
-                console.log('localStorage hasCompletedQuestionnaire:', hasCompleted)
-                
-                if (isFirstTimeUser && !hasCompleted) {
-                  console.log('Starting questionnaire...')
-                  onStartQuestionnaire?.();
-                } else {
-                  console.log('Navigating to home...')
-                  onNavigate?.('home');
-                }
-              }}
-              className="flex flex-col items-center space-y-1 px-4 py-3 sm:px-3 sm:px-3 sm:py-2 rounded-xl text-white hover:bg-white/10 transition-all duration-300 group min-w-[80px] sm:min-w-0 justify-center"
-            >
-              <svg className="w-6 h-6 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-300" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
-              </svg>
-              <span className="text-sm font-medium">Home</span>
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 };

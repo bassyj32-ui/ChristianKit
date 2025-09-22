@@ -1,3 +1,8 @@
+// DEPRECATED: This service is DISABLED in favor of RealNotificationService
+// DO NOT USE - Use RealNotificationService instead
+console.warn('⚠️ pushNotificationService is DEPRECATED. Use RealNotificationService instead.');
+
+/*
 import { supabase } from '../utils/supabase';
 
 export interface PushNotificationData {
@@ -321,3 +326,12 @@ export class PushNotificationService {
 
 // Export singleton instance
 export const pushNotificationService = new PushNotificationService();
+*/
+
+// Export a disabled version that throws errors
+export const pushNotificationService = {
+  initialize: () => { throw new Error('pushNotificationService is DEPRECATED. Use RealNotificationService instead.'); },
+  requestPermission: () => { throw new Error('pushNotificationService is DEPRECATED. Use RealNotificationService instead.'); },
+  getSubscriptionStatus: () => { throw new Error('pushNotificationService is DEPRECATED. Use RealNotificationService instead.'); },
+  sendTestNotification: () => { throw new Error('pushNotificationService is DEPRECATED. Use RealNotificationService instead.'); }
+};

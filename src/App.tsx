@@ -9,7 +9,6 @@ import { UnifiedTimerPage } from './components/UnifiedTimerPage'
 import { OfflineIndicator } from './components/OfflineIndicator'
 import { UserProfile } from './components/UserProfile'
 import { GameLeaderboard } from './components/GameLeaderboard'
-import { NotificationManager } from './components/NotificationManager'
 
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { SupabaseAuthProvider, useSupabaseAuth } from './components/SupabaseAuthProvider'
@@ -33,7 +32,6 @@ import { StorePage } from './components/StorePage'
 import { OsmoPricingPage } from './components/OsmoPricingPage'
 import { SettingsPage } from './components/SettingsPage'
 import { PrayerHistory } from './components/PrayerHistory'
-import { PrayerSettings } from './components/PrayerSettings'
 import { BibleTracker } from './components/BibleTracker'
 import { OsmoLandingPage } from './components/OsmoLandingPage'
 import { UserQuestionnaire } from './components/UserQuestionnaire'
@@ -351,8 +349,6 @@ const AppContent: React.FC = () => {
           return <SettingsPage />
         // case 'prayer-history':
         //   return <PrayerHistory />
-        // case 'prayer-settings':
-        //   return <PrayerSettings />
         // case 'bible-tracker':
         //   return <BibleTracker />
         // case 'osmo-landing':
@@ -475,9 +471,6 @@ const AppContent: React.FC = () => {
         
         {/* Offline Indicator - HIDDEN */}
         {/* <OfflineIndicator /> */}
-
-        {/* Notification Manager - HIDDEN */}
-        {/* <NotificationManager user={user} /> */}
 
         {/* Main Content with Global Progress Tab */}
         <AppLayout 

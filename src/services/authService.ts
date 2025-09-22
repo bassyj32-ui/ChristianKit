@@ -39,40 +39,59 @@ class AuthService {
     }
   }
 
-  // Ensure profile record exists for user
+  // Ensure profile record exists for user with enhanced error handling
   private async ensureProfileExists(user: any): Promise<void> {
     try {
-      const { data: existingProfile } = await supabase
+      const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', user.id)
         .single()
 
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking profile existence:', checkError)
+        return
+      }
+
       if (!existingProfile) {
-        // Create profile record
+        // Create profile record with comprehensive data
+        const profileData = {
+          id: user.id,
+          email: user.email,
+          display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
+          avatar_url: user.user_metadata?.avatar_url,
+          bio: user.user_metadata?.bio,
+          favorite_verse: user.user_metadata?.favoriteVerse,
+          location: user.user_metadata?.location,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
         const { error } = await supabase
           .from('profiles')
-          .insert({
-            id: user.id,
-            email: user.email,
-            display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
-            avatar_url: user.user_metadata?.avatar_url,
-            bio: user.user_metadata?.bio,
-            favorite_verse: user.user_metadata?.favoriteVerse,
-            location: user.user_metadata?.location,
-            custom_links: user.user_metadata?.customLinks || [],
-            banner_image: user.user_metadata?.bannerImage,
-            profile_image: user.user_metadata?.profileImage
-          })
+          .insert(profileData)
 
         if (error) {
-          console.error('Error creating profile:', error)
+          console.error('❌ Error creating profile:', {
+            code: error.code,
+            message: error.message,
+            userId: user.id
+          })
+
+          // Provide specific error messages
+          if (error.code === '23505') {
+            console.error('❌ Profile already exists for this user')
+          } else if (error.code === '42P01') {
+            console.error('❌ Profiles table does not exist')
+          }
         } else {
-          console.log('✅ Profile record created for user:', user.id)
+          console.log('✅ Profile record created successfully for user:', user.id)
         }
+      } else {
+        console.log('ℹ️ Profile already exists for user:', user.id)
       }
     } catch (error) {
-      console.error('Error ensuring profile exists:', error)
+      console.error('❌ Error ensuring profile exists:', error)
     }
   }
 

@@ -1,0 +1,47 @@
+<svg width="200" height="150" viewBox="0 0 200 150" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="meditationGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6;stop-opacity:0.3" />
+      <stop offset="100%" style="stop-color:#7C3AED;stop-opacity:0.1" />
+    </linearGradient>
+    <linearGradient id="meditationIconGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B5CF6" />
+      <stop offset="100%" style="stop-color:#7C3AED" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="200" height="150" rx="12" fill="url(#meditationGradient)"/>
+
+  <!-- Meditation pose -->
+  <ellipse cx="100" cy="90" rx="25" ry="15" fill="url(#meditationIconGradient)" opacity="0.7"/>
+
+  <!-- Body -->
+  <rect x="90" y="75" width="20" height="25" rx="10" fill="url(#meditationIconGradient)" opacity="0.8"/>
+
+  <!-- Head -->
+  <circle cx="100" cy="65" r="12" fill="url(#meditationIconGradient)" opacity="0.9"/>
+
+  <!-- Peaceful expression -->
+  <circle cx="96" cy="62" r="1.5" fill="#ffffff"/>
+  <circle cx="104" cy="62" r="1.5" fill="#ffffff"/>
+  <path d="M96 67 Q100 69 104 67" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Aura rings -->
+  <circle cx="100" cy="65" r="20" fill="none" stroke="url(#meditationIconGradient)" stroke-width="2" opacity="0.3"/>
+  <circle cx="100" cy="65" r="25" fill="none" stroke="url(#meditationIconGradient)" stroke-width="1.5" opacity="0.2"/>
+
+  <!-- Decorative elements -->
+  <circle cx="60" cy="40" r="2" fill="#8B5CF6" opacity="0.6"/>
+  <circle cx="140" cy="35" r="1.5" fill="#7C3AED" opacity="0.6"/>
+  <circle cx="50" cy="110" r="1" fill="#8B5CF6" opacity="0.8"/>
+
+  <!-- Subtle pattern -->
+  <pattern id="meditationPattern" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
+    <circle cx="10" cy="10" r="1" fill="#8B5CF6" opacity="0.1"/>
+  </pattern>
+  <rect width="200" height="150" fill="url(#meditationPattern)"/>
+</svg>
+
+
+

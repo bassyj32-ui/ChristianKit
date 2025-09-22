@@ -1,0 +1,133 @@
+/* Mobile-first optimizations for ChristianKit Community */
+
+/* Hide scrollbars but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari and Opera */
+}
+
+/* Touch manipulation for better mobile interactions */
+.touch-manipulation {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+/* Better touch targets */
+@media (max-width: 640px) {
+  /* Minimum 44px touch targets for mobile */
+  button, .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger tap areas for small buttons */
+  .touch-manipulation {
+    padding: 8px;
+    margin: -8px;
+  }
+  
+  /* Smooth scrolling on mobile */
+  .overflow-x-auto {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  
+  /* Better focus states for keyboard navigation */
+  button:focus,
+  input:focus,
+  textarea:focus {
+    outline: 2px solid #facc15; /* yellow-500 */
+    outline-offset: 2px;
+  }
+}
+
+/* Prevent zoom on double-tap for iOS */
+@media (max-width: 640px) {
+  button,
+  input,
+  select,
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+  }
+}
+
+/* Better active states for mobile */
+.active\:scale-95:active {
+  transform: scale(0.95);
+}
+
+.active\:scale-105:active {
+  transform: scale(1.05);
+}
+
+/* Smooth animations */
+.transition-all {
+  transition-property: all;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Community-specific mobile optimizations */
+.community-post {
+  /* Better readability on mobile */
+  line-height: 1.6;
+  word-break: break-word;
+}
+
+.community-filters {
+  /* Horizontal scroll with momentum */
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.community-filters button {
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+
+/* Loading states */
+.loading-shimmer {
+  background: linear-gradient(90deg, #1f2937 25%, #374151 50%, #1f2937 75%);
+  background-size: 200% 100%;
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+/* Error states */
+.error-shake {
+  animation: shake 0.5s ease-in-out;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-5px); }
+  75% { transform: translateX(5px); }
+}
+
+/* Success states */
+.success-bounce {
+  animation: bounce 0.6s ease-in-out;
+}
+
+@keyframes bounce {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+

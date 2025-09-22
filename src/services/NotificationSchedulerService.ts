@@ -1,3 +1,8 @@
+// DEPRECATED: This service is DISABLED in favor of RealNotificationService
+// DO NOT USE - Use RealNotificationService instead
+console.warn('⚠️ NotificationSchedulerService is DEPRECATED. Use RealNotificationService instead.');
+
+/*
 import ProgressService from './ProgressService';
 
 export interface NotificationSchedule {
@@ -504,5 +509,14 @@ class NotificationSchedulerService {
     return Array.from(this.schedules.keys()).filter(key => key.startsWith(`${userId}-`));
   }
 }
+
+export default NotificationSchedulerService;
+*/
+
+// Export a disabled version
+const NotificationSchedulerService = {
+  initialize: () => { throw new Error('NotificationSchedulerService is DEPRECATED. Use RealNotificationService instead.'); },
+  scheduleNotifications: () => { throw new Error('NotificationSchedulerService is DEPRECATED. Use RealNotificationService instead.'); }
+};
 
 export default NotificationSchedulerService;

@@ -1,552 +1,892 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
-import { dataExportService } from '../services/dataExportService'
-import { reminderService } from '../services/reminderService'
-import { SyncStatus } from './SyncStatus'
-import { PushNotificationSettings } from './PushNotificationSettings'
-import { ThemeToggle } from './ThemeToggle'
+import { useNavigate } from 'react-router-dom'
+import {
+  OsmoCard,
+  OsmoButton,
+  OsmoContainer
+} from '../theme/osmoComponents'
+import { supabase } from '../utils/supabase'
 
-interface Settings {
-  theme: string
-  notifications: {
-    prayer: boolean
-    bible: boolean
-    community: boolean
-    daily: boolean
-  }
-  privacy: {
-    shareProgress: boolean
-    publicProfile: boolean
-    showStats: boolean
-  }
+interface SettingsState {
+  dailyNotifications: boolean
+  prayerReminders: boolean
+  communityPrivacy: 'public' | 'followers' | 'private'
+  notificationTime: string
+  // Prayer settings
+  defaultDuration: number
+  defaultMode: 'guided' | 'silent' | 'scripture' | 'worship'
+  enableReminders: boolean
+  reminderInterval: number
+  ambientSound: 'none' | 'nature' | 'ocean' | 'worship' | 'meditation'
+  autoSave: boolean
+  showScripture: boolean
+  // Push notification settings
+  pushEnabled: boolean
+  emailEnabled: boolean
+  urgencyLevel: 'gentle' | 'moderate' | 'aggressive' | 'ruthless'
+  frequency: 'hourly' | 'daily' | 'constant'
+}
+
+interface NotificationPreferences {
+  daily_reminders: boolean
+  prayer_reminders: boolean
+  preferred_time: string
+  timezone: string
+}
+
+interface PrayerSettingsType {
+  defaultDuration: number
+  defaultMode: 'guided' | 'silent' | 'scripture' | 'worship'
+  enableReminders: boolean
+  reminderInterval: number
+  ambientSound: 'none' | 'nature' | 'ocean' | 'worship' | 'meditation'
+  autoSave: boolean
+  showScripture: boolean
+}
+
+interface NotificationPermission {
+  isSupported: boolean
+  permission: NotificationPermission
+  isSubscribed: boolean
 }
 
 export const SettingsPage: React.FC = () => {
-  const { user, signOut } = useSupabaseAuth()
-  const [activeTab, setActiveTab] = useState('account')
-  const [importFile, setImportFile] = useState<File | null>(null)
-  const [isExporting, setIsExporting] = useState(false)
-  const [isImporting, setIsImporting] = useState(false)
-  const [settings, setSettings] = useState<Settings>({
-    theme: 'dark',
-    notifications: {
-      prayer: true,
-      bible: true,
-      community: true,
-      daily: true
-    },
-    privacy: {
-      shareProgress: false,
-      publicProfile: false,
-      showStats: true
-    }
+  const { user, signOut, signInWithGoogle } = useSupabaseAuth()
+  const navigate = useNavigate()
+  const [settings, setSettings] = useState<SettingsState>({
+    dailyNotifications: true,
+    prayerReminders: true,
+    communityPrivacy: 'public',
+    notificationTime: '09:00',
+    // Prayer settings defaults
+    defaultDuration: 10,
+    defaultMode: 'guided',
+    enableReminders: true,
+    reminderInterval: 30,
+    ambientSound: 'none',
+    autoSave: true,
+    showScripture: true,
+    // Push notification defaults
+    pushEnabled: false,
+    emailEnabled: true,
+    urgencyLevel: 'moderate',
+    frequency: 'daily'
   })
+  const [loading, setLoading] = useState(false)
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false)
+  const [activeTab, setActiveTab] = useState<'general' | 'prayer' | 'notifications' | 'privacy'>('general')
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default' as unknown as NotificationPermission)
+  const [saving, setSaving] = useState<string | null>(null)
+  const [errors, setErrors] = useState<Record<string, string>>({})
+  const [success, setSuccess] = useState<string | null>(null)
 
-  const handleSettingChange = (category: keyof Settings, setting: string, value: any) => {
-    setSettings(prev => {
-      if (category === 'notifications') {
-        return {
-          ...prev,
-          notifications: {
-            ...prev.notifications,
-            [setting]: value
-          }
-        }
-      } else if (category === 'privacy') {
-        return {
-          ...prev,
-          privacy: {
-            ...prev.privacy,
-            [setting]: value
-          }
-        }
-      } else {
-        return {
-          ...prev,
-          [category]: value
-        }
+  // Load settings from localStorage and database on mount
+  useEffect(() => {
+    loadSettings()
+  }, [user])
+
+  const loadSettings = async () => {
+    try {
+      // Load from localStorage first
+      const savedSettings = localStorage.getItem('christiankit-settings')
+      if (savedSettings) {
+        const parsed = JSON.parse(savedSettings)
+        setSettings(prev => ({ ...prev, ...parsed }))
       }
-    })
+
+      // Load notification preferences from localStorage
+      const notificationPrefs = localStorage.getItem('notificationPreferences')
+      if (notificationPrefs) {
+        const parsed = JSON.parse(notificationPrefs)
+        setSettings(prev => ({ ...prev, ...parsed }))
+      }
+
+      // Load from database if user is authenticated
+      if (user) {
+        await loadUserSettings()
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading settings:', {
+        code: error?.code,
+        message: error?.message
+      })
+    }
   }
 
-  const handleExportAllData = async () => {
+  const loadUserSettings = async () => {
+    if (!user) return
+
     try {
-      setIsExporting(true)
-      await dataExportService.exportAllData()
-      dataExportService.updateLastBackupDate()
-      alert('Data exported successfully!')
+      // Load notification preferences
+      const { data: notificationPrefs } = await supabase!
+        .from('user_notification_preferences')
+        .select('*')
+        .eq('user_id', user.id)
+        .single()
+
+      if (notificationPrefs) {
+        setSettings(prev => ({
+          ...prev,
+          dailyNotifications: notificationPrefs.daily_reminders || false,
+          prayerReminders: notificationPrefs.prayer_reminders || false,
+          notificationTime: notificationPrefs.preferred_time || '09:00'
+        }))
+      }
+
+      // Load community privacy from user profile
+      const { data: profile } = await supabase!
+        .from('profiles')
+        .select('community_privacy')
+        .eq('id', user.id)
+        .single()
+
+      if (profile?.community_privacy) {
+        setSettings(prev => ({
+          ...prev,
+          communityPrivacy: profile.community_privacy
+        }))
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading user settings:', {
+        code: error?.code,
+        message: error?.message
+      })
+    }
+  }
+
+  // Input validation functions
+  const validateTime = (time: string): boolean => {
+    const timeRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/
+    return timeRegex.test(time)
+  }
+
+  const validateDuration = (duration: number): boolean => {
+    return duration >= 5 && duration <= 120
+  }
+
+  const validateReminderInterval = (interval: number): boolean => {
+    return interval >= 15 && interval <= 120
+  }
+
+  // Enhanced update setting function with validation
+  const updateSetting = async <K extends keyof SettingsState>(key: K, value: SettingsState[K]) => {
+    // Clear any previous errors
+    setErrors(prev => ({ ...prev, [key]: '' }))
+
+    // Validate inputs
+    if (key === 'notificationTime' && !validateTime(value as string)) {
+      setErrors(prev => ({ ...prev, [key]: 'Please enter a valid time (HH:MM)' }))
+      return
+    }
+
+    if (key === 'defaultDuration' && !validateDuration(value as number)) {
+      setErrors(prev => ({ ...prev, [key]: 'Duration must be between 5 and 120 minutes' }))
+      return
+    }
+
+    if (key === 'reminderInterval' && !validateReminderInterval(value as number)) {
+      setErrors(prev => ({ ...prev, [key]: 'Reminder interval must be between 15 and 120 seconds' }))
+      return
+    }
+
+    const newSettings = { ...settings, [key]: value }
+    setSettings(newSettings)
+
+    // Save to localStorage immediately
+    localStorage.setItem('christiankit-settings', JSON.stringify(newSettings))
+
+    // Save to database if user is authenticated
+    if (user) {
+      await saveToDatabase(newSettings)
+    }
+
+    // Update notification services if notification settings changed
+    if (key === 'dailyNotifications' || key === 'prayerReminders' || key === 'notificationTime') {
+      await updateNotificationServices(newSettings)
+    }
+  }
+
+  // Notification permission management
+  const requestNotificationPermission = async () => {
+    try {
+      if (!('Notification' in window)) {
+        setErrors(prev => ({ ...prev, notifications: 'This browser does not support notifications' }))
+        return
+      }
+
+      const permission = await Notification.requestPermission()
+      setNotificationPermission(permission as unknown as NotificationPermission)
+
+      if (permission === 'granted') {
+        await updateSetting('pushEnabled', true)
+        setSuccess('Push notifications enabled successfully!')
+        setTimeout(() => setSuccess(null), 3000)
+      } else {
+        setErrors(prev => ({ ...prev, notifications: 'Notification permission denied' }))
+      }
+    } catch (error: any) {
+      console.error('❌ Error requesting notification permission:', error)
+      setErrors(prev => ({ ...prev, notifications: 'Failed to request notification permission' }))
+    }
+  }
+
+  // Test notification functionality
+  const testNotification = async () => {
+    try {
+      if (notificationPermission !== ('granted' as unknown as NotificationPermission)) {
+        await requestNotificationPermission()
+        return
+      }
+
+      new Notification('🧪 Test Notification', {
+        body: 'This is a test notification from ChristianKit!',
+        icon: '/icon-192x192.png'
+      })
+
+      setSuccess('Test notification sent!')
+      setTimeout(() => setSuccess(null), 3000)
+    } catch (error: any) {
+      console.error('❌ Error sending test notification:', error)
+      setErrors(prev => ({ ...prev, notifications: 'Failed to send test notification' }))
+    }
+  }
+
+  const saveToDatabase = async (newSettings: SettingsState) => {
+    if (!user) return
+
+    try {
+      // Save notification preferences
+      const notificationPrefs: NotificationPreferences = {
+        daily_reminders: newSettings.dailyNotifications,
+        prayer_reminders: newSettings.prayerReminders,
+        preferred_time: newSettings.notificationTime,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone
+      }
+
+      await supabase!
+        .from('user_notification_preferences')
+        .upsert({
+          user_id: user.id,
+          ...notificationPrefs,
+          updated_at: new Date().toISOString()
+        })
+
+      // Save community privacy to user profile
+      await supabase!
+        .from('profiles')
+        .upsert({
+          id: user.id,
+          community_privacy: newSettings.communityPrivacy,
+          updated_at: new Date().toISOString()
+        })
+
+      console.log('✅ Settings saved to database')
+    } catch (error: any) {
+      console.error('❌ Error saving settings to database:', {
+        code: error?.code,
+        message: error?.message
+      })
+    }
+  }
+
+  const updateNotificationServices = async (newSettings: SettingsState) => {
+    try {
+      // Update the notification settings that the services read from
+      const notificationSettings = {
+        emailEnabled: newSettings.emailEnabled,
+        pushEnabled: newSettings.pushEnabled,
+        frequency: newSettings.dailyNotifications ? 'daily' : 'never',
+        preferredTime: newSettings.notificationTime,
+        prayerReminders: newSettings.prayerReminders
+      }
+
+      localStorage.setItem('notificationPreferences', JSON.stringify(notificationSettings))
+      console.log('✅ Notification services updated:', notificationSettings)
+    } catch (error: any) {
+      console.error('❌ Error updating notification services:', error)
+    }
+  }
+
+  const handleSignOut = async () => {
+    try {
+      setLoading(true)
+      await signOut()
+      navigate('/') // Redirect to homepage
     } catch (error) {
-      alert('Failed to export data: ' + error)
+      console.error('Error signing out:', error)
     } finally {
-      setIsExporting(false)
+      setLoading(false)
+      setShowSignOutConfirm(false)
     }
   }
 
-  const handleImportData = async () => {
-    if (!importFile) return
-    
-    try {
-      setIsImporting(true)
-      await dataExportService.importData(importFile)
-      // Page will reload after import
-    } catch (error) {
-      alert('Failed to import data: ' + error)
-      setIsImporting(false)
-    }
-  }
-
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0]
-    if (file && file.type === 'application/json') {
-      setImportFile(file)
-    } else {
-      alert('Please select a valid JSON backup file')
-    }
-  }
-
-  const handleLogout = () => {
-    signOut()
-  }
-
-  const tabs = [
-    { id: 'account', label: 'Account', icon: '👤' },
-    { id: 'appearance', label: 'Appearance', icon: '🎨' },
-    { id: 'notifications', label: 'Notifications', icon: '🔔' },
-    { id: 'reminders', label: 'Prayer Reminders', icon: '⏰' },
-    { id: 'privacy', label: 'Privacy', icon: '🔒' },
-    { id: 'sync', label: 'Cloud Sync', icon: '🌐' },
-    { id: 'data', label: 'Data & Backup', icon: '💾' },
-    { id: 'help', label: 'Help & Support', icon: '❓' }
+  // Ambient sound options
+  const ambientSounds = [
+    { value: 'none', label: 'None', description: 'No background sound' },
+    { value: 'nature', label: 'Nature Sounds', description: 'Gentle rain, birds, forest' },
+    { value: 'ocean', label: 'Ocean Waves', description: 'Calming ocean waves' },
+    { value: 'worship', label: 'Worship Music', description: 'Soft instrumental worship' },
+    { value: 'meditation', label: 'Meditation', description: 'Peaceful meditation music' }
   ]
 
-  const dataSummary = dataExportService.getDataSummary()
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case 'account':
-        return (
-          <div className="space-y-6">
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Account Information</h3>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Email</label>
-                  <input
-                    type="email"
-                    value={user?.email || ''}
-                    disabled
-                    className="w-full p-3 bg-neutral-700 border border-neutral-600 rounded-xl text-gray-400 cursor-not-allowed"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">Email managed by Google</p>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">Display Name</label>
-                  <input
-                    type="text"
-                    defaultValue={user?.email?.split('@')[0] || 'User'}
-                    className="w-full p-3 bg-neutral-800 border border-neutral-600 rounded-xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Account Actions</h3>
-              <div className="space-y-4">
-                <button
-                  onClick={handleLogout}
-                  className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300"
-                >
-                  🚪 Sign Out
-                </button>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'appearance':
-        return (
-          <div className="space-y-6">
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">🎨 Theme & Appearance</h3>
-              <div className="space-y-6">
-                <div>
-                  <h4 className="text-lg font-semibold text-gray-200 mb-3">Theme Settings</h4>
-                  <p className="text-gray-400 mb-4">Choose your preferred theme for the best visual experience</p>
-                  <ThemeToggle showLabels={true} />
-                </div>
-                
-                <div className="pt-4 border-t border-neutral-700">
-                  <h4 className="text-lg font-semibold text-gray-200 mb-3">Visual Preferences</h4>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-gray-300">Enable Animations</span>
-                        <p className="text-sm text-gray-500">Smooth transitions and hover effects</p>
-                      </div>
-                      <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-green-500">
-                        <span className="inline-block h-4 w-4 transform translate-x-6 rounded-full bg-white transition-transform" />
-                      </button>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <span className="text-gray-300">Compact Mode</span>
-                        <p className="text-sm text-gray-500">Reduce spacing for more content</p>
-                      </div>
-                      <button className="relative inline-flex h-6 w-11 items-center rounded-full bg-neutral-600">
-                        <span className="inline-block h-4 w-4 transform translate-x-1 rounded-full bg-white transition-transform" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'notifications':
-        return (
-          <div className="space-y-6">
-            <PushNotificationSettings />
-            
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">🔔 Browser Notifications</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Browser Notifications</span>
-                  <button
-                    onClick={() => reminderService.requestNotificationPermission()}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Enable
-                  </button>
-                </div>
-                <p className="text-sm text-gray-400">
-                  Allow browser notifications to receive prayer reminders even when the app is closed.
-                </p>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'reminders':
-        return (
-          <div className="space-y-6">
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Prayer Reminders</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Browser Notifications</span>
-                  <button
-                    onClick={() => reminderService.requestNotificationPermission()}
-                    className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                  >
-                    Enable
-                  </button>
-                </div>
-                <p className="text-sm text-gray-400">
-                  Allow browser notifications to receive prayer reminders even when the app is closed.
-                </p>
-              </div>
-            </div>
-
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Active Reminders</h3>
-              <div className="space-y-3">
-                {reminderService.getReminders().map((reminder) => (
-                  <div key={reminder.id} className="p-4 bg-neutral-800 rounded-lg border border-neutral-700">
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <h4 className="font-medium text-gray-100">{reminder.title}</h4>
-                        <p className="text-sm text-gray-400">{reminder.message}</p>
-                        <p className="text-xs text-gray-500 mt-1">
-                          {reminder.time} • {reminder.days.map(day => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][day]).join(', ')}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => reminderService.toggleReminder(reminder.id)}
-                          className={`px-3 py-1 rounded-lg text-xs font-medium transition-colors ${
-                            reminder.enabled
-                              ? 'bg-green-500 text-white'
-                              : 'bg-neutral-700 text-gray-300 hover:bg-neutral-600'
-                          }`}
-                        >
-                          {reminder.enabled ? 'Active' : 'Inactive'}
-                        </button>
-                        <button
-                          onClick={() => reminderService.deleteReminder(reminder.id)}
-                          className="px-3 py-1 bg-red-600 text-white rounded-lg text-xs font-medium hover:bg-red-700 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {reminderService.getReminders().length === 0 && (
-                  <p className="text-gray-400 text-center py-8">No reminders set yet.</p>
-                )}
-              </div>
-            </div>
-
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Upcoming Reminders Today</h3>
-              <div className="space-y-3">
-                {reminderService.getUpcomingReminders().map((reminder) => (
-                  <div key={reminder.id} className="p-4 bg-neutral-800 rounded-lg border border-neutral-700">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className="font-medium text-gray-100">{reminder.title}</h4>
-                        <p className="text-sm text-gray-400">{reminder.message}</p>
-                      </div>
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-green-400">{reminder.time}</div>
-                        <div className="text-xs text-gray-400">Today</div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-                {reminderService.getUpcomingReminders().length === 0 && (
-                  <p className="text-gray-400 text-center py-8">No more reminders for today.</p>
-                )}
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'privacy':
-        return (
-          <div className="space-y-6">
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Privacy Settings</h3>
-              <div className="space-y-4">
-                {Object.entries(settings.privacy).map(([key, value]) => (
-                  <label key={key} className="flex items-center justify-between p-3 bg-neutral-800 rounded-lg">
-                    <div>
-                      <span className="text-gray-100 font-medium capitalize">{key.replace(/([A-Z])/g, ' $1')}</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={value}
-                      onChange={(e) => handleSettingChange('privacy', key, e.target.checked)}
-                      className="w-5 h-5 text-green-500 bg-neutral-700 border-neutral-600 rounded focus:ring-green-500"
-                    />
-                  </label>
-                ))}
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'sync':
-        return (
-          <div className="space-y-6">
-            <SyncStatus />
-            
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">🔄 Sync Settings</h3>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Auto-sync on login</span>
-                  <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                    Enabled
-                  </button>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Sync in background</span>
-                  <button className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
-                    Enabled
-                  </button>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-gray-300">Conflict resolution</span>
-                  <select className="px-4 py-2 bg-neutral-800 border border-neutral-600 rounded-lg text-gray-100">
-                    <option>Latest wins</option>
-                    <option>Manual resolve</option>
-                    <option>Local priority</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">📱 Device Management</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-neutral-800 rounded-lg border border-neutral-700">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <h4 className="font-medium text-gray-100">Current Device</h4>
-                      <p className="text-sm text-gray-400">{navigator.userAgent}</p>
-                    </div>
-                    <div className="text-right">
-                      <div className="text-sm text-green-400">Active</div>
-                      <div className="text-xs text-gray-500">Last active: Now</div>
-                    </div>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-400">
-                  Your data automatically syncs across all devices where you're signed in.
-                </p>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'data':
-        return (
-          <div className="space-y-6">
-            {/* Data Summary */}
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Data Summary</h3>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-green-400">{dataSummary.totalEntries}</div>
-                  <div className="text-sm text-gray-400">Total Entries</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-blue-400">{dataSummary.dataSize}</div>
-                  <div className="text-sm text-gray-400">Data Size</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-lg font-bold text-purple-400">
-                    {dataSummary.lastBackup ? 'Yes' : 'No'}
-                  </div>
-                  <div className="text-sm text-gray-400">Last Backup</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Export Data */}
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Export Data</h3>
-              <div className="space-y-4">
-                <button
-                  onClick={handleExportAllData}
-                  disabled={isExporting}
-                  className="w-full py-3 bg-green-500 text-white rounded-xl hover:bg-green-600 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isExporting ? '🔄 Exporting...' : '💾 Export All Data'}
-                </button>
-                <div className="text-sm text-gray-400 text-center">
-                  Downloads a complete backup of all your spiritual data
-                </div>
-              </div>
-            </div>
-
-            {/* Import Data */}
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Import Data</h3>
-              <div className="space-y-4">
-                <input
-                  type="file"
-                  accept=".json"
-                  onChange={handleFileChange}
-                  className="w-full p-3 bg-neutral-800 border border-neutral-600 rounded-xl text-gray-100 focus:outline-none focus:ring-2 focus:ring-green-500"
-                />
-                <button
-                  onClick={handleImportData}
-                  disabled={!importFile || isImporting}
-                  className="w-full py-3 bg-blue-500 text-white rounded-xl hover:bg-blue-600 transition-all duration-300 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {isImporting ? '🔄 Importing...' : '📥 Import Data'}
-                </button>
-                <div className="text-sm text-gray-400 text-center">
-                  Import data from a previous backup file
-                </div>
-              </div>
-            </div>
-
-            {/* Danger Zone */}
-            <div className="bg-red-900/20 border border-red-500/30 rounded-2xl p-6">
-              <h3 className="text-xl font-bold text-red-400 mb-4">⚠️ Danger Zone</h3>
-              <div className="space-y-4">
-                <button
-                  onClick={() => {
-                    if (confirm('Are you sure you want to clear all data? This action cannot be undone.')) {
-                      dataExportService.clearAllData()
-                    }
-                  }}
-                  className="w-full py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-300 font-medium"
-                >
-                  🗑️ Clear All Data
-                </button>
-                <div className="text-sm text-red-400 text-center">
-                  This will permanently delete all your data and reset the app
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      case 'help':
-        return (
-          <div className="space-y-6">
-            <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-6 border border-neutral-800">
-              <h3 className="text-xl font-bold text-gray-100 mb-4">Help & Support</h3>
-              <div className="space-y-4">
-                <div className="p-4 bg-neutral-800 rounded-lg">
-                  <h4 className="font-medium text-gray-100 mb-2">📚 Getting Started</h4>
-                  <p className="text-sm text-gray-400">Learn how to use ChristianKit effectively</p>
-                </div>
-                <div className="p-4 bg-neutral-800 rounded-lg">
-                  <h4 className="font-medium text-gray-100 mb-2">❓ FAQ</h4>
-                  <p className="text-sm text-gray-400">Common questions and answers</p>
-                </div>
-                <div className="p-4 bg-neutral-800 rounded-lg">
-                  <h4 className="font-medium text-gray-100 mb-2">📧 Contact Support</h4>
-                  <p className="text-sm text-gray-400">Get help from our support team</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        )
-
-      default:
-        return null
-    }
-  }
+  // Prayer modes
+  const prayerModes = [
+    { value: 'guided', label: 'Guided Prayer', description: 'Step-by-step prayer prompts' },
+    { value: 'silent', label: 'Silent Prayer', description: 'Just timer with minimal distractions' },
+    { value: 'scripture', label: 'Scripture Prayer', description: 'Bible verses appear during prayer' },
+    { value: 'worship', label: 'Worship Prayer', description: 'Background worship music' }
+  ]
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)]">
-      <div className="max-w-4xl mx-auto py-8 px-4">
+      <OsmoContainer padding={true}>
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            Your{' '}
-            <span className="bg-gradient-to-r from-[var(--accent-primary)] to-[var(--accent-secondary)] bg-clip-text text-transparent">
-              Settings
-            </span>
-          </h1>
-          <p className="text-lg text-[var(--text-secondary)] max-w-2xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-[var(--text-primary)] mb-2">Settings</h1>
+          <p className="text-[var(--text-secondary)] text-lg">
             Customize your ChristianKit experience and manage your account
           </p>
         </div>
 
-        {/* Settings Tabs */}
-        <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl p-2 border border-neutral-800 mb-8">
-          <div className="flex flex-wrap gap-2">
-            {tabs.map((tab) => (
+        {/* Sign In Prompt for Non-Authenticated Users */}
+        {!user && (
+          <OsmoCard className="mb-8 text-center">
+            <div className="p-6">
+              <div className="w-16 h-16 bg-gradient-to-br from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-2">Sign In Required</h3>
+              <p className="text-[var(--text-secondary)] mb-6">Sign in to access your personalized settings</p>
+              <OsmoButton
+                onClick={signInWithGoogle}
+                variant="primary"
+                className="px-8 py-3"
+              >
+                <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center mr-2">
+                  <span className="text-[var(--accent-primary)] text-sm font-bold">G</span>
+                </div>
+                Sign In with Google
+              </OsmoButton>
+            </div>
+          </OsmoCard>
+        )}
+
+        {/* Tab Navigation */}
+        <div className="mb-8">
+          <div className="flex flex-wrap gap-2 p-1 bg-[var(--glass-dark)] border border-[var(--glass-border)] rounded-2xl">
+            {(['general', 'prayer', 'notifications', 'privacy'] as const).map((tab) => (
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-3 rounded-xl font-medium transition-all duration-200 flex items-center gap-2 ${
-                  activeTab === tab.id
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-lg'
-                    : 'text-gray-400 hover:text-gray-100 hover:bg-neutral-800'
+                key={tab}
+                onClick={() => setActiveTab(tab)}
+                className={`px-4 py-2 rounded-xl text-sm font-medium transition-all duration-300 ${
+                  activeTab === tab
+                    ? 'bg-[var(--accent-primary)] text-white shadow-lg'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--glass-light)]'
                 }`}
               >
-                <span>{tab.icon}</span>
-                <span>{tab.label}</span>
+                {tab === 'general' && 'General'}
+                {tab === 'prayer' && 'Prayer'}
+                {tab === 'notifications' && 'Notifications'}
+                {tab === 'privacy' && 'Privacy'}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Tab Content */}
-        {renderTabContent()}
-      </div>
+        {/* Settings for Authenticated Users */}
+        {user && (
+          <div className="space-y-6">
+            {/* Success Messages */}
+            {success && (
+              <div className="bg-green-500/10 border border-green-500/30 text-green-400 px-4 py-3 rounded-xl flex items-center gap-2">
+                <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd"/>
+                </svg>
+                {success}
+              </div>
+            )}
+
+            {/* Tab Content */}
+            {activeTab === 'general' && (
+          <div className="space-y-6">
+            {/* Daily Notifications */}
+            <OsmoCard className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/5 to-[var(--spiritual-blue)]/5"></div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-[var(--text-primary)]">Daily Notifications</h3>
+                      <p className="text-[var(--text-secondary)] text-sm">Receive spiritual messages and reminders daily</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => updateSetting('dailyNotifications', !settings.dailyNotifications)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                      settings.dailyNotifications
+                        ? 'bg-[var(--accent-primary)]'
+                        : 'bg-[var(--glass-border)]'
+                    }`}
+                  >
+                    <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                      settings.dailyNotifications ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+                
+                {/* Time Picker */}
+                {settings.dailyNotifications && (
+                  <div className="flex items-center gap-3 pl-16">
+                    <label className="text-sm text-[var(--text-secondary)]">Time:</label>
+                    <input
+                      type="time"
+                      value={settings.notificationTime}
+                      onChange={(e) => updateSetting('notificationTime', e.target.value)}
+                      className="bg-[var(--glass-dark)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-all"
+                    />
+                        {errors.notificationTime && (
+                          <span className="text-red-400 text-sm">{errors.notificationTime}</span>
+                        )}
+                  </div>
+                )}
+              </div>
+            </OsmoCard>
+
+                {/* Email Notifications */}
+            <OsmoCard className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5"></div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[var(--spiritual-blue)]/20 to-[var(--spiritual-cyan)]/20 rounded-xl flex items-center justify-center">
+                          <svg className="w-6 h-6 text-[var(--spiritual-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Email Notifications</h3>
+                          <p className="text-[var(--text-secondary)] text-sm">Receive notifications via email</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => updateSetting('emailEnabled', !settings.emailEnabled)}
+                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                          settings.emailEnabled
+                            ? 'bg-[var(--spiritual-blue)]'
+                            : 'bg-[var(--glass-border)]'
+                        }`}
+                      >
+                        <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                          settings.emailEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+                  </div>
+                </OsmoCard>
+              </div>
+            )}
+
+            {activeTab === 'prayer' && (
+              <div className="space-y-6">
+                {/* Default Prayer Duration */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5"></div>
+                  <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">⏰ Default Prayer Duration</h3>
+                    <div className="flex flex-wrap justify-center gap-3">
+                      {[5, 10, 15, 20, 30].map((minutes) => (
+                        <button
+                          key={minutes}
+                          onClick={() => updateSetting('defaultDuration', minutes)}
+                          className={`p-4 rounded-xl font-bold text-lg transition-all duration-300 hover:scale-105 border-2 ${
+                            settings.defaultDuration === minutes
+                              ? 'bg-[var(--spiritual-blue)] text-white shadow-lg border-[var(--spiritual-blue)]'
+                              : 'bg-[var(--glass-dark)] text-[var(--text-primary)] hover:bg-[var(--glass-light)] border-[var(--glass-border)]'
+                          }`}
+                        >
+                          {minutes}
+                          <div className="text-xs font-normal mt-1">MINUTES</div>
+                        </button>
+                      ))}
+                    </div>
+                    {errors.defaultDuration && (
+                      <p className="text-red-400 text-sm mt-2 text-center">{errors.defaultDuration}</p>
+                    )}
+                  </div>
+                </OsmoCard>
+
+                {/* Prayer Mode */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/5 to-[var(--spiritual-blue)]/5"></div>
+                  <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">🙏 Default Prayer Mode</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {prayerModes.map((mode) => (
+                        <button
+                          key={mode.value}
+                          onClick={() => updateSetting('defaultMode', mode.value as SettingsState['defaultMode'])}
+                          className={`p-4 rounded-xl text-left transition-all duration-300 hover:scale-105 border-2 ${
+                            settings.defaultMode === mode.value
+                              ? 'bg-[var(--accent-secondary)] text-white shadow-lg border-[var(--accent-secondary)]'
+                              : 'bg-[var(--glass-dark)] text-[var(--text-primary)] hover:bg-[var(--glass-light)] border-[var(--glass-border)]'
+                          }`}
+                        >
+                          <h4 className="font-semibold">{mode.label}</h4>
+                          <p className="text-sm opacity-80 mt-1">{mode.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </OsmoCard>
+
+                {/* Prayer Reminders */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5"></div>
+                  <div className="relative p-6">
+                    <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[var(--spiritual-blue)]/20 to-[var(--spiritual-cyan)]/20 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-[var(--spiritual-blue)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </div>
+                    <div>
+                          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Enable Prayer Reminders</h3>
+                          <p className="text-[var(--text-secondary)] text-sm">Show gentle prompts during prayer</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => updateSetting('enableReminders', !settings.enableReminders)}
+                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                          settings.enableReminders
+                            ? 'bg-[var(--spiritual-blue)]'
+                            : 'bg-[var(--glass-border)]'
+                        }`}
+                      >
+                        <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                          settings.enableReminders ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {settings.enableReminders && (
+                      <div className="pl-16">
+                        <label className="block text-sm text-[var(--text-secondary)] mb-2">Reminder Interval (seconds)</label>
+                        <input
+                          type="range"
+                          min="15"
+                          max="120"
+                          step="15"
+                          value={settings.reminderInterval}
+                          onChange={(e) => updateSetting('reminderInterval', parseInt(e.target.value))}
+                          className="w-full h-2 bg-[var(--glass-border)] rounded-lg appearance-none cursor-pointer"
+                        />
+                        <div className="flex justify-between text-xs text-[var(--text-secondary)] mt-1">
+                          <span>15s</span>
+                          <span className="font-semibold">{settings.reminderInterval}s</span>
+                          <span>120s</span>
+                        </div>
+                        {errors.reminderInterval && (
+                          <p className="text-red-400 text-sm mt-2">{errors.reminderInterval}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </OsmoCard>
+
+                {/* Ambient Sound */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/5 to-[var(--spiritual-blue)]/5"></div>
+                  <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">🔊 Ambient Sound</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {ambientSounds.map((sound) => (
+                        <button
+                          key={sound.value}
+                          onClick={() => updateSetting('ambientSound', sound.value as SettingsState['ambientSound'])}
+                          className={`p-4 rounded-xl text-left transition-all duration-300 hover:scale-105 border-2 ${
+                            settings.ambientSound === sound.value
+                              ? 'bg-[var(--accent-secondary)] text-white shadow-lg border-[var(--accent-secondary)]'
+                              : 'bg-[var(--glass-dark)] text-[var(--text-primary)] hover:bg-[var(--glass-light)] border-[var(--glass-border)]'
+                          }`}
+                        >
+                          <h4 className="font-semibold">{sound.label}</h4>
+                          <p className="text-sm opacity-80 mt-1">{sound.description}</p>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </OsmoCard>
+
+                {/* Additional Settings */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5"></div>
+                  <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">⚙️ Additional Settings</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-[var(--text-primary)]">Auto Save Sessions</h4>
+                          <p className="text-sm text-[var(--text-secondary)]">Automatically save prayer sessions</p>
+                        </div>
+                        <button
+                          onClick={() => updateSetting('autoSave', !settings.autoSave)}
+                          className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                            settings.autoSave
+                              ? 'bg-[var(--spiritual-blue)]'
+                              : 'bg-[var(--glass-border)]'
+                          }`}
+                        >
+                          <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                            settings.autoSave ? 'translate-x-6' : 'translate-x-0'
+                          }`} />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-[var(--text-primary)]">Show Scripture Verses</h4>
+                          <p className="text-sm text-[var(--text-secondary)]">Display Bible verses during prayer</p>
+                  </div>
+                  <button
+                          onClick={() => updateSetting('showScripture', !settings.showScripture)}
+                    className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                            settings.showScripture
+                        ? 'bg-[var(--spiritual-blue)]'
+                        : 'bg-[var(--glass-border)]'
+                    }`}
+                  >
+                    <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                            settings.showScripture ? 'translate-x-6' : 'translate-x-0'
+                    }`} />
+                  </button>
+                </div>
+                    </div>
+                  </div>
+                </OsmoCard>
+              </div>
+            )}
+
+            {activeTab === 'notifications' && (
+              <div className="space-y-6">
+                {/* Push Notifications */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-primary)]/5 to-[var(--spiritual-blue)]/5"></div>
+                  <div className="relative p-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gradient-to-br from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 rounded-xl flex items-center justify-center">
+                          <svg className="w-6 h-6 text-[var(--accent-primary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-5 5v-5zM4 19h6v-6H4v6zM4 5h6V1H4v4zM15 3h5l-5-5v5z" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-semibold text-[var(--text-primary)]">Push Notifications</h3>
+                          <p className="text-[var(--text-secondary)] text-sm">Browser notifications for spiritual reminders</p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => updateSetting('pushEnabled', !settings.pushEnabled)}
+                        className={`relative w-14 h-8 rounded-full transition-all duration-300 ${
+                          settings.pushEnabled
+                            ? 'bg-[var(--accent-primary)]'
+                            : 'bg-[var(--glass-border)]'
+                        }`}
+                      >
+                        <div className={`absolute top-1 left-1 w-6 h-6 bg-white rounded-full transition-transform duration-300 ${
+                          settings.pushEnabled ? 'translate-x-6' : 'translate-x-0'
+                        }`} />
+                      </button>
+                    </div>
+
+                    {settings.pushEnabled && (
+                      <div className="pl-16 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-[var(--text-primary)]">Request Permission</h4>
+                            <p className="text-sm text-[var(--text-secondary)]">Enable browser notifications</p>
+                          </div>
+                          <button
+                            onClick={requestNotificationPermission}
+                            className="px-4 py-2 bg-[var(--accent-primary)] text-white rounded-lg hover:bg-[var(--accent-primary)]/80 transition-all duration-300"
+                          >
+                            {notificationPermission === ('granted' as unknown as NotificationPermission) ? '✓ Granted' : 'Request'}
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium text-[var(--text-primary)]">Test Notification</h4>
+                            <p className="text-sm text-[var(--text-secondary)]">Send a test notification</p>
+                          </div>
+                          <button
+                            onClick={testNotification}
+                            className="px-4 py-2 bg-[var(--spiritual-blue)] text-white rounded-lg hover:bg-[var(--spiritual-blue)]/80 transition-all duration-300"
+                          >
+                            🧪 Test
+                          </button>
+                        </div>
+                      </div>
+                    )}
+              </div>
+            </OsmoCard>
+
+                {/* Notification Settings */}
+                <OsmoCard className="relative overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5"></div>
+                  <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">Notification Settings</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-[var(--text-primary)]">Urgency Level</h4>
+                          <p className="text-sm text-[var(--text-secondary)]">How persistent notifications should be</p>
+                        </div>
+                        <select
+                          value={settings.urgencyLevel}
+                          onChange={(e) => updateSetting('urgencyLevel', e.target.value as SettingsState['urgencyLevel'])}
+                          className="bg-[var(--glass-dark)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-all"
+                        >
+                          <option value="gentle">Gentle</option>
+                          <option value="moderate">Moderate</option>
+                          <option value="aggressive">Aggressive</option>
+                          <option value="ruthless">Ruthless</option>
+                        </select>
+                      </div>
+
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-medium text-[var(--text-primary)]">Frequency</h4>
+                          <p className="text-sm text-[var(--text-secondary)]">How often to send notifications</p>
+                        </div>
+                        <select
+                          value={settings.frequency}
+                          onChange={(e) => updateSetting('frequency', e.target.value as SettingsState['frequency'])}
+                          className="bg-[var(--glass-dark)] border border-[var(--glass-border)] rounded-lg px-3 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-all"
+                        >
+                          <option value="hourly">Hourly</option>
+                          <option value="daily">Daily</option>
+                          <option value="constant">Constant</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </OsmoCard>
+              </div>
+            )}
+
+            {activeTab === 'privacy' && (
+              <div className="space-y-6">
+            {/* Community Privacy */}
+            <OsmoCard className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[var(--accent-secondary)]/5 to-[var(--spiritual-blue)]/5"></div>
+              <div className="relative p-6">
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)] mb-4">🔒 Privacy Settings</h3>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-[var(--accent-secondary)]/20 to-[var(--spiritual-blue)]/20 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-[var(--accent-secondary)]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>
+                    </div>
+                    <div>
+                          <h4 className="text-lg font-semibold text-[var(--text-primary)]">Community Privacy</h4>
+                      <p className="text-[var(--text-secondary)] text-sm">Control who can see your posts and activities</p>
+                    </div>
+                  </div>
+                  <select
+                    value={settings.communityPrivacy}
+                    onChange={(e) => updateSetting('communityPrivacy', e.target.value as SettingsState['communityPrivacy'])}
+                    className="bg-[var(--glass-dark)] border border-[var(--glass-border)] rounded-xl px-4 py-2 text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent-primary)] focus:border-transparent transition-all min-w-[140px]"
+                  >
+                    <option value="public">Public</option>
+                    <option value="followers">Followers Only</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+              </div>
+            </OsmoCard>
+              </div>
+            )}
+
+            {/* Sign Out */}
+            <OsmoCard className="relative overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-red-500/5 to-red-600/5"></div>
+              <div className="relative p-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-xl flex items-center justify-center">
+                      <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold text-[var(--text-primary)]">Sign Out</h3>
+                      <p className="text-[var(--text-secondary)] text-sm">Sign out of your account and return to homepage</p>
+                    </div>
+                  </div>
+                  <OsmoButton
+                    onClick={() => setShowSignOutConfirm(true)}
+                    variant="secondary"
+                    disabled={loading}
+                    className="px-6 py-3 border-2 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500 transition-all duration-300"
+                  >
+                    {loading ? 'Signing Out...' : 'Sign Out'}
+                  </OsmoButton>
+                </div>
+              </div>
+            </OsmoCard>
+          </div>
+        )}
+
+        {/* Sign Out Confirmation Dialog */}
+        {showSignOutConfirm && (
+          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <OsmoCard className="max-w-md w-full">
+              <div className="p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="w-12 h-12 bg-gradient-to-br from-red-500/20 to-red-600/20 rounded-xl flex items-center justify-center">
+                    <svg className="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold text-[var(--text-primary)]">Confirm Sign Out</h3>
+                    <p className="text-[var(--text-secondary)] text-sm">Are you sure you want to sign out?</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <OsmoButton
+                    onClick={handleSignOut}
+                    variant="secondary"
+                    disabled={loading}
+                    className="flex-1 px-6 py-3 border-2 border-red-500/30 text-red-500 hover:bg-red-500/10 hover:border-red-500 transition-all duration-300"
+                  >
+                    {loading ? 'Signing Out...' : 'Yes, Sign Out'}
+                  </OsmoButton>
+                  <OsmoButton
+                    onClick={() => setShowSignOutConfirm(false)}
+                    variant="primary"
+                    className="flex-1 px-6 py-3"
+                    disabled={loading}
+                  >
+                    Cancel
+                  </OsmoButton>
+                </div>
+              </div>
+            </OsmoCard>
+          </div>
+        )}
+      </OsmoContainer>
     </div>
   )
 }
