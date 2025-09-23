@@ -1,4 +1,10 @@
-import { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
+import { GameCard } from './game/GameCard';
+import { GameBoard } from './game/GameBoard';
+import { GameHeader } from './game/GameHeader';
+import { GameComplete } from './game/GameComplete';
+import { useGameAudio } from '../hooks/useGameAudio';
+import { useGameSave } from '../hooks/useGameSave';
 import { OsmoCard, OsmoButton, OsmoGradientText, OsmoSectionHeader, OsmoBadge } from '../theme/osmoComponents';
 
 // Game Types
@@ -37,8 +43,14 @@ interface BibleVerse {
   category: string;
 }
 
-const BibleVerseMemoryMatch = () => {
-  // Game state
+const BibleVerseMemoryMatch: React.FC = () => {
+  // Hooks
+  const { playSound, initializeAudio } = useGameAudio();
+  const { loadGameData, recordGameComplete } = useGameSave();
+
+  // Initialize with saved data
+  const savedData = loadGameData();
+  
   const [gameState, setGameState] = useState<GameState>({
     cards: [],
     flippedCards: [],
@@ -50,7 +62,7 @@ const BibleVerseMemoryMatch = () => {
     gameCompleted: false,
     difficulty: 'easy',
     streak: 0,
-    bestScore: 0,
+    bestScore: savedData.bestScore,
     perfectMatches: 0,
     perfectGamesInRow: 0,
     currentCategory: 'popular',
@@ -59,7 +71,9 @@ const BibleVerseMemoryMatch = () => {
   });
 
   const [showStats, setShowStats] = useState(false);
+  const [showGameComplete, setShowGameComplete] = useState(false);
   const [autoContinueTimer, setAutoContinueTimer] = useState(3);
+  const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<NodeJS.Timeout | null>(null);
 
   // Bible verses database
   const bibleVerses: BibleVerse[] = [
@@ -262,6 +276,11 @@ const BibleVerseMemoryMatch = () => {
       return;
     }
 
+    // Initialize audio on first interaction
+    initializeAudio();
+    // Play card flip sound
+    playSound('cardFlip');
+
     const newFlippedCards = [...gameState.flippedCards, clickedCard];
     const updatedCards = gameState.cards.map(card =>
       card.id === clickedCard.id ? { ...card, flipped: true } : card
@@ -306,7 +325,12 @@ const BibleVerseMemoryMatch = () => {
             gameCompleted: newMatches === (gameState.difficulty === 'easy' ? 4 : gameState.difficulty === 'medium' ? 6 : 8)
           }));
 
-          // Play success sound (you can add actual audio here)
+          // Play match sound
+          if (isPerfectMatch) {
+            playSound('perfectMatch');
+          } else {
+            playSound('match');
+          }
           console.log('🎉 Match found!');
         } else {
           // No match
@@ -322,6 +346,8 @@ const BibleVerseMemoryMatch = () => {
             streak: 0 // Reset streak on wrong match
           }));
 
+          // Play no match sound
+          playSound('noMatch');
           console.log('❌ No match');
         }
       }, 1000);
@@ -330,54 +356,128 @@ const BibleVerseMemoryMatch = () => {
 
   // Save game completion and handle progression
   useEffect(() => {
-    if (gameState.gameCompleted) {
-      const newBestScore = Math.max(gameState.score, gameState.bestScore);
-      const isPerfectGame = gameState.attempts === gameState.matches; // Perfect game = no wrong attempts
-      const newPerfectGamesInRow = isPerfectGame ? gameState.perfectGamesInRow + 1 : 0;
+    if (gameState.gameCompleted && !showGameComplete) {
+      // Play game completion sound
+      playSound('gameComplete');
       
-      // Update progression
-      const nextSettings = getNextGameSettings();
+      // Record completion and check for new best score
+      const result = recordGameComplete(gameState.score, gameState.matches, gameState.timeElapsed);
       
-      const saveData = {
-        bestScore: newBestScore,
-        perfectGamesInRow: newPerfectGamesInRow,
-        currentCategory: nextSettings.category,
-        unlockedCategories: nextSettings.unlockedCategories,
-        currentLevel: nextSettings.level,
-        difficulty: nextSettings.difficulty
-      };
-      
-      localStorage.setItem('bible-memory-match-data', JSON.stringify(saveData));
-      
-      setGameState(prev => ({ 
-        ...prev, 
-        bestScore: newBestScore,
-        perfectGamesInRow: newPerfectGamesInRow,
-        currentCategory: nextSettings.category,
-        unlockedCategories: nextSettings.unlockedCategories,
-        currentLevel: nextSettings.level,
-        difficulty: nextSettings.difficulty
+      // Update best score in state
+      setGameState(prev => ({
+        ...prev,
+        bestScore: result.bestScore
       }));
-    }
-  }, [gameState.gameCompleted, gameState.score, gameState.bestScore, gameState.attempts, gameState.matches]);
-
-  // Auto-continue timer
-  useEffect(() => {
-    if (gameState.gameCompleted) {
-      setAutoContinueTimer(3);
-      const timer = setInterval(() => {
-        setAutoContinueTimer(prev => {
-          if (prev <= 1) {
-            initializeGame();
-            return 3;
-          }
-          return prev - 1;
-        });
-      }, 1000);
       
-      return () => clearInterval(timer);
+      // Show completion screen
+      setShowGameComplete(true);
+      
+      // Auto-advance to next level if not on hardest difficulty
+      if (gameState.difficulty !== 'hard') {
+        const timer = setTimeout(() => {
+          handleNextLevel();
+        }, 3000); // 3 second delay
+        
+        setAutoAdvanceTimer(timer);
+      }
     }
-  }, [gameState.gameCompleted, initializeGame]);
+  }, [gameState.gameCompleted, gameState.score, gameState.matches, gameState.timeElapsed, gameState.difficulty, showGameComplete, playSound, recordGameComplete]);
+
+  // Cleanup auto-advance timer
+  useEffect(() => {
+    return () => {
+      if (autoAdvanceTimer) {
+        clearTimeout(autoAdvanceTimer);
+      }
+    };
+  }, [autoAdvanceTimer]);
+
+  // Handle next level progression
+  const handleNextLevel = useCallback(() => {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      setAutoAdvanceTimer(null);
+    }
+    
+    let nextDifficulty: 'easy' | 'medium' | 'hard' = gameState.difficulty;
+    if (gameState.difficulty === 'easy') {
+      nextDifficulty = 'medium';
+    } else if (gameState.difficulty === 'medium') {
+      nextDifficulty = 'hard';
+    }
+    
+    setShowGameComplete(false);
+    setGameState(prev => ({
+      ...prev,
+      difficulty: nextDifficulty,
+      gameCompleted: false,
+      gameStarted: false,
+      cards: [],
+      flippedCards: [],
+      matches: 0,
+      attempts: 0,
+      score: 0,
+      timeElapsed: 0,
+      streak: 0,
+      perfectMatches: 0
+    }));
+    
+    // Initialize new game with new difficulty
+    setTimeout(() => {
+      initializeGame();
+    }, 100);
+  }, [gameState.difficulty, autoAdvanceTimer]);
+
+  // Handle play again
+  const handlePlayAgain = useCallback(() => {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      setAutoAdvanceTimer(null);
+    }
+    
+    setShowGameComplete(false);
+    setGameState(prev => ({
+      ...prev,
+      gameCompleted: false,
+      gameStarted: false,
+      cards: [],
+      flippedCards: [],
+      matches: 0,
+      attempts: 0,
+      score: 0,
+      timeElapsed: 0,
+      streak: 0,
+      perfectMatches: 0
+    }));
+    
+    setTimeout(() => {
+      initializeGame();
+    }, 100);
+  }, [autoAdvanceTimer]);
+
+  // Handle return to main menu
+  const handleMainMenu = useCallback(() => {
+    if (autoAdvanceTimer) {
+      clearTimeout(autoAdvanceTimer);
+      setAutoAdvanceTimer(null);
+    }
+    
+    setShowGameComplete(false);
+    setGameState(prev => ({
+      ...prev,
+      gameCompleted: false,
+      gameStarted: false,
+      cards: [],
+      flippedCards: [],
+      matches: 0,
+      attempts: 0,
+      score: 0,
+      timeElapsed: 0,
+      streak: 0,
+      perfectMatches: 0,
+      difficulty: 'easy'
+    }));
+  }, [autoAdvanceTimer]);
 
   // Reset current game
   const resetGame = () => {
@@ -866,6 +966,22 @@ const BibleVerseMemoryMatch = () => {
           </OsmoCard>
         </div>
       </div>
+
+      {/* Game Complete Modal */}
+      {showGameComplete && (
+        <GameComplete
+          score={gameState.score}
+          bestScore={gameState.bestScore}
+          isNewBest={gameState.score > (gameState.bestScore - gameState.score)}
+          timeElapsed={gameState.timeElapsed}
+          difficulty={gameState.difficulty}
+          perfectMatches={gameState.perfectMatches}
+          totalMatches={gameState.matches}
+          onNextLevel={handleNextLevel}
+          onPlayAgain={handlePlayAgain}
+          onMainMenu={handleMainMenu}
+        />
+      )}
     </div>
   );
 };

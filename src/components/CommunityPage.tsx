@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react'
-import { OsmoCard, OsmoGradientText, OsmoSectionHeader } from '../theme/osmoComponents'
+import { OsmoCard, OsmoGradientText, OsmoSectionHeader, OsmoButton } from '../theme/osmoComponents'
 import { useCommunityStore } from '../store/communityStore'
 import { PostCard } from './community/PostCard'
 import { PostCreation } from './community/PostCreation'
 import { FeedControls } from './community/FeedControls'
-import { ReplyModal } from './community/ReplyModal'
+import { BibleVersesSidebar } from './BibleVersesSidebar'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { CommunityPost } from '../store/communityStore'
+import { useAppStore } from '../store/appStore'
 
 const CommunityPage = () => {
   const { user } = useSupabaseAuth()
+  const { setActiveTab } = useAppStore()
   const {
     posts,
     isLoading,
@@ -21,10 +23,6 @@ const CommunityPage = () => {
     reset
   } = useCommunityStore()
 
-  const [selectedPostForReply, setSelectedPostForReply] = useState<CommunityPost | null>(null)
-  const [showUserModal, setShowUserModal] = useState(false)
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
-
   // Initialize community data
   useEffect(() => {
     loadPosts(true)
@@ -34,18 +32,16 @@ const CommunityPage = () => {
     }
   }, [loadPosts, reset])
 
-  // Handle user click
-  const handleUserClick = (userId: string) => {
-    setSelectedUserId(userId)
-    setShowUserModal(true)
+  // Handle user profile navigation
+  const handleNavigateToProfile = (userId: string) => {
+    // Navigate to the profile page
+    setActiveTab('profile')
+    // You might want to store the selected user ID in app store for profile page to use
   }
 
-  // Handle reply click
-  const handleReplyClick = (postId: string) => {
-    const post = posts.find(p => p.id === postId)
-    if (post) {
-      setSelectedPostForReply(post)
-    }
+  // Handle user click (for mentions, etc.)
+  const handleUserClick = (userId: string) => {
+    handleNavigateToProfile(userId)
   }
 
   // Handle load more posts
@@ -62,7 +58,7 @@ const CommunityPage = () => {
     <div className="min-h-screen bg-black text-white">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-black/80 backdrop-blur-xl border-b border-gray-800">
-        <div className="max-w-2xl mx-auto">
+        <div className="max-w-7xl mx-auto px-4">
           <div className="p-4">
             <div className="text-center">
               <OsmoGradientText className="text-2xl font-bold">
@@ -70,38 +66,44 @@ const CommunityPage = () => {
               </OsmoGradientText>
             </div>
           </div>
-          <FeedControls />
+          <div className="max-w-2xl mx-auto">
+            <FeedControls />
+          </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-2xl mx-auto">
+      {/* Main Content with Sidebar Layout */}
+      <div className="max-w-5xl mx-auto px-4">
+        <div className="flex gap-8 justify-center">
+          {/* Main Feed */}
+          <div className="w-full max-w-2xl">
         {/* Post Creation */}
         <PostCreation />
 
-        {/* Error Display - Mobile Optimized */}
+        {/* Error Display - Osmo Style */}
         {error && (
-          <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-4 m-3 sm:m-4">
-            <div className="flex items-start space-x-3">
-              <div className="flex-shrink-0">
-                <svg className="w-5 h-5 text-red-400" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+          <OsmoCard className="p-6 mb-6 border-red-500/20 m-3 sm:m-4">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-8 h-8 text-red-400" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                 </svg>
               </div>
-              <div className="flex-1">
-                <p className="text-red-400 text-sm leading-relaxed">{error}</p>
-                <button 
-                  onClick={() => {
-                    useCommunityStore.getState().reset()
-                    loadPosts(true)
-                  }}
-                  className="mt-2 text-red-300 hover:text-red-200 text-xs underline touch-manipulation"
-                >
-                  Try Again
-                    </button>
-              </div>
+              <OsmoGradientText className="text-xl font-bold mb-2">
+                Connection Issue
+              </OsmoGradientText>
+              <p className="text-gray-400 text-sm mb-6">{error}</p>
+              <OsmoButton 
+                onClick={() => {
+                  useCommunityStore.getState().reset()
+                  loadPosts(true)
+                }}
+                className="px-6 py-2"
+              >
+                Try Again
+              </OsmoButton>
             </div>
-          </div>
+          </OsmoCard>
         )}
 
         {/* Loading State */}
@@ -118,7 +120,7 @@ const CommunityPage = () => {
               key={post.id}
               post={post}
               onUserClick={handleUserClick}
-              onReplyClick={handleReplyClick}
+              onNavigateToProfile={handleNavigateToProfile}
               showReplies={true}
             />
           ))}
@@ -158,80 +160,43 @@ const CommunityPage = () => {
                   </div>
                 )}
                 
-        {/* Community Stats */}
-        <div className="p-4 border-t border-gray-800 bg-gray-900/20">
+          </div>
+
+          {/* Right Sidebar - Desktop Only */}
+          <div className="hidden lg:block w-80 flex-shrink-0">
+            <BibleVersesSidebar />
+          </div>
+        </div>
+
+        {/* Community Stats - Mobile Only */}
+        <div className="lg:hidden p-4 border-t border-gray-800 bg-gray-900/20">
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
             <div>
               <div className="text-2xl font-bold text-yellow-500">{posts.length}</div>
               <div className="text-xs text-gray-500">Posts</div>
-                        </div>
+            </div>
             <div>
               <div className="text-2xl font-bold text-blue-500">
                 {posts.reduce((sum, post) => sum + post.prayers_count, 0)}
-                          </div>
+              </div>
               <div className="text-xs text-gray-500">Prayers</div>
-                        </div>
+            </div>
             <div>
               <div className="text-2xl font-bold text-pink-500">
                 {posts.reduce((sum, post) => sum + post.loves_count, 0)}
-                      </div>
+              </div>
               <div className="text-xs text-gray-500">Loves</div>
-                    </div>
+            </div>
             <div>
               <div className="text-2xl font-bold text-green-500">
                 {posts.reduce((sum, post) => sum + post.amens_count, 0)}
               </div>
               <div className="text-xs text-gray-500">Amens</div>
-        </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Reply Modal */}
-      {selectedPostForReply && (
-        <ReplyModal
-          post={selectedPostForReply}
-          onClose={() => setSelectedPostForReply(null)}
-        />
-      )}
-
-      {/* User Profile Modal (placeholder) */}
-      {showUserModal && selectedUserId && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <OsmoCard className="w-full max-w-md">
-            <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-white">User Profile</h3>
-              <button
-                onClick={() => setShowUserModal(false)}
-                className="text-gray-500 hover:text-white transition-colors duration-200"
-              >
-                  <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
-                  </svg>
-              </button>
-            </div>
-            
-            <div className="text-center">
-                <div className="w-20 h-20 bg-yellow-500 rounded-full flex items-center justify-center text-black text-2xl font-bold mx-auto mb-4">
-                👤
-              </div>
-                <h4 className="text-xl font-bold text-white mb-2">User Profile</h4>
-                <p className="text-gray-400 text-sm mb-4">Profile details will be loaded from Supabase</p>
-              
-              <div className="flex space-x-3">
-                  <button className="flex-1 bg-yellow-500 hover:bg-yellow-400 text-black py-2 px-4 rounded-lg font-bold transition-colors duration-200">
-                    Follow
-                </button>
-                  <button className="flex-1 bg-gray-700 hover:bg-gray-600 text-white py-2 px-4 rounded-lg font-bold transition-colors duration-200">
-                    Message
-                </button>
-                </div>
-              </div>
-            </div>
-          </OsmoCard>
-        </div>
-      )}
     </div>
   )
 }

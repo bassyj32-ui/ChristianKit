@@ -50,6 +50,12 @@ if ('serviceWorker' in navigator) {
         });
       });
     }
+    
+    // Force reload after clearing to ensure clean state
+    setTimeout(() => {
+      if (window.location.search.includes('sw-cleared')) return;
+      window.location.href = window.location.href + '?sw-cleared=1';
+    }, 500);
   }
 }
 

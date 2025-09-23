@@ -1,10 +1,13 @@
 import React, { useState } from 'react'
 import { CommunityPost, useCommunityStore } from '../../store/communityStore'
+import { useSupabaseAuth } from '../SupabaseAuthProvider'
+import { ShareModal } from '../ShareModal'
 
 interface PostCardProps {
   post: CommunityPost
   onUserClick: (userId: string) => void
-  onReplyClick: (postId: string) => void
+  onReplyClick?: (postId: string) => void
+  onNavigateToProfile: (userId: string) => void
   showReplies?: boolean
   isReply?: boolean
 }
@@ -13,11 +16,17 @@ export const PostCard: React.FC<PostCardProps> = ({
   post, 
   onUserClick, 
   onReplyClick,
+  onNavigateToProfile,
   showReplies = false,
   isReply = false 
 }) => {
-  const { addInteraction, followedUsers, toggleFollow } = useCommunityStore()
+  const { addInteraction, followedUsers, toggleFollow, addReply } = useCommunityStore()
+  const { user } = useSupabaseAuth()
   const [isFollowLoading, setIsFollowLoading] = useState(false)
+  const [showReplyBox, setShowReplyBox] = useState(false)
+  const [replyContent, setReplyContent] = useState('')
+  const [isSubmittingReply, setIsSubmittingReply] = useState(false)
+  const [showShareModal, setShowShareModal] = useState(false)
 
   const formatTimestamp = (timestamp: string): string => {
     const now = new Date()
@@ -64,6 +73,36 @@ export const PostCard: React.FC<PostCardProps> = ({
     setIsFollowLoading(false)
   }
 
+  const handleReply = async () => {
+    if (!replyContent.trim() || isSubmittingReply || !user) return
+
+    setIsSubmittingReply(true)
+    const success = await addReply(post.id, replyContent)
+    
+    if (success) {
+      setReplyContent('')
+      setShowReplyBox(false)
+    }
+    
+    setIsSubmittingReply(false)
+  }
+
+  const handleReplyClick = () => {
+    if (onReplyClick) {
+      onReplyClick(post.id)
+    } else {
+      setShowReplyBox(!showReplyBox)
+    }
+  }
+
+  const handleUserClick = () => {
+    onNavigateToProfile(post.author_id)
+  }
+
+  const handleSharePost = () => {
+    setShowShareModal(true)
+  }
+
   const isFollowing = followedUsers.includes(post.author_id)
 
   return (
@@ -71,7 +110,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       {/* Post Header */}
       <div className="flex items-start space-x-3 mb-3">
         <button
-          onClick={() => onUserClick(post.author_id)}
+          onClick={handleUserClick}
           className={`${isReply ? 'w-8 h-8' : 'w-10 h-10 sm:w-12 sm:h-12'} rounded-full flex items-center justify-center text-sm font-medium hover:opacity-80 active:scale-95 transition-all duration-200 flex-shrink-0 overflow-hidden bg-gradient-to-br from-amber-400 to-amber-500 shadow-lg border-2 border-black touch-manipulation`}
         >
           {post.author_profile_image ? (
@@ -91,7 +130,7 @@ export const PostCard: React.FC<PostCardProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <button
-                onClick={() => onUserClick(post.author_id)}
+                onClick={handleUserClick}
                 className="font-bold text-white text-sm sm:text-base hover:underline transition-colors duration-200 flex items-center gap-1"
               >
                 {post.author_name}
@@ -130,7 +169,7 @@ export const PostCard: React.FC<PostCardProps> = ({
       <div className="flex items-center justify-between pt-3 border-t border-gray-800/50">
         <div className="flex items-center space-x-4 sm:space-x-6 md:space-x-8">
           <button
-            onClick={() => onReplyClick(post.id)}
+            onClick={handleReplyClick}
             className="flex items-center space-x-2 text-gray-500 hover:text-blue-400 active:text-blue-500 transition-colors duration-200 touch-manipulation p-1 rounded"
           >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
@@ -159,13 +198,59 @@ export const PostCard: React.FC<PostCardProps> = ({
             <span className="text-sm font-medium">{post.loves_count || 0}</span>
           </button>
 
-          <button className="hidden sm:flex items-center space-x-2 text-gray-500 hover:text-blue-500 active:text-blue-600 transition-colors duration-200 touch-manipulation p-1 rounded">
+          <button 
+            onClick={handleSharePost}
+            className="hidden sm:flex items-center space-x-2 text-gray-500 hover:text-blue-500 active:text-blue-600 transition-colors duration-200 touch-manipulation p-1 rounded"
+          >
             <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
               <path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"/>
             </svg>
           </button>
         </div>
       </div>
+
+      {/* Inline Reply Box */}
+      {showReplyBox && user && (
+        <div className="mt-4 pt-3 border-t border-gray-800/50">
+          <div className="flex items-start space-x-3">
+            <div className="w-8 h-8 bg-yellow-500 rounded-full flex items-center justify-center text-black text-sm font-bold flex-shrink-0">
+              👤
+            </div>
+            <div className="flex-1">
+              <textarea
+                value={replyContent}
+                onChange={(e) => setReplyContent(e.target.value)}
+                placeholder="Share your prayer or encouragement..."
+                className="w-full p-3 bg-gray-900 text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400 text-sm leading-relaxed border border-gray-700 rounded-lg"
+                rows={2}
+                maxLength={280}
+              />
+              
+              <div className="flex items-center justify-between mt-2">
+                <span className="text-xs text-gray-500">
+                  {replyContent.length}/280
+                </span>
+                
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => setShowReplyBox(false)}
+                    className="px-3 py-1.5 text-gray-400 hover:text-white text-sm transition-colors duration-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleReply}
+                    disabled={!replyContent.trim() || isSubmittingReply}
+                    className="bg-yellow-500 hover:bg-yellow-400 text-black px-4 py-1.5 rounded-full font-bold text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmittingReply ? 'Posting...' : 'Reply'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Replies */}
       {showReplies && post.replies && post.replies.length > 0 && (
@@ -177,12 +262,22 @@ export const PostCard: React.FC<PostCardProps> = ({
                 post={reply}
                 onUserClick={onUserClick}
                 onReplyClick={onReplyClick}
+                onNavigateToProfile={onNavigateToProfile}
                 isReply={true}
               />
             ))}
           </div>
         </div>
       )}
+
+      {/* Share Modal */}
+      <ShareModal
+        isOpen={showShareModal}
+        onClose={() => setShowShareModal(false)}
+        postContent={post.content}
+        postAuthor={post.author_name}
+        postId={post.id}
+      />
     </div>
   )
 }

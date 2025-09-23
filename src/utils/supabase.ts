@@ -46,6 +46,8 @@ export const supabase = supabaseUrl && supabaseAnonKey
 
 if (supabase) {
   console.log('✅ Supabase: Client created successfully')
+  console.log('✅ Supabase URL:', supabaseUrl)
+  console.log('✅ Supabase Key Length:', supabaseAnonKey?.length)
   
   // Test connection in development
   if (isDevelopment) {
@@ -53,8 +55,10 @@ if (supabase) {
       .then(({ error, count }) => {
         if (error) {
           console.error('❌ Supabase: Connection test failed:', error.message)
+          console.error('❌ Full error:', error)
         } else {
           console.log('✅ Supabase: Connection test successful - profiles table accessible')
+          console.log('✅ Profile count:', count)
         }
       })
       .catch(err => {
@@ -63,6 +67,8 @@ if (supabase) {
   }
 } else {
   console.warn('⚠️ Supabase: Client not created - running in demo mode')
+  console.warn('⚠️ URL:', supabaseUrl)
+  console.warn('⚠️ Key:', supabaseAnonKey ? 'Present' : 'Missing')
 }
 
 // Export auth helpers with null check

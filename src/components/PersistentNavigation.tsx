@@ -139,7 +139,7 @@ export const PersistentNavigation: React.FC<PersistentNavigationProps> = ({
   return (
     <>
       {/* Mobile Navigation Bar - Bottom */}
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-black/90 backdrop-blur-xl border-t border-amber-400/20">
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-[100] bg-black/90 backdrop-blur-xl border-t border-amber-400/20">
         <div className="flex items-center justify-around py-2 px-2">
           {primaryNavigationItems.map((item) => (
             <button
@@ -160,7 +160,7 @@ export const PersistentNavigation: React.FC<PersistentNavigationProps> = ({
 
       {/* Smart Mobile Drawer */}
       {isExpanded && (
-        <div className="lg:hidden fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm" onClick={() => setIsExpanded(false)}>
+        <div className="lg:hidden fixed inset-0 z-[102] bg-black/50 backdrop-blur-sm" onClick={() => setIsExpanded(false)}>
           <div 
             className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-amber-400/20 rounded-t-3xl p-6 transform transition-transform duration-300 ease-out translate-y-0 max-h-[80vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}

@@ -64,6 +64,7 @@ interface CommunityState {
   addInteraction: (postId: string, type: 'amen' | 'love' | 'prayer') => Promise<boolean>
   addReply: (postId: string, content: string) => Promise<boolean>
   setContentFilter: (filter: 'all' | 'following') => void
+  loadFollowedUsers: () => Promise<void>
   checkRateLimit: (type: 'posts' | 'interactions' | 'follows') => boolean
   getUserProfile: (userId: string) => Promise<UserProfile | null>
   reset: () => void
@@ -103,9 +104,17 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       
       if (refresh) {
         set({ currentCursor: undefined, hasMorePosts: true })
+        // Also load followed users when refreshing
+        await get().loadFollowedUsers()
       }
 
-      if (!supabase) throw new Error('Supabase client not initialized')
+      if (!supabase) {
+        console.error('❌ Community Store: Supabase client is null')
+        throw new Error('Supabase client not initialized')
+      }
+
+      console.log('🔄 Community Store: Attempting to load posts...')
+      console.log('🔄 Supabase client exists:', !!supabase)
 
       // First, let's try a simpler query without joins to test basic connectivity
       let query = supabase
@@ -119,11 +128,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         query = query.in('author_id', followedUsers)
       }
 
+      console.log('🔄 Executing query...')
       const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(POSTS_PER_PAGE)
 
-      if (error) throw error
+      console.log('📊 Query result:', { data: data?.length || 0, error })
+      if (error) {
+        console.error('❌ Query error:', error)
+        throw error
+      }
 
       const newPosts = data?.map(formatPost) || []
       
@@ -167,11 +181,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       
       set({ error: errorMessage, isLoading: false })
       
-      // If it's a refresh and we have no posts, show fallback message
+      // If it's a refresh and we have no posts, keep the error for retry
       if (refresh && get().posts.length === 0) {
         set({ 
           posts: [],
-          error: errorMessage
+          error: errorMessage,
+          isLoading: false
         })
       }
     }
@@ -221,7 +236,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     try {
       set({ isCreatingPost: true, error: null })
 
-      if (!supabase) throw new Error('Supabase client not initialized')
+      if (!supabase) {
+        throw new Error('Unable to connect to the community. Please check your network connection.')
+      }
 
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('User not authenticated')
@@ -273,6 +290,11 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       return false
     }
 
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return false
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return false
@@ -321,32 +343,77 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       return false
     }
 
+    if (!supabase) {
+      set({ error: 'Unable to connect to the community. Please check your network connection.' })
+      return false
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return false
 
-      // Add interaction
-      const { error: interactionError } = await supabase
+      // Check if interaction already exists
+      const { data: existing } = await supabase
         .from('post_interactions')
-        .upsert({
-          post_id: postId,
-          user_id: user.id,
-          interaction_type: type
+        .select('id')
+        .eq('post_id', postId)
+        .eq('user_id', user.id)
+        .eq('interaction_type', type)
+        .single()
+
+      let isAdding = true
+      
+      if (existing) {
+        // Remove interaction (toggle off)
+        const { error: deleteError } = await supabase
+          .from('post_interactions')
+          .delete()
+          .eq('id', existing.id)
+
+        if (deleteError) throw deleteError
+        isAdding = false
+      } else {
+        // Add interaction
+        const { error: insertError } = await supabase
+          .from('post_interactions')
+          .insert({
+            post_id: postId,
+            user_id: user.id,
+            interaction_type: type
+          })
+
+        if (insertError) throw insertError
+      }
+
+      // Update post counts in database
+      const countField = `${type}s_count`
+      const { data: currentPost } = await supabase
+        .from('community_posts')
+        .select(countField)
+        .eq('id', postId)
+        .single()
+
+      if (currentPost) {
+        const newCount = isAdding 
+          ? ((currentPost as any)[countField] || 0) + 1
+          : Math.max(0, ((currentPost as any)[countField] || 1) - 1)
+
+        const { error: updateError } = await supabase
+          .from('community_posts')
+          .update({ [countField]: newCount })
+          .eq('id', postId)
+
+        if (updateError) throw updateError
+
+        // Update local state with the correct count
+        set({
+          posts: get().posts.map(post =>
+            post.id === postId
+              ? { ...post, [countField]: newCount }
+              : post
+          )
         })
-
-      if (interactionError) throw interactionError
-
-      // Update post counts - we'll handle this optimistically in the UI for now
-      // The backend can handle the actual increment later
-
-      // Update local state
-      set({
-        posts: get().posts.map(post =>
-          post.id === postId
-            ? { ...post, [`${type}s_count`]: post[`${type}s_count` as keyof CommunityPost] as number + 1 }
-            : post
-        )
-      })
+      }
 
       updateRateLimit('interactions')
       return true
@@ -359,6 +426,11 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   addReply: async (postId: string, content: string) => {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return false
+    }
+
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return false
@@ -406,6 +478,31 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     get().loadPosts(true) // Reload posts when filter changes
   },
 
+  loadFollowedUsers: async () => {
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return
+    }
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data, error } = await supabase
+        .from('user_follows')
+        .select('following_id')
+        .eq('follower_id', user.id)
+
+      if (error) throw error
+
+      const followedUserIds = data?.map(follow => follow.following_id) || []
+      set({ followedUsers: followedUserIds })
+
+    } catch (error) {
+      console.error('Error loading followed users:', error)
+    }
+  },
+
   checkRateLimit: (type: 'posts' | 'interactions' | 'follows') => {
     const { rateLimits } = get()
     const now = Date.now()
@@ -433,6 +530,11 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     // Return cached profile
     if (userProfiles.has(userId)) {
       return userProfiles.get(userId) || null
+    }
+
+    if (!supabase) {
+      console.error('Supabase client not initialized')
+      return null
     }
     
     try {

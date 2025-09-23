@@ -38,16 +38,28 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached version or fetch from network
-        return response || fetch(event.request);
-      })
-  );
-});
+// Fetch event - DISABLED to fix network issues
+// self.addEventListener('fetch', (event) => {
+//   // Skip caching for Supabase API calls and external APIs
+//   if (event.request.url.includes('supabase.co') || 
+//       event.request.url.includes('api') ||
+//       event.request.method !== 'GET') {
+//     // Let these requests go directly to network
+//     return;
+//   }
+
+//   event.respondWith(
+//     caches.match(event.request)
+//       .then((response) => {
+//         // Return cached version or fetch from network
+//         return response || fetch(event.request);
+//       })
+//       .catch(() => {
+//         // If fetch fails, just return the network request
+//         return fetch(event.request);
+//       })
+//   );
+// });
 
 // Push event - Handle incoming push notifications
 self.addEventListener('push', (event) => {
