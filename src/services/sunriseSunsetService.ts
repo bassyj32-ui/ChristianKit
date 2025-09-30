@@ -165,7 +165,7 @@ export class SunriseSunsetService {
   private async getTimezoneFromCoordinates(lat: number, lng: number): Promise<string | null> {
     try {
       const response = await fetch(
-        `https://api.timezonedb.com/v2.1/get-time-zone?key=${process.env.VITE_TIMEZONE_API_KEY}&format=json&by=position&lat=${lat}&lng=${lng}`
+        `https://api.timezonedb.com/v2.1/get-time-zone?key=${import.meta.env.VITE_TIMEZONE_API_KEY}&format=json&by=position&lat=${lat}&lng=${lng}`
       );
       
       if (response.ok) {
@@ -190,7 +190,7 @@ export class SunriseSunsetService {
   private async getLocationInfo(lat: number, lng: number): Promise<{ city?: string; country?: string } | null> {
     try {
       const response = await fetch(
-        `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${process.env.VITE_OPENCAGE_API_KEY}&no_annotations=1`
+        `https://api.opencagedata.com/geocode/v1/json?q=${lat}+${lng}&key=${import.meta.env.VITE_OPENCAGE_API_KEY}&no_annotations=1`
       );
       
       if (response.ok) {
@@ -362,7 +362,7 @@ export class SunriseSunsetService {
         return false;
       }
 
-      console.log('✅ User location saved successfully');
+      // User location saved successfully
       return true;
     } catch (error) {
       console.error('Error saving user location:', error);

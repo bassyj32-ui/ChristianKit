@@ -1,4 +1,6 @@
 import React, { useState } from 'react'
+import { useCommunityStore } from '../store/communityStore'
+import { useAppStore } from '../store/appStore'
 
 interface SharePrayerSessionProps {
   sessionData: {
@@ -6,6 +8,7 @@ interface SharePrayerSessionProps {
     focus: string
     date: string
     mood: string
+    sessionType?: 'prayer' | 'bible' | 'meditation'
   }
   onClose: () => void
 }
@@ -13,10 +16,77 @@ interface SharePrayerSessionProps {
 export const SharePrayerSession: React.FC<SharePrayerSessionProps> = ({ sessionData, onClose }) => {
   const [shareText, setShareText] = useState('')
   const [isSharing, setIsSharing] = useState(false)
+  const [isSharingToCommunity, setIsSharingToCommunity] = useState(false)
+
+  const { createPost } = useCommunityStore()
+  const { addCommunityShare, navigateToCommunity } = useAppStore()
 
   const generateShareText = () => {
-    const { duration, focus, mood } = sessionData
-    return `🙏 Just completed a ${duration}-minute prayer session focused on ${focus} with ChristianKit! Feeling ${mood} and grateful. Join me in building consistent spiritual habits! #PrayerTime #ChristianKit #SpiritualGrowth`
+    const { duration, focus, mood, sessionType = 'prayer' } = sessionData
+    const sessionTypeText = sessionType === 'prayer' ? 'prayer session' :
+                           sessionType === 'bible' ? 'Bible reading session' :
+                           'meditation session'
+    return `🙏 Just completed a ${duration}-minute ${sessionTypeText}${focus ? ` focused on ${focus}` : ''} with ChristianKit! Feeling ${mood} and grateful. Join me in building consistent spiritual habits! #ChristianKit #SpiritualGrowth`
+  }
+
+  const handleShareToCommunity = async () => {
+    const { duration, focus, mood, sessionType = 'prayer' } = sessionData
+    const text = shareText || generateShareText()
+
+    setIsSharingToCommunity(true)
+
+    try {
+      // Create a prayer share post with proper session linking
+      const sessionId = Date.now().toString() // Generate unique session ID
+      const success = await createPost(text, 'prayer_share', {
+        linkedSessionId: sessionId,
+        sessionType: sessionType
+      })
+
+      if (success) {
+        // Add to community shares for tracking
+        const shareId = Date.now().toString()
+        addCommunityShare({
+          id: shareId,
+          userId: '', // Will be filled by community store
+          sessionType,
+          duration,
+          focus,
+          mood,
+          message: text,
+          date: new Date().toISOString(),
+          postId: shareId // Link to the created post
+        })
+
+        // Link this share to the user's spiritual journey
+        await fetch('/api/journey/link-post', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            postId: shareId,
+            sessionType: sessionType,
+            duration: duration,
+            focus: focus,
+            mood: mood,
+            impactScore: 8, // High impact for sharing
+            notes: 'Shared spiritual journey with community'
+          })
+        }).catch(() => {
+          // Fallback to store method if API not available
+          console.log('API not available, using store fallback')
+        })
+
+        // Navigate to community to show the shared post
+        navigateToCommunity()
+        onClose()
+      }
+    } catch (error) {
+      console.error('Failed to share to community:', error)
+    } finally {
+      setIsSharingToCommunity(false)
+    }
   }
 
   const handleShare = async (platform: string) => {
@@ -131,18 +201,31 @@ export const SharePrayerSession: React.FC<SharePrayerSessionProps> = ({ sessionD
           </button>
         </div>
 
-        {typeof navigator !== 'undefined' && navigator.share && (
-          <button
-            onClick={() => handleShare('native')}
-            disabled={isSharing}
-            className="w-full flex items-center justify-center gap-2 p-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-amber-300 transition-all disabled:opacity-50"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
-            </svg>
-            Share
-          </button>
-        )}
+    <div className="flex gap-3">
+      <button
+        onClick={handleShareToCommunity}
+        disabled={isSharingToCommunity}
+        className="flex-1 flex items-center justify-center gap-2 p-3 border rounded-lg transition-all disabled:opacity-50 bg-blue-500/20 hover:bg-blue-500/30 border-blue-500/30 text-blue-300"
+      >
+        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+          <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A1.5 1.5 0 0 0 18.54 8H16c-.8 0-1.54.37-2.01.99L12 11l-1.99-2.01A2.5 2.5 0 0 0 8 8H5.46c-.8 0-1.54.37-2.01.99L1 15.5V22h2v-6h2.5l2.5 7.5h2L10 16h4l1.5 7.5h2L18 16h2v6h2z"/>
+        </svg>
+        {isSharingToCommunity ? 'Sharing...' : 'Community'}
+      </button>
+
+          {(navigator as any).share && (
+            <button
+              onClick={() => handleShare('native')}
+              disabled={isSharing}
+              className="flex items-center justify-center gap-2 p-3 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/30 rounded-lg text-amber-300 transition-all disabled:opacity-50"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"/>
+              </svg>
+              Share
+            </button>
+          )}
+        </div>
       </div>
     </div>
   )

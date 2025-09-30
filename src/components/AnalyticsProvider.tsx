@@ -55,7 +55,7 @@ export const AnalyticsProvider: React.FC<AnalyticsProviderProps> = ({
     const initialized = initializeGA4();
     
     if (initialized) {
-      console.log('🎯 Analytics Provider initialized');
+      // Analytics Provider initialized
     }
   }, []);
 

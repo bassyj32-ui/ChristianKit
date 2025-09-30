@@ -34,7 +34,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   isFirstTimeUser = false 
 }) => {
   const { user, signInWithGoogle } = useSupabaseAuth();
-  console.log('PrayerTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
+  // PrayerTimerPage rendered
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
@@ -111,7 +111,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
   // Update timer when prop changes
   useEffect(() => {
     if (propSelectedMinutes && propSelectedMinutes > 0) {
-      console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
+      // Prop changed, updating timer
       setSelectedMinutes(propSelectedMinutes);
       setTimeRemaining(propSelectedMinutes * 60);
     }
@@ -150,7 +150,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
           prayer_type: 'prayer',
           notes: prayerFocus ? `Focus: ${prayerFocus}` : undefined
         });
-        console.log('✅ Prayer session recorded successfully');
+        // Prayer session recorded successfully
       } catch (error) {
         console.error('❌ Error recording prayer session:', error);
         // Continue even if database recording fails
@@ -167,7 +167,7 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
 
   useEffect(() => {
     // Start timer immediately when component mounts
-    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
+    // Component mounted, starting timer
     
     if (isPraying && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {
@@ -446,21 +446,14 @@ export const PrayerTimerPage: React.FC<PrayerTimerPageProps> = ({
             {/* Home Tab */}
             <button
               onClick={() => {
-                console.log('Home tab clicked!')
-                console.log('isFirstTimeUser:', isFirstTimeUser)
-                console.log('onStartQuestionnaire function:', onStartQuestionnaire)
-                console.log('onNavigate function:', onNavigate)
-                console.log('localStorage hasCompletedQuestionnaire:', localStorage.getItem('hasCompletedQuestionnaire'))
+                // Home tab clicked
                 
                 // Check if user has already completed questionnaire in localStorage
                 const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
-                console.log('localStorage hasCompletedQuestionnaire:', hasCompleted)
-                
+                // Check if user has already completed questionnaire
                 if (isFirstTimeUser && !hasCompleted) {
-                  console.log('Starting questionnaire...')
                   onStartQuestionnaire?.();
                 } else {
-                  console.log('Navigating to dashboard...')
                   onNavigate?.('dashboard');
                 }
               }}

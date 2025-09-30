@@ -34,7 +34,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
       }
 
       try {
-        console.log('📊 WeeklyProgress: Loading real progress for user:', user.id);
+        // Loading real progress for user
 
         // Get current week start (Sunday)
         const today = new Date();
@@ -46,7 +46,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
         // Load real progress data from ProgressService
         const realData = await ProgressService.getWeeklyProgress(user.id, weekStartStr);
         setRealProgressData(realData);
-        console.log('✅ WeeklyProgress: Real data loaded:', realData);
+        // Real data loaded
 
         // Convert real data to display format
         const displayData: ProgressData[] = [];
@@ -75,7 +75,7 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
 
         setProgressData(displayData);
         setLoading(false);
-        console.log('✅ WeeklyProgress: Display data prepared:', displayData);
+        // Display data prepared
       } catch (error) {
         console.error('❌ WeeklyProgress: Error loading progress:', error);
         // Show empty state on error
@@ -96,7 +96,28 @@ export const WeeklyProgress: React.FC<WeeklyProgressProps> = ({
   // Get real calculated stats when available
   const getRealStats = () => {
     if (realProgressData) {
-      return realProgressData.calculatedStats;
+      // Calculate averages from daily progress data
+      const averages = {
+        prayer: 0,
+        bible: 0,
+        meditation: 0,
+        journal: 0
+      };
+
+      Object.values(realProgressData.dailyProgress).forEach(day => {
+        if (day.prayer) averages.prayer += day.prayer;
+        if (day.bible) averages.bible += day.bible;
+        if (day.meditation) averages.meditation += day.meditation;
+        if (day.journal) averages.journal += day.journal;
+      });
+
+      // Average over 7 days
+      return {
+        prayer: Math.round(averages.prayer / 7),
+        bible: Math.round(averages.bible / 7),
+        meditation: Math.round(averages.meditation / 7),
+        journal: Math.round(averages.journal / 7)
+      };
     }
     return {
       prayer: calculateAverage(progressData, 'prayer'),

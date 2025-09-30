@@ -23,7 +23,7 @@ interface ThemeProviderProps {
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ 
   children, 
-  defaultMode = 'dark' // Default to dark mode (Osmo theme)
+  defaultMode = 'system' // Default to system mode
 }) => {
   // Load theme mode from localStorage on mount
   const [mode, setMode] = useState<ThemeMode>(() => {

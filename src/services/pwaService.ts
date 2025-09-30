@@ -39,7 +39,7 @@ class PWAService {
     // Listen for appinstalled event
     window.addEventListener('appinstalled', () => {
       this.isInstalled = true;
-      console.log('PWA was installed');
+      // PWA was installed
     });
   }
 
@@ -56,7 +56,6 @@ class PWAService {
     try {
       // Register service worker for PWA functionality
       this.swRegistration = await navigator.serviceWorker.register('/sw.js');
-      console.log('✅ PWA Service Worker registered successfully');
       return true;
     } catch (error) {
       console.error('❌ PWA Service Worker registration failed:', error);
@@ -75,7 +74,6 @@ class PWAService {
           newWorker.addEventListener('statechange', () => {
             if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
               // New version available
-              console.log('🆕 PWA New version available');
             }
           });
         }
@@ -87,7 +85,6 @@ class PWAService {
 
   async showInstallPrompt() {
     if (!this.deferredPrompt) {
-      console.log('No install prompt available');
       return false;
     }
 
@@ -96,11 +93,9 @@ class PWAService {
       const { outcome } = await this.deferredPrompt.userChoice;
       
       if (outcome === 'accepted') {
-        console.log('User accepted the install prompt');
         this.deferredPrompt = null;
         return true;
       } else {
-        console.log('User dismissed the install prompt');
         return false;
       }
     } catch (error) {
@@ -135,7 +130,6 @@ class PWAService {
   // Request notification permission
   async requestNotificationPermission(): Promise<NotificationPermission> {
     if (!('Notification' in window)) {
-      console.log('📱 PWA: Notifications not supported')
       return 'denied'
     }
 
@@ -145,7 +139,6 @@ class PWAService {
 
     if (Notification.permission !== 'denied') {
       const permission = await Notification.requestPermission()
-      console.log('🔔 PWA: Notification permission:', permission)
       return permission
     }
 
@@ -157,7 +150,6 @@ class PWAService {
     const permission = await this.requestNotificationPermission()
     
     if (permission !== 'granted') {
-      console.log('🚫 PWA: Notification permission denied')
       return
     }
 
@@ -238,7 +230,7 @@ class PWAService {
 
   // Handle notification actions
   private handleNotificationAction(action: string): void {
-    console.log('🔔 PWA: Handling notification action:', action)
+    // Handling notification action
     
     switch (action) {
       case 'open-prayer':
@@ -291,7 +283,7 @@ class PWAService {
       
     }, timeUntilReminder)
 
-    console.log('⏰ PWA: Daily reminders scheduled for 8:00 AM')
+    // Daily reminders scheduled
   }
 
   // Store prayer data offline
@@ -306,7 +298,6 @@ class PWAService {
       })
       
       localStorage.setItem('offline-prayer-data', JSON.stringify(data))
-      console.log('💾 PWA: Prayer data stored offline')
       
       // Try to sync when online
       if (navigator.onLine && this.swRegistration) {
@@ -336,7 +327,6 @@ class PWAService {
       const unsynced = data.filter((item: any) => !item.synced)
       
       localStorage.setItem('offline-prayer-data', JSON.stringify(unsynced))
-      console.log('🧹 PWA: Cleared synced offline data')
     } catch (error) {
       console.error('❌ PWA: Error clearing offline data:', error)
     }
@@ -353,7 +343,6 @@ class PWAService {
     onOffline?: () => void
   ): void {
     window.addEventListener('online', () => {
-      console.log('🌐 PWA: App is online')
       onOnline?.()
       
       // Try to sync offline data
@@ -363,7 +352,6 @@ class PWAService {
     })
 
     window.addEventListener('offline', () => {
-      console.log('📱 PWA: App is offline')
       onOffline?.()
     })
   }

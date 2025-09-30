@@ -52,7 +52,7 @@ export class PaddleService {
         throw new Error('User not authenticated');
       }
 
-      console.log('Paddle initialized for user:', user.id);
+      // Paddle initialized for user
       return true;
     } catch (error) {
       console.error('Failed to initialize Paddle:', error);
@@ -237,7 +237,7 @@ export class PaddleService {
           await this.handlePaymentFailed(event);
           break;
         default:
-          console.log('Unhandled webhook event:', event.event_type);
+          // Unhandled webhook event
       }
     } catch (error) {
       console.error('Webhook handling failed:', error);
@@ -257,31 +257,31 @@ export class PaddleService {
   }
 
   private async handleSubscriptionCreated(event: any): Promise<void> {
-    console.log('Subscription created:', event.subscription_id);
+    // Subscription created
     // Update local user subscription status
     // Trigger welcome email/notification
   }
 
   private async handleSubscriptionUpdated(event: any): Promise<void> {
-    console.log('Subscription updated:', event.subscription_id);
+    // Subscription updated
     // Update local subscription data
     // Sync with cloud database
   }
 
   private async handleSubscriptionCancelled(event: any): Promise<void> {
-    console.log('Subscription cancelled:', event.subscription_id);
+    // Subscription cancelled
     // Update local subscription status
     // Trigger cancellation email/notification
   }
 
   private async handlePaymentSucceeded(event: any): Promise<void> {
-    console.log('Payment succeeded:', event.subscription_id);
+    // Payment succeeded
     // Update payment status
     // Trigger success notification
   }
 
   private async handlePaymentFailed(event: any): Promise<void> {
-    console.log('Payment failed:', event.subscription_id);
+    // Payment failed
     // Update payment status
     // Trigger failure notification
     // Attempt retry logic

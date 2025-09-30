@@ -22,7 +22,7 @@ export const initializeGA4 = () => {
       },
     });
     
-    console.log('✅ GA4 initialized successfully');
+    // GA4 initialized successfully
     return true;
   } else {
     console.warn('⚠️ GA4 Measurement ID not configured. Analytics will not work.');

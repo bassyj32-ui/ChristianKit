@@ -61,7 +61,7 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     try {
       await navigator.clipboard.writeText(`${shareText} ${shareUrl}`)
       // You could show a toast notification here
-      console.log('Link copied to clipboard')
+      // Link copied to clipboard
     } catch (err) {
       console.error('Failed to copy: ', err)
     }
@@ -123,4 +123,6 @@ export const ShareModal: React.FC<ShareModalProps> = ({
     </div>
   )
 }
+
+
 

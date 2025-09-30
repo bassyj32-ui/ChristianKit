@@ -44,11 +44,11 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
     let timeoutId: NodeJS.Timeout | undefined;
 
     try {
-      console.log('🙏 Starting prayer data loading for user:', user.id);
+      // Starting prayer data loading for user
 
       // Set a timeout to ensure loading doesn't hang
       timeoutId = setTimeout(() => {
-        console.log('⏰ Loading timeout reached, using fallback');
+        // Loading timeout reached, using fallback
         setIsLoading(false);
         // Fallback will be triggered by the catch block
         throw new Error('Loading timeout');
@@ -56,11 +56,11 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
 
       // Get or create user profile
       let profile = prayerSystemService.getUserProfile(user.id);
-      console.log('📊 Profile status:', profile ? 'Found' : 'Not found');
+      // Profile status determined
 
       // If no profile exists, create a default beginner profile
       if (!profile) {
-        console.log('🌱 Creating default beginner profile');
+        // Creating default beginner profile
         profile = {
           userId: user.id,
           currentLevel: 'beginner',
@@ -76,13 +76,12 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
           reflectionEntries: 0
         };
         prayerSystemService.savePrayerProgress(user.id, profile);
-        console.log('✅ Profile created successfully');
+        // Profile created successfully
       }
 
       // Get daily prayer
-      console.log('📖 Generating daily prayer content...');
       const prayer = prayerSystemService.getDailyPrayer(user.id);
-      console.log('✅ Daily prayer loaded successfully');
+      // Daily prayer loaded successfully
 
       // Clear timeout since we succeeded
       clearTimeout(timeoutId);
@@ -94,7 +93,7 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
       const levelDuration = prayerSystemService.getUserLevel(user.id)?.duration || 5;
       setSelectedMinutes(levelDuration);
 
-      console.log('🎉 Prayer data loaded successfully - Ready for sacred time!');
+      // Prayer data loaded successfully
     } catch (error) {
       console.error('❌ Error loading prayer data:', error);
 
@@ -104,7 +103,7 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
       }
 
       // Create a fallback prayer for beginners
-      console.log('🔄 Using fallback prayer content');
+      // Using fallback prayer content
       const fallbackPrayer = {
         level: 'beginner',
         day: new Date().getDate(),
@@ -154,7 +153,7 @@ export const PrayerSystemInterface: React.FC<PrayerSystemInterfaceProps> = ({
         reflectionEntries: 0
       });
       setSelectedMinutes(5);
-      console.log('✅ Fallback prayer loaded successfully');
+      // Fallback prayer loaded successfully
     } finally {
       setIsLoading(false);
     }

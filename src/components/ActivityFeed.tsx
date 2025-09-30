@@ -152,11 +152,11 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           id: `interaction-${interaction.id}`,
           type: 'interaction',
           actor_id: interaction.user_id,
-          actor_name: interaction.profiles?.display_name || 'Anonymous',
-          actor_avatar: interaction.profiles?.avatar_url,
+          actor_name: interaction.profiles?.display_name || interaction.profiles?.email?.split('@')[0] || 'Anonymous',
+          actor_avatar: interaction.profiles?.avatar_url || interaction.profiles?.picture,
           target_id: interaction.post_id,
-          target_name: interaction.community_posts?.author_name,
-          content: interaction.community_posts?.content,
+          target_name: interaction.community_posts?.author_name || interaction.community_posts?.author_email?.split('@')[0] || 'User',
+          content: interaction.community_posts?.content || 'Shared a post',
           interaction_type: interaction.interaction_type as 'amen' | 'love' | 'prayer',
           created_at: interaction.created_at
         });
@@ -168,10 +168,10 @@ export const ActivityFeed: React.FC<ActivityFeedProps> = ({
           id: `follow-${follow.id}`,
           type: 'follow',
           actor_id: follow.follower_id,
-          actor_name: follow.follower?.display_name || 'Anonymous',
-          actor_avatar: follow.follower?.avatar_url,
+          actor_name: follow.follower?.display_name || follow.follower?.email?.split('@')[0] || 'Anonymous',
+          actor_avatar: follow.follower?.avatar_url || follow.follower?.picture,
           target_id: follow.following_id,
-          target_name: follow.following?.display_name,
+          target_name: follow.following?.display_name || follow.following?.email?.split('@')[0] || 'User',
           created_at: follow.created_at
         });
       });

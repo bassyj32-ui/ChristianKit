@@ -1,6 +1,6 @@
 import { PrayerSession, PrayerStats, PrayerSettings, PrayerReminder, PrayerPrompt, PrayerTechnique } from '../types/prayer';
-import { cloudDataService } from './cloudDataService'
-import { useAuth } from '../components/AuthProvider'
+// Removed cloudDataService - using Supabase directly
+// Auth is handled via SupabaseAuthProvider - no need to import here
 import { supabase } from '../utils/supabase';
 
 class PrayerService {
@@ -29,17 +29,19 @@ class PrayerService {
               .from('prayer_sessions')
               .insert({
                 user_id: user.id,
-                started_at: new Date(session.started_at).toISOString(),
-                ended_at: session.ended_at ? new Date(session.ended_at).toISOString() : null,
-                duration_minutes: session.duration_minutes,
-                prayer_type: session.prayer_type || 'personal',
-                notes: session.notes
+                date: session.date,
+                duration_minutes: session.duration,
+                prayer_type: session.mode || 'personal',
+                notes: session.message || '',
+                focus: session.focus || '',
+                mood: session.mood || 'neutral',
+                completed: session.completed || true
               });
 
             if (error) {
               console.error('Error saving to Supabase:', error);
             } else {
-              console.log('✅ Prayer session saved to Supabase');
+              // Prayer session saved to Supabase
             }
           }
         } catch (supabaseError) {
@@ -67,7 +69,7 @@ class PrayerService {
               .limit(100);
 
             if (!error && supabaseSessions) {
-              console.log('✅ Loaded prayer sessions from Supabase:', supabaseSessions.length);
+              // Loaded prayer sessions from Supabase
 
               // Convert Supabase format to local format
               const convertedSessions: PrayerSession[] = supabaseSessions.map(session => ({
@@ -91,7 +93,7 @@ class PrayerService {
       // Fallback to localStorage
       const saved = localStorage.getItem(this.SESSIONS_KEY);
       const localSessions = saved ? JSON.parse(saved) : [];
-      console.log('📱 Using localStorage sessions:', localSessions.length);
+      // Using localStorage sessions
       return localSessions;
     } catch (error) {
       console.error('Error loading prayer sessions:', error);
@@ -325,9 +327,8 @@ class PrayerService {
   // Weekly Progress - Enhanced Logic with Real Data
   async getWeeklyProgress(): Promise<any> {
     try {
-      console.log('📊 Calculating weekly progress...');
       const sessions = await this.getPrayerSessions();
-      console.log('📊 Sessions loaded:', sessions.length);
+      // Sessions loaded for progress calculation
       const today = new Date();
       const startOfWeek = new Date(today);
       startOfWeek.setDate(today.getDate() - today.getDay()); // Start of week (Sunday)
@@ -361,7 +362,7 @@ class PrayerService {
       
       // Calculate daily progress with enhanced logic
       weeklySessions.forEach(session => {
-        const sessionDate = new Date(session.started_at || session.date);
+        const sessionDate = new Date(session.date);
         const dayIndex = sessionDate.getDay();
         const dayName = days[dayIndex];
 
@@ -369,8 +370,8 @@ class PrayerService {
         let activityType = 'prayer'; // Default
 
         // More sophisticated activity detection
-        const notes = session.notes?.toLowerCase() || '';
-        const prayerType = session.prayer_type?.toLowerCase() || '';
+        const notes = session.message?.toLowerCase() || '';
+        const prayerType = session.mode?.toLowerCase() || '';
 
         if (notes.includes('bible') || notes.includes('scripture') || notes.includes('reading') || prayerType.includes('bible')) {
           activityType = 'bible';
@@ -384,7 +385,7 @@ class PrayerService {
 
         // Calculate percentage based on user's target duration (default 30 min)
         const targetDuration = 30;
-        const duration = session.duration_minutes || session.duration || 0;
+        const duration = session.duration || 0;
         const percentage = Math.min(100, Math.round((duration / targetDuration) * 100));
 
         // Update daily progress
@@ -395,7 +396,7 @@ class PrayerService {
         dailyProgress[dayName].totalMinutes += duration;
         dailyProgress[dayName].sessionsCount += 1;
 
-        console.log(`📊 Day ${dayName}: ${activityType} ${percentage}% (${duration} min)`);
+        // Progress calculated for day and activity
       });
       
       // Calculate streaks and goals

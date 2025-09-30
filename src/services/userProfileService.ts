@@ -51,7 +51,7 @@ export const getUserProfile = async (userId: string): Promise<UserProfile | null
 
     if (error) {
       if (error.code === 'PGRST116') {
-        console.log('ℹ️ No profile found for user:', userId)
+        // No profile found for user
         return null
       }
       throw error;
@@ -93,7 +93,7 @@ export const updateUserProfile = async (
       return false;
     }
 
-    console.log('✅ Profile updated successfully:', userId);
+    // Profile updated successfully
     return true;
   } catch (error) {
     console.error('❌ Error updating user profile:', error);
@@ -181,10 +181,10 @@ export const getUserFollowers = async (userId: string): Promise<UserProfile[]> =
     if (error) throw error;
     
     return data?.map(follow => ({
-      id: follow.profiles.id,
-      display_name: follow.profiles.display_name,
-      avatar_url: follow.profiles.avatar_url,
-      bio: follow.profiles.bio,
+      id: follow.profiles?.[0]?.id || follow.following_id,
+      display_name: follow.profiles?.[0]?.display_name || follow.profiles?.[0]?.email?.split('@')[0] || 'User',
+      avatar_url: follow.profiles?.[0]?.avatar_url || follow.profiles?.[0]?.picture,
+      bio: follow.profiles?.[0]?.bio || '',
       created_at: '',
       posts_count: 0,
       amens_received: 0,
@@ -220,10 +220,10 @@ export const getUserFollowing = async (userId: string): Promise<UserProfile[]> =
     if (error) throw error;
     
     return data?.map(follow => ({
-      id: follow.profiles.id,
-      display_name: follow.profiles.display_name,
-      avatar_url: follow.profiles.avatar_url,
-      bio: follow.profiles.bio,
+      id: follow.profiles?.[0]?.id || follow.following_id,
+      display_name: follow.profiles?.[0]?.display_name || follow.profiles?.[0]?.email?.split('@')[0] || 'User',
+      avatar_url: follow.profiles?.[0]?.avatar_url || follow.profiles?.[0]?.picture,
+      bio: follow.profiles?.[0]?.bio || '',
       created_at: '',
       posts_count: 0,
       amens_received: 0,
@@ -278,7 +278,7 @@ export const searchUsers = async (query: string, limit: number = 10): Promise<Us
       return [];
     }
 
-    console.log(`✅ Found ${data?.length || 0} users matching: ${query}`);
+    // Found users matching query
     return data || [];
   } catch (error) {
     console.error('❌ Error searching users:', error);

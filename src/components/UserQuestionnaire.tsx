@@ -261,7 +261,7 @@ export const UserQuestionnaire: React.FC<QuestionnaireProps> = ({ onComplete, on
     const success = await realNotificationService.enableNotifications(notificationPreferences)
     
     if (success) {
-      console.log('✅ Real notifications configured and enabled:', notificationPreferences)
+      // Real notifications configured and enabled
     } else {
       console.error('❌ Failed to enable real notifications')
     }

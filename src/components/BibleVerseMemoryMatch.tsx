@@ -6,6 +6,7 @@ import { GameComplete } from './game/GameComplete';
 import { useGameAudio } from '../hooks/useGameAudio';
 import { useGameSave } from '../hooks/useGameSave';
 import { OsmoCard, OsmoButton, OsmoGradientText, OsmoSectionHeader, OsmoBadge } from '../theme/osmoComponents';
+import { bibleVersesByLevel, levelProgression, getVersesForLevel, getTotalLevels } from '../data/verseLevels';
 
 // Game Types
 interface Card {
@@ -75,36 +76,16 @@ const BibleVerseMemoryMatch: React.FC = () => {
   const [autoContinueTimer, setAutoContinueTimer] = useState(3);
   const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<NodeJS.Timeout | null>(null);
 
-  // Bible verses database
-  const bibleVerses: BibleVerse[] = [
-    // Popular Verses
-    { id: '1', verse: 'For God so loved the world that he gave his one and only Son', reference: 'John 3:16', category: 'popular' },
-    { id: '2', verse: 'I can do all things through Christ who strengthens me', reference: 'Philippians 4:13', category: 'popular' },
-    { id: '3', verse: 'Trust in the Lord with all your heart and lean not on your own understanding', reference: 'Proverbs 3:5', category: 'popular' },
-    { id: '4', verse: 'The Lord is my shepherd, I lack nothing', reference: 'Psalm 23:1', category: 'popular' },
-    { id: '5', verse: 'Be strong and courageous. Do not be afraid; do not be discouraged', reference: 'Joshua 1:9', category: 'popular' },
-    { id: '6', verse: 'And we know that in all things God works for the good of those who love him', reference: 'Romans 8:28', category: 'popular' },
-    { id: '7', verse: 'Cast all your anxiety on him because he cares for you', reference: '1 Peter 5:7', category: 'popular' },
-    { id: '8', verse: 'For I know the plans I have for you, declares the Lord', reference: 'Jeremiah 29:11', category: 'popular' },
-    
-    // Hope & Faith
-    { id: '9', verse: 'Now faith is confidence in what we hope for and assurance about what we do not see', reference: 'Hebrews 11:1', category: 'faith' },
-    { id: '10', verse: 'May the God of hope fill you with all joy and peace as you trust in him', reference: 'Romans 15:13', category: 'faith' },
-    { id: '11', verse: 'But those who hope in the Lord will renew their strength', reference: 'Isaiah 40:31', category: 'faith' },
-    { id: '12', verse: 'Faith is taking the first step even when you don\'t see the whole staircase', reference: 'Martin Luther King Jr.', category: 'faith' },
-    
-    // Love & Grace
-    { id: '13', verse: 'Love is patient, love is kind. It does not envy, it does not boast', reference: '1 Corinthians 13:4', category: 'love' },
-    { id: '14', verse: 'But God demonstrates his own love for us in this: While we were still sinners, Christ died for us', reference: 'Romans 5:8', category: 'love' },
-    { id: '15', verse: 'Above all, love each other deeply, because love covers over a multitude of sins', reference: '1 Peter 4:8', category: 'love' },
-    { id: '16', verse: 'For it is by grace you have been saved, through faith—and this is not from yourselves', reference: 'Ephesians 2:8', category: 'love' },
-    
-    // Wisdom
-    { id: '17', verse: 'The fear of the Lord is the beginning of wisdom', reference: 'Proverbs 9:10', category: 'wisdom' },
-    { id: '18', verse: 'If any of you lacks wisdom, you should ask God, who gives generously to all', reference: 'James 1:5', category: 'wisdom' },
-    { id: '19', verse: 'The simple believe anything, but the prudent give thought to their steps', reference: 'Proverbs 14:15', category: 'wisdom' },
-    { id: '20', verse: 'Plans fail for lack of counsel, but with many advisers they succeed', reference: 'Proverbs 15:22', category: 'wisdom' }
-  ];
+  // Get current level in the non-sequential progression
+  const getCurrentLevelIndex = () => {
+    const currentIndex = levelProgression.indexOf(gameState.currentLevel);
+    return currentIndex >= 0 ? currentIndex : 0;
+  };
+
+  // Get next level in sequential progression
+  const getNextLevel = () => {
+    return gameState.currentLevel + 1;
+  };
 
   const categories = [
     { 
@@ -177,53 +158,39 @@ const BibleVerseMemoryMatch: React.FC = () => {
     }
   }, []);
 
-  // Determine next category and difficulty based on progression
+  // Get next game settings based on level progression
   const getNextGameSettings = () => {
-    const { perfectGamesInRow, unlockedCategories, currentLevel } = gameState;
-    
-    // Unlock new categories based on perfect games
-    let newUnlockedCategories = [...unlockedCategories];
-    if (perfectGamesInRow >= 2 && !newUnlockedCategories.includes('faith')) {
-      newUnlockedCategories.push('faith');
-    }
-    if (perfectGamesInRow >= 4 && !newUnlockedCategories.includes('love')) {
-      newUnlockedCategories.push('love');
-    }
-    if (perfectGamesInRow >= 6 && !newUnlockedCategories.includes('wisdom')) {
-      newUnlockedCategories.push('wisdom');
+    const nextLevel = getNextLevel();
+    const levelVerses = getVersesForLevel(nextLevel);
+
+    if (!levelVerses || levelVerses.length === 0) {
+      console.error('No verses found for level:', nextLevel);
+      return null;
     }
 
-    // Determine next category (cycle through unlocked ones)
-    const currentIndex = newUnlockedCategories.indexOf(gameState.currentCategory);
-    const nextCategoryIndex = (currentIndex + 1) % newUnlockedCategories.length;
-    const nextCategory = newUnlockedCategories[nextCategoryIndex];
-
-    // Determine difficulty based on perfect games
-    let nextDifficulty: 'easy' | 'medium' | 'hard' = 'easy';
-    let nextLevel = currentLevel;
-    
-    if (perfectGamesInRow >= 3) {
-      nextDifficulty = 'medium';
-      nextLevel = Math.max(2, currentLevel);
-    }
-    if (perfectGamesInRow >= 6) {
-      nextDifficulty = 'hard';
-      nextLevel = Math.max(3, currentLevel);
-    }
+    // Determine difficulty based on level number
+    let difficulty: 'easy' | 'medium' | 'hard' = 'easy';
+    if (nextLevel >= 9) difficulty = 'hard';
+    else if (nextLevel >= 5) difficulty = 'medium';
 
     return {
-      category: nextCategory,
-      difficulty: nextDifficulty,
       level: nextLevel,
-      unlockedCategories: newUnlockedCategories
+      verses: levelVerses,
+      difficulty: difficulty,
+      totalLevels: getTotalLevels(),
+      currentLevelIndex: getCurrentLevelIndex()
     };
   };
 
   // Initialize game
   const initializeGame = useCallback(() => {
     const nextSettings = getNextGameSettings();
-    const categoryVerses = bibleVerses.filter(verse => verse.category === nextSettings.category);
-    const gameVerses = categoryVerses.slice(0, nextSettings.difficulty === 'easy' ? 4 : nextSettings.difficulty === 'medium' ? 6 : 8);
+    if (!nextSettings) {
+      console.error('Failed to get next game settings');
+      return;
+    }
+
+    const gameVerses = nextSettings.verses;
     
     const cards: Card[] = [];
     
@@ -263,12 +230,12 @@ const BibleVerseMemoryMatch: React.FC = () => {
       gameCompleted: false,
       streak: 0,
       perfectMatches: 0,
-      currentCategory: nextSettings.category,
+      currentCategory: 'mixed',
       difficulty: nextSettings.difficulty,
       currentLevel: nextSettings.level,
-      unlockedCategories: nextSettings.unlockedCategories
+      unlockedCategories: ['mixed']
     }));
-  }, [gameState.perfectGamesInRow, gameState.unlockedCategories, gameState.currentLevel, bibleVerses]);
+  }, [gameState.currentLevel, getNextGameSettings]);
 
   // Handle card click
   const handleCardClick = useCallback((clickedCard: Card) => {
@@ -331,7 +298,7 @@ const BibleVerseMemoryMatch: React.FC = () => {
           } else {
             playSound('match');
           }
-          console.log('🎉 Match found!');
+          // Match found
         } else {
           // No match
           const resetCards = gameState.cards.map(card =>
@@ -348,11 +315,12 @@ const BibleVerseMemoryMatch: React.FC = () => {
 
           // Play no match sound
           playSound('noMatch');
-          console.log('❌ No match');
+          // No match
         }
       }, 1000);
     }
   }, [gameState.cards, gameState.flippedCards, gameState.matches, gameState.attempts, gameState.score, gameState.streak, gameState.timeElapsed, gameState.difficulty]);
+
 
   // Save game completion and handle progression
   useEffect(() => {
@@ -372,16 +340,65 @@ const BibleVerseMemoryMatch: React.FC = () => {
       // Show completion screen
       setShowGameComplete(true);
       
-      // Auto-advance to next level if not on hardest difficulty
-      if (gameState.difficulty !== 'hard') {
+      // Auto-advance to next level if not on the final level
+      if (gameState.currentLevel < getTotalLevels()) {
         const timer = setTimeout(() => {
-          handleNextLevel();
+          // Move to next level directly
+          const nextLevel = gameState.currentLevel + 1;
+          const nextLevelVerses = getVersesForLevel(nextLevel);
+          
+          if (nextLevelVerses.length > 0) {
+            // Create cards from verses (same logic as initializeGame)
+            const newCards: Card[] = [];
+            
+            nextLevelVerses.forEach(verse => {
+              newCards.push({
+                id: `verse-${verse.id}`,
+                content: verse.verse,
+                type: 'verse',
+                matched: false,
+                flipped: false,
+                pairId: verse.id
+              });
+
+              newCards.push({
+                id: `ref-${verse.id}`,
+                content: verse.reference,
+                type: 'reference',
+                matched: false,
+                flipped: false,
+                pairId: verse.id
+              });
+            });
+
+            // Shuffle cards
+            const shuffledCards = newCards.sort(() => Math.random() - 0.5);
+      
+      setGameState(prev => ({ 
+        ...prev, 
+              currentLevel: nextLevel,
+              cards: shuffledCards,
+              flippedCards: [],
+              matches: 0,
+              attempts: 0,
+              score: 0,
+              timeElapsed: 0,
+              gameStarted: false,
+              gameCompleted: false,
+              streak: 0,
+              perfectMatches: 0,
+              perfectGamesInRow: prev.perfectGamesInRow + 1
+            }));
+            
+            setShowGameComplete(false);
+            setShowStats(false);
+          }
         }, 3000); // 3 second delay
-        
+
         setAutoAdvanceTimer(timer);
       }
     }
-  }, [gameState.gameCompleted, gameState.score, gameState.matches, gameState.timeElapsed, gameState.difficulty, showGameComplete, playSound, recordGameComplete]);
+  }, [gameState.gameCompleted, gameState.score, gameState.matches, gameState.timeElapsed, gameState.difficulty, gameState.currentLevel, showGameComplete, playSound, recordGameComplete, getTotalLevels, getVersesForLevel]);
 
   // Cleanup auto-advance timer
   useEffect(() => {
@@ -399,17 +416,15 @@ const BibleVerseMemoryMatch: React.FC = () => {
       setAutoAdvanceTimer(null);
     }
     
-    let nextDifficulty: 'easy' | 'medium' | 'hard' = gameState.difficulty;
-    if (gameState.difficulty === 'easy') {
-      nextDifficulty = 'medium';
-    } else if (gameState.difficulty === 'medium') {
-      nextDifficulty = 'hard';
-    }
+    // Note: Difficulty is now determined by the level number in getNextGameSettings()
     
+    setShowGameComplete(false);
+    // Get next level in the non-sequential progression
+    const nextLevel = getNextLevel();
+
     setShowGameComplete(false);
     setGameState(prev => ({
       ...prev,
-      difficulty: nextDifficulty,
       gameCompleted: false,
       gameStarted: false,
       cards: [],
@@ -419,12 +434,14 @@ const BibleVerseMemoryMatch: React.FC = () => {
       score: 0,
       timeElapsed: 0,
       streak: 0,
-      perfectMatches: 0
+      perfectMatches: 0,
+      currentLevel: nextLevel,
+      bestScore: Math.max(prev.bestScore, prev.score)
     }));
     
     // Initialize new game with new difficulty
     setTimeout(() => {
-      initializeGame();
+            initializeGame();
     }, 100);
   }, [gameState.difficulty, autoAdvanceTimer]);
 
@@ -641,6 +658,9 @@ const BibleVerseMemoryMatch: React.FC = () => {
                   <div className="text-[var(--text-tertiary)] text-sm">
                     {gameState.difficulty === 'easy' ? 'Beginner' : 
                      gameState.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
+                  </div>
+                  <div className="text-[var(--spiritual-blue)] text-xs">
+                    {gameState.currentLevel} of {getTotalLevels()}
                   </div>
                 </OsmoCard>
                 <OsmoCard className="px-4 py-3 text-center">
@@ -977,6 +997,10 @@ const BibleVerseMemoryMatch: React.FC = () => {
           difficulty={gameState.difficulty}
           perfectMatches={gameState.perfectMatches}
           totalMatches={gameState.matches}
+          currentLevel={gameState.currentLevel}
+          nextLevel={gameState.currentLevel + 1}
+          currentLevelIndex={gameState.currentLevel - 1}
+          totalLevels={getTotalLevels()}
           onNextLevel={handleNextLevel}
           onPlayAgain={handlePlayAgain}
           onMainMenu={handleMainMenu}

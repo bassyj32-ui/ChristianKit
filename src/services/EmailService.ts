@@ -27,7 +27,7 @@ export class EmailService {
     this.brevoApiKey = (import.meta as any).env?.VITE_BREVO_API_KEY || null;
     
     if (this.brevoApiKey) {
-      console.log('✅ Brevo email service initialized');
+      // Brevo email service initialized
     } else {
       console.warn('⚠️ VITE_BREVO_API_KEY not found. Email functionality will be disabled.');
     }
@@ -63,7 +63,7 @@ export class EmailService {
       });
 
       if (result) {
-        console.log(`📧 Re-engagement email sent to ${schedule.email}`);
+        // Re-engagement email sent
         return true;
       } else {
         console.error('Failed to send email');
@@ -83,11 +83,7 @@ export class EmailService {
       if (!this.brevoApiKey) {
         console.warn('⚠️ Brevo API key not found - email will be logged instead');
         // Log the email content for development/testing
-        console.log('📧 Email would be sent:', {
-          to: emailContent.to,
-          subject: emailContent.subject,
-          html: emailContent.html.substring(0, 100) + '...'
-        });
+        // Email would be sent
         return true; // Return true so the app continues working
       }
 
@@ -111,7 +107,7 @@ export class EmailService {
       });
 
       if (response.ok) {
-        console.log('✅ Email sent successfully via Brevo');
+        // Email sent successfully via Brevo
         return true;
       } else {
         const errorData = await response.json();
@@ -386,7 +382,7 @@ export class EmailService {
    * Schedule daily emails for all inactive users
    */
   async sendDailyBatch(userSchedules: EmailSchedule[]): Promise<void> {
-    console.log(`📧 Processing ${userSchedules.length} daily re-engagement emails...`);
+    // Processing daily re-engagement emails
     
     for (const schedule of userSchedules) {
       try {
@@ -398,7 +394,7 @@ export class EmailService {
       }
     }
     
-    console.log('✅ Daily email batch completed');
+    // Daily email batch completed
   }
 }
 

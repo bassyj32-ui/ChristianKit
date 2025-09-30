@@ -187,7 +187,7 @@ export const CommunityPrayerRequests: React.FC<CommunityPrayerRequestsProps> = (
       )
 
       // Show encouragement notification
-      console.log('Prayed for request:', requestId)
+      // Prayed for request
       
     } catch (error) {
       console.error('Error recording prayer:', error)
@@ -202,7 +202,7 @@ export const CommunityPrayerRequests: React.FC<CommunityPrayerRequestsProps> = (
         id: Date.now().toString(),
         ...newRequest,
         authorId: user?.id || 'anonymous',
-        authorName: newRequest.isAnonymous ? undefined : user?.name || 'Anonymous',
+        authorName: newRequest.isAnonymous ? undefined : user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Anonymous',
         createdAt: new Date().toISOString(),
         prayedCount: 0,
         hasPrayed: false

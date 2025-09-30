@@ -43,11 +43,6 @@ describe('Button', () => {
   })
 })
 
-
-
-import userEvent from '@testing-library/user-event'
-import Button from './Button'
-
 describe('Button', () => {
   it('renders with correct text', () => {
     render(<Button>Click me</Button>)

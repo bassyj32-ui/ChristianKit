@@ -27,7 +27,6 @@
     "pages:deploy": "npm run build && wrangler pages deploy dist --project-name christian-kit"
   },
   "dependencies": {
-    "@auth0/auth0-react": "^2.4.0",
     "@supabase/supabase-js": "^2.55.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.542.0",
@@ -42,6 +41,7 @@
     "@testing-library/jest-dom": "^6.1.5",
     "@testing-library/react": "^14.1.2",
     "@testing-library/user-event": "^14.5.1",
+    "@types/lodash": "^4.17.20",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@types/react-router-dom": "^5.3.3",

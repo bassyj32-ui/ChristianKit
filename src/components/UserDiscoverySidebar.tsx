@@ -247,7 +247,7 @@ export const UserDiscoverySidebar: React.FC<UserDiscoverySidebarProps> = ({
       <ActivityFeed 
         onUserSelect={onUserSelect}
         onPostSelect={(postId) => {
-          console.log('Navigate to post:', postId);
+          // Navigate to post
         }}
       />
 

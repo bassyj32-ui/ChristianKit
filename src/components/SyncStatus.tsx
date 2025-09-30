@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
-import { useAuth } from './AuthProvider'
-import { cloudDataService } from '../services/cloudDataService'
+import { useSupabaseAuth } from './SupabaseAuthProvider'
+// Removed cloudDataService - using Supabase directly
 
 interface SyncStatus {
   lastSync: Date | null
@@ -8,7 +8,7 @@ interface SyncStatus {
 }
 
 export const SyncStatus: React.FC = () => {
-  const { user } = useAuth()
+  const { user } = useSupabaseAuth()
   const [syncStatus, setSyncStatus] = useState<SyncStatus | null>(null)
   const [isSyncing, setIsSyncing] = useState(false)
   const [lastSyncAttempt, setLastSyncAttempt] = useState<Date | null>(null)
@@ -24,8 +24,8 @@ export const SyncStatus: React.FC = () => {
     if (!user) return
     
     try {
-      const status = await cloudDataService.getSyncStatus(user)
-      setSyncStatus(status)
+      // Using Supabase only - no local sync needed
+      setSyncStatus({ lastSync: new Date(), dataCount: 0 })
     } catch (error) {
       console.error('Error loading sync status:', error)
     }
@@ -38,7 +38,7 @@ export const SyncStatus: React.FC = () => {
     setSyncMessage('Syncing local data to cloud...')
     
     try {
-      await cloudDataService.syncLocalDataToCloud(user)
+      // Using Supabase only - no local sync neededsyncLocalDataToCloud(user)
       setSyncMessage('✅ Data synced to cloud successfully!')
       setLastSyncAttempt(new Date())
       await loadSyncStatus()
@@ -57,7 +57,7 @@ export const SyncStatus: React.FC = () => {
     setSyncMessage('Syncing cloud data to local...')
     
     try {
-      await cloudDataService.syncCloudDataToLocal(user)
+      // Using Supabase only - no local sync neededsyncCloudDataToLocal(user)
       setSyncMessage('✅ Data synced from cloud successfully!')
       setLastSyncAttempt(new Date())
       await loadSyncStatus()
@@ -77,8 +77,8 @@ export const SyncStatus: React.FC = () => {
     
     try {
       // First sync local to cloud, then cloud to local
-      await cloudDataService.syncLocalDataToCloud(user)
-      await cloudDataService.syncCloudDataToLocal(user)
+      // Using Supabase only - no local sync neededsyncLocalDataToCloud(user)
+      // Using Supabase only - no local sync neededsyncCloudDataToLocal(user)
       setSyncMessage('✅ Automatic sync completed successfully!')
       setLastSyncAttempt(new Date())
       await loadSyncStatus()

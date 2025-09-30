@@ -10,16 +10,25 @@ interface AdvancedProgressData {
     duration: number
     sessionsCount: number
     consistency: number
+    quality: string
   }
   bible: {
     duration: number
     chaptersRead: number
     consistency: number
+    quality: string
   }
   journal: {
     entriesCount: number
     wordCount: number
     consistency: number
+    quality: string
+  }
+  meditation: {
+    duration: number
+    sessionsCount: number
+    consistency: number
+    quality: string
   }
   overall: {
     completionRate: number
@@ -69,7 +78,7 @@ export const AdvancedWeeklyProgress: React.FC<AdvancedWeeklyProgressProps> = ({
 
     setIsLoading(true)
     try {
-      console.log('📊 AdvancedWeeklyProgress: Loading real progress data for user:', user.id)
+      // Loading real progress data for user
 
       // Calculate date range based on timeRange
       const today = new Date()
@@ -93,7 +102,7 @@ export const AdvancedWeeklyProgress: React.FC<AdvancedWeeklyProgressProps> = ({
 
       // Load real progress data
       const realData = await ProgressService.getWeeklyProgress(user.id, weekStartStr)
-      console.log('✅ AdvancedWeeklyProgress: Real data loaded:', realData)
+      // Real data loaded
 
       // Convert to AdvancedProgressData format
       const advancedData = convertToAdvancedFormat(realData)

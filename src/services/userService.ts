@@ -48,7 +48,6 @@ export class UserService {
     try {
       const { data: { user } } = await this.supabase.auth.getUser()
       if (!user) {
-        console.log('ℹ️ No authenticated user found')
         return null
       }
 
@@ -60,7 +59,6 @@ export class UserService {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('ℹ️ No profile found for user, creating default profile')
           return await this.createDefaultProfile(user)
         }
         console.error('❌ Error fetching user profile:', {
@@ -83,10 +81,35 @@ export class UserService {
    */
   private async createDefaultProfile(user: User): Promise<UserProfile | null> {
     try {
+      // Check if profile already exists first
+      const { data: existingProfile, error: checkError } = await this.supabase!
+        .from('profiles')
+        .select('id')
+        .eq('id', user.id)
+        .maybeSingle()
+
+      // If profile exists, return it
+      if (existingProfile) {
+        const { data: profile } = await this.supabase!
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single()
+        return profile
+      }
+
+      // If there's a database error (not just "no profile found"), log it
+      if (checkError && checkError.code !== 'PGRST116') {
+        console.error('❌ Error checking profile existence:', checkError)
+        return null
+      }
+
+      // Create default profile only if it doesn't exist
       const defaultProfile: Partial<UserProfile> = {
         id: user.id,
         email: user.email!,
-        display_name: user.email?.split('@')[0] || 'User',
+        display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        avatar_url: user.user_metadata?.avatar_url,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       }
@@ -98,11 +121,20 @@ export class UserService {
         .single()
 
       if (error) {
+        // Handle race condition where profile was created by trigger between check and insert
+        if (error.code === '23505') {
+          const { data: profile } = await this.supabase!
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          return profile
+        }
+
         console.error('❌ Error creating default profile:', error)
         return null
       }
 
-      console.log('✅ Default profile created for user:', user.id)
       return data
     } catch (error) {
       console.error('❌ Error in createDefaultProfile:', error)
@@ -156,7 +188,6 @@ export class UserService {
         return null
       }
 
-      console.log('✅ Profile upserted successfully:', profile.id)
       return data
     } catch (error) {
       console.error('❌ Error in upsertUserProfile:', error)
@@ -302,7 +333,6 @@ export class UserService {
 
       if (error) {
         if (error.code === 'PGRST116') {
-          console.log('ℹ️ No profile found for user:', userId)
           return null
         }
         console.error('❌ Error fetching user profile:', {
@@ -348,7 +378,6 @@ export class UserService {
         return false
       }
 
-      console.log('✅ Profile updated successfully:', userId)
       return true
     } catch (error) {
       console.error('❌ Error in updateUserProfile:', error)

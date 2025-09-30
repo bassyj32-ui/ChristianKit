@@ -79,7 +79,7 @@ describe('Color System', () => {
       const lightColors = [colorPalette.primary[50], colorPalette.neutral[100], colorPalette.success[100]];
       
       lightColors.forEach(color => {
-        expect(color.contrast).toBe('#1f2937'); // Dark text on light backgrounds
+        expect(color.contrast).toBe('#000000'); // Black text on light backgrounds
       });
     });
 
@@ -278,7 +278,7 @@ describe('Color System', () => {
       const lightColors = [colorPalette.primary[50], colorPalette.neutral[100], colorPalette.success[100]];
       
       lightColors.forEach(color => {
-        expect(color.contrast).toBe('#1f2937'); // Dark text on light backgrounds
+        expect(color.contrast).toBe('#000000'); // Black text on light backgrounds
       });
     });
 

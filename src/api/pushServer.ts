@@ -69,7 +69,7 @@ export async function sendPushNotification(
     const result = await webpush.sendNotification(subscription, pushPayload);
     
     if (result.statusCode === 200 || result.statusCode === 201) {
-      console.log('✅ Push notification sent successfully');
+      // Push notification sent successfully
       return true;
     } else {
       console.error('❌ Push notification failed:', result.statusCode, result.statusText);
@@ -120,7 +120,7 @@ export async function sendDailyReminderNotifications(
   try {
     // This would typically fetch from your database
     // For now, we'll return a mock result
-    console.log(`📱 Sending daily ${reminderType} reminders to all users`);
+    // Sending daily reminders to all users
     
     const payload: PushNotificationPayload = {
       title: getReminderTitle(reminderType),
@@ -140,7 +140,7 @@ export async function sendDailyReminderNotifications(
     // 2. Send notifications to each subscription
     // 3. Log the results
     
-    console.log('✅ Daily reminder notifications queued');
+    // Daily reminder notifications queued
     return { success: 1, failed: 0 };
   } catch (error) {
     console.error('❌ Error sending daily reminder notifications:', error);
@@ -168,9 +168,7 @@ function getReminderTitle(reminderType: string): string {
 export async function testPushNotification(): Promise<boolean> {
   try {
     // This is a test function - in production, you'd send to real subscriptions
-    console.log('🧪 Testing push notification system...');
-    console.log('✅ VAPID keys configured');
-    console.log('✅ Web-push library ready');
+    // Testing push notification system
     return true;
   } catch (error) {
     console.error('❌ Push notification test failed:', error);

@@ -33,12 +33,12 @@ export class ReminderAutomationService {
    */
   async sendDailyPrayerReminders() {
     try {
-      console.log('🔔 Starting daily prayer reminders...')
+      // Starting daily prayer reminders
       
       // Get all users with active prayer reminders
       const activeUsers = await this.getUsersWithActiveReminders('prayer')
       
-      console.log(`📧 Sending prayer reminders to ${activeUsers.length} users`)
+      // Sending prayer reminders
       
       for (const user of activeUsers) {
         try {
@@ -51,7 +51,7 @@ export class ReminderAutomationService {
         }
       }
       
-      console.log('✅ Daily prayer reminders completed')
+      // Daily prayer reminders completed
     } catch (error) {
       console.error('❌ Error in sendDailyPrayerReminders:', error)
     }
@@ -62,11 +62,11 @@ export class ReminderAutomationService {
    */
   async sendDailyBibleReminders() {
     try {
-      console.log('🔔 Starting daily Bible reminders...')
+      // Starting daily Bible reminders
       
       const activeUsers = await this.getUsersWithActiveReminders('bible')
       
-      console.log(`📧 Sending Bible reminders to ${activeUsers.length} users`)
+      // Sending Bible reminders
       
       for (const user of activeUsers) {
         try {
@@ -78,7 +78,7 @@ export class ReminderAutomationService {
         }
       }
       
-      console.log('✅ Daily Bible reminders completed')
+      // Daily Bible reminders completed
     } catch (error) {
       console.error('❌ Error in sendDailyBibleReminders:', error)
     }
@@ -89,11 +89,11 @@ export class ReminderAutomationService {
    */
   async sendDailyMeditationReminders() {
     try {
-      console.log('🔔 Starting daily meditation reminders...')
+      // Starting daily meditation reminders
       
       const activeUsers = await this.getUsersWithActiveReminders('meditation')
       
-      console.log(`📧 Sending meditation reminders to ${activeUsers.length} users`)
+      // Sending meditation reminders
       
       for (const user of activeUsers) {
         try {
@@ -105,7 +105,7 @@ export class ReminderAutomationService {
         }
       }
       
-      console.log('✅ Daily meditation reminders completed')
+      // Daily meditation reminders completed
     } catch (error) {
       console.error('❌ Error in sendDailyMeditationReminders:', error)
     }
@@ -164,7 +164,7 @@ export class ReminderAutomationService {
       // Log reminder sent
       await this.logReminderSent(user.user_id, 'prayer', 'email')
       
-      console.log(`✅ Prayer reminder sent to ${userProfile.email}`)
+      // Prayer reminder sent
     } catch (error) {
       console.error(`❌ Error sending prayer reminder to ${user.user_id}:`, error)
       await this.logReminderSent(user.user_id, 'prayer', 'failed', error instanceof Error ? error.message : 'Unknown error')
@@ -196,7 +196,7 @@ export class ReminderAutomationService {
       })
       
       await this.logReminderSent(user.user_id, 'bible', 'email')
-      console.log(`✅ Bible reminder sent to ${userProfile.email}`)
+      // Bible reminder sent
     } catch (error) {
       console.error(`❌ Error sending Bible reminder to ${user.user_id}:`, error)
       await this.logReminderSent(user.user_id, 'bible', 'failed', error instanceof Error ? error.message : 'Unknown error')
@@ -228,7 +228,7 @@ export class ReminderAutomationService {
       })
       
       await this.logReminderSent(user.user_id, 'meditation', 'email')
-      console.log(`✅ Meditation reminder sent to ${userProfile.email}`)
+      // Meditation reminder sent
     } catch (error) {
       console.error(`❌ Error sending meditation reminder to ${user.user_id}:`, error)
       await this.logReminderSent(user.user_id, 'meditation', 'failed', error instanceof Error ? error.message : 'Unknown error')
@@ -284,7 +284,6 @@ export class ReminderAutomationService {
         return null
       }
 
-      console.log('✅ Default reminder schedule created for user:', userId)
       return data
     } catch (error) {
       console.error('❌ Error in createDefaultReminderSchedule:', error)

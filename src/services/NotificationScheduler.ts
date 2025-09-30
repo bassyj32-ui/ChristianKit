@@ -184,13 +184,13 @@ class NotificationScheduler {
    * Process all inactive users for notifications
    */
   async processInactiveUsers(users: UserActivity[]): Promise<void> {
-    console.log(`🔥 Starting restless notification campaign for ${users.length} inactive users`);
+    // Starting restless notification campaign
     
     for (const user of users) {
       this.startRestlessNotifications(user);
     }
     
-    console.log('✅ Restless notification campaign initiated');
+    // Restless notification campaign initiated
   }
 }
 

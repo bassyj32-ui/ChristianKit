@@ -10,7 +10,7 @@ export const useGameAudio = () => {
       try {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       } catch (error) {
-        console.log('Audio not supported:', error);
+        // Audio not supported
         return null;
       }
     }
@@ -84,7 +84,7 @@ export const useGameAudio = () => {
       }, (config.duration * 1000) + 100);
       
     } catch (error) {
-      console.log('Audio playback failed:', error);
+      // Audio playback failed
     }
   }, [getAudioContext]);
 

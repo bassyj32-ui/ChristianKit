@@ -36,11 +36,11 @@ export const DailyReEngagementCard: React.FC<DailyReEngagementCardProps> = ({ on
       }
 
       try {
-        console.log('📊 DailyReEngagementCard: Loading user stats for:', user.id)
+        // Loading user stats
 
         // Load real user stats from ProgressService
         const userStats = await ProgressService.getUserStats(user.id)
-        console.log('✅ DailyReEngagementCard: Loaded user stats:', userStats)
+        // Loaded user stats
 
         // Convert to component format
         const componentStats = {

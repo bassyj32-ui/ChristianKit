@@ -54,7 +54,7 @@ export const UserProfile: React.FC = () => {
         .single()
 
       if (error) {
-        console.log('No existing profile found, setting up defaults')
+        // No existing profile found, setting up defaults
         // Use auth metadata as fallback
         setBio((user as any).bio || '')
         setFavoriteVerse((user as any).favoriteVerse || '')
@@ -79,7 +79,7 @@ export const UserProfile: React.FC = () => {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })
-          console.log('✅ Default images saved for new user')
+          // Default images saved for new user
         } catch (saveError: any) {
           console.error('❌ Error saving default images:', {
             code: saveError?.code,
@@ -123,13 +123,7 @@ export const UserProfile: React.FC = () => {
       })
 
       // Provide specific error feedback
-      if ((error as any)?.code === 'PGRST301') {
-        console.log('ℹ️ Profiles table does not exist - using auth metadata as fallback')
-      } else if ((error as any)?.code === 'PGRST116') {
-        console.log('ℹ️ No profile found - will create default profile')
-      } else {
-        console.log('ℹ️ Using auth metadata as fallback due to error')
-      }
+      // Using auth metadata as fallback
 
       // Fallback to auth metadata
       setBio((user as any).bio || '')
@@ -172,7 +166,7 @@ export const UserProfile: React.FC = () => {
 
       await authService.updateProfile(profileUpdates)
 
-      console.log('✅ Profile saved successfully for user:', user.id)
+      // Profile saved successfully
       setIsEditing(false)
     } catch (error: any) {
       console.error('❌ Failed to update profile:', {
@@ -312,7 +306,7 @@ export const UserProfile: React.FC = () => {
           })
         ])
         
-        console.log('✅ Banner image saved successfully')
+        // Banner image saved successfully
       }
     } catch (error: any) {
       console.error('❌ Banner upload error:', {
@@ -370,7 +364,7 @@ export const UserProfile: React.FC = () => {
           })
         ])
         
-        console.log('✅ Profile image saved successfully')
+        // Profile image saved successfully
       }
     } catch (error: any) {
       console.error('❌ Profile upload error:', {
@@ -407,7 +401,7 @@ export const UserProfile: React.FC = () => {
   const handleSignOut = async () => {
     try {
       await signOut()
-      console.log('✅ User signed out successfully')
+      // User signed out successfully
     } catch (error: any) {
       console.error('❌ Failed to sign out:', {
         code: error?.code,

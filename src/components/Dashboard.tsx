@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { WeeklyProgress } from './WeeklyProgress'
 import { CommunityPage } from './CommunityPage'
 import { DailyReEngagementCard } from './DailyReEngagementCard'
-import { TestNotificationButton } from './TestNotificationButton'
-// import { CleanNotificationTest } from './CleanNotificationTest' // HIDDEN
+// Test components removed during cleanup
 import { AdvancedWeeklyProgress } from './AdvancedWeeklyProgress'
 import { MonthlyHabitBuilder } from './MonthlyHabitBuilder'
 import { CommunityPrayerRequests } from './CommunityPrayerRequests'
@@ -58,8 +57,6 @@ interface DashboardProps {
 }
 
 export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) => {
-  console.log('🔍 Dashboard: Component initialized with props:', { onNavigate: !!onNavigate, userPlan: !!userPlan })
-  
   const [activeSection, setActiveSection] = useState<string | null>(null)
   const [currentView, setCurrentView] = useState<'dashboard' | 'prayerSystem'>('dashboard')
   const [todayProgress, setTodayProgress] = useState({
@@ -84,7 +81,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
   useEffect(() => {
     const loadTodayProgress = async () => {
       try {
-        console.log('🔍 Dashboard: Loading today\'s progress...')
         setLoading(true)
         
         // Only load data if user is signed in
@@ -95,14 +91,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         
         // Initialize subscription service if user is logged in
         if (user?.id) {
-          console.log('🔍 Dashboard: Initializing services for user:', user.id)
           await subscriptionService.initializeUserSubscription(user.id)
           await dailyReEngagementService.initialize()
         }
         
-        console.log('🔍 Dashboard: Getting prayer sessions...')
         const sessions = await prayerService.getPrayerSessions()
-        console.log('🔍 Dashboard: Prayer sessions loaded:', sessions.length)
         
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -119,11 +112,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         let meditationProgress = 0
 
         // Load REAL prayer progress using UnifiedProgressService
-        console.log('🔍 Dashboard: Loading unified progress stats...')
         try {
           const realStats = await unifiedProgressService.getProgressStats(user?.id)
-          console.log('✅ Dashboard: Real progress loaded:', realStats)
-          
+
           setPrayerProgress({
             currentStreak: realStats.currentStreak,
             totalPrayers: realStats.totalPrayers,
@@ -131,13 +122,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
             daysThisMonth: realStats.daysThisMonth,
             weeklyGoal: realStats.weeklyGoal,
             dataSource: realStats.dataSource
-          })
-          
-          console.log('🎯 Dashboard: Progress updated:', {
-            streak: realStats.currentStreak,
-            total: realStats.totalPrayers,
-            level: realStats.currentLevel,
-            source: realStats.dataSource
           })
         } catch (error) {
           console.error('❌ Dashboard: Error loading unified progress:', error)
@@ -157,8 +141,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
           }
         })
         
-        console.log('🔍 Dashboard: Progress calculated:', { prayer: prayerProgress, bible: bibleProgress, meditation: meditationProgress })
-        
         setTodayProgress({
           prayer: prayerProgress,
           bible: bibleProgress,
@@ -176,12 +158,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
         setLoading(false)
       }
     }
-    
+
     loadTodayProgress()
   }, [user?.id])
-
-  // Simple test render first
-  console.log('🔍 Dashboard: Attempting to render...')
   
   // Show Prayer System Interface if selected
   if (currentView === 'prayerSystem') {
@@ -300,7 +279,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ onNavigate, userPlan }) =>
                     prayer_type: 'prayer',
                     notes: userPlan?.customPlan?.prayer?.focus?.join(', ') || undefined
                   });
-                  console.log('✅ Prayer session started and recorded');
                 } catch (error) {
                   console.error('❌ Error recording prayer session start:', error);
                   // Continue even if database recording fails

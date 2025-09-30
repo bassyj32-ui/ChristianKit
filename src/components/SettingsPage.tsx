@@ -281,7 +281,7 @@ export const SettingsPage: React.FC = () => {
           updated_at: new Date().toISOString()
         })
 
-      console.log('✅ Settings saved to database')
+      // Settings saved to database
     } catch (error: any) {
       console.error('❌ Error saving settings to database:', {
         code: error?.code,
@@ -302,7 +302,7 @@ export const SettingsPage: React.FC = () => {
       }
 
       localStorage.setItem('notificationPreferences', JSON.stringify(notificationSettings))
-      console.log('✅ Notification services updated:', notificationSettings)
+      // Notification services updated
     } catch (error: any) {
       console.error('❌ Error updating notification services:', error)
     }

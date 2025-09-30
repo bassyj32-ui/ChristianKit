@@ -10,14 +10,11 @@ if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
         .then((registration) => {
-          console.log('✅ Service Worker registered (prod):', registration);
-          
           // Force clear all caches on app load to prevent stale assets
           if ('caches' in window) {
             caches.keys().then((cacheNames) => {
               cacheNames.forEach((cacheName) => {
                 caches.delete(cacheName);
-                console.log('🧹 Cleared cache:', cacheName);
               });
             });
           }
@@ -36,9 +33,7 @@ if ('serviceWorker' in navigator) {
     navigator.serviceWorker.getRegistrations().then((regs) => {
       regs.forEach((r) => {
         r.unregister();
-        console.log('🧹 Dev mode: unregistered service worker');
       });
-      console.log('🧹 Dev mode: unregistered all existing Service Workers');
     });
     
     // Also clear all caches in development
@@ -46,7 +41,6 @@ if ('serviceWorker' in navigator) {
       caches.keys().then((cacheNames) => {
         cacheNames.forEach((cacheName) => {
           caches.delete(cacheName);
-          console.log('🧹 Dev mode: cleared cache:', cacheName);
         });
       });
     }

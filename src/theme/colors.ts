@@ -171,6 +171,7 @@ export const colorPalette: ColorPalette = {
   info: createColorScale(colors.info),
 };
 
+
 // Semantic color mappings
 export const semanticColors = {
   // Text colors
@@ -181,7 +182,7 @@ export const semanticColors = {
     inverse: colorPalette.neutral[50],
     disabled: colorPalette.neutral[300],
   },
-  
+
   // Background colors
   background: {
     primary: colorPalette.neutral[50],
@@ -190,7 +191,7 @@ export const semanticColors = {
     inverse: colorPalette.neutral[900],
     overlay: 'rgba(0, 0, 0, 0.5)',
   },
-  
+
   // Border colors
   border: {
     primary: colorPalette.neutral[200],
@@ -200,7 +201,7 @@ export const semanticColors = {
     success: colorPalette.success[500],
     warning: colorPalette.warning[500],
   },
-  
+
   // Interactive colors
   interactive: {
     primary: colorPalette.primary[600],
@@ -210,7 +211,7 @@ export const semanticColors = {
     secondaryHover: colorPalette.neutral[700],
     secondaryActive: colorPalette.neutral[800],
   },
-  
+
   // Status colors
   status: {
     success: colorPalette.success[500],
@@ -229,7 +230,7 @@ export const darkModeColors = {
     inverse: colorPalette.neutral[900],
     disabled: colorPalette.neutral[600],
   },
-  
+
   background: {
     primary: colorPalette.neutral[900],
     secondary: colorPalette.neutral[800],
@@ -237,7 +238,7 @@ export const darkModeColors = {
     inverse: colorPalette.neutral[50],
     overlay: 'rgba(255, 255, 255, 0.1)',
   },
-  
+
   border: {
     primary: colorPalette.neutral[700],
     secondary: colorPalette.neutral[600],
@@ -246,7 +247,7 @@ export const darkModeColors = {
     success: colorPalette.success[400],
     warning: colorPalette.warning[400],
   },
-  
+
   interactive: {
     primary: colorPalette.primary[400],
     primaryHover: colorPalette.primary[500],
@@ -260,25 +261,25 @@ export const darkModeColors = {
 // Export color utilities
 export const colorUtils = {
   // Get color by name and scale
-  getColor: (name: keyof ColorPalette, scale: keyof ColorScale) => 
+  getColor: (name: keyof ColorPalette, scale: keyof ColorScale) =>
     colorPalette[name][scale],
-  
+
   // Get semantic color
   getSemantic: (category: keyof typeof semanticColors, variant: string) =>
     semanticColors[category][variant as keyof typeof semanticColors[typeof category]],
-  
+
   // Get dark mode color
   getDarkMode: (category: keyof typeof darkModeColors, variant: string) =>
     darkModeColors[category][variant as keyof typeof darkModeColors[typeof category]],
-  
+
   // Check if color meets WCAG standards
   meetsWCAG: (name: keyof ColorPalette, scale: keyof ColorScale, level: 'aa' | 'aaa' = 'aa') =>
     colorPalette[name][scale].wcag[level],
-  
+
   // Get all colors that meet WCAG standards
   getWCAGCompliant: (level: 'aa' | 'aaa' = 'aa') => {
     const compliant: Record<string, Record<string, ColorToken>> = {};
-    
+
     Object.entries(colorPalette).forEach(([paletteName, palette]) => {
       compliant[paletteName] = {};
       Object.entries(palette).forEach(([scaleName, color]) => {
@@ -287,9 +288,10 @@ export const colorUtils = {
         }
       });
     });
-    
+
     return compliant;
   },
 };
+
 
 export default colorPalette;

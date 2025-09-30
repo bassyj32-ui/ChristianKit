@@ -1,13 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  getUserNotifications, 
-  markNotificationAsRead, 
+import {
+  getUserNotifications,
+  markNotificationAsRead,
   markAllNotificationsAsRead,
   getUnreadNotificationCount,
   subscribeToNotifications,
-  type Notification 
+  subscribeToPushNotifications,
+  type Notification
 } from '../services/notificationService';
 import { useSupabaseAuth } from './SupabaseAuthProvider';
+
+// VAPID public key from env1.md
+const VAPID_PUBLIC_KEY = 'BEd9I1aA4TrQnASkZfKFKylZuy_-EjSeNwBsD32JvHFrbaZxTbfcPme2KhboVY8QMK47OoYtpus0alGzuJuR-60';
+
+// Utility function to convert VAPID key
+function urlBase64ToUint8Array(base64String: string) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+  const rawData = window.atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
+}
 
 interface NotificationCenterProps {
   onUserSelect?: (userId: string) => void;
@@ -29,12 +45,12 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
     if (user?.id) {
       loadNotifications();
       loadUnreadCount();
-      
+
       // Subscribe to real-time notifications
       const unsubscribe = subscribeToNotifications(user.id, (newNotification) => {
         setNotifications(prev => [newNotification, ...prev]);
         setUnreadCount(prev => prev + 1);
-        
+
         // Show browser notification if supported
         if ('Notification' in window && Notification.permission === 'granted') {
           new Notification(newNotification.title, {
@@ -43,6 +59,30 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           });
         }
       });
+
+      // Subscribe to push notifications for PWA
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        navigator.serviceWorker.ready.then((registration) => {
+          return registration.pushManager.getSubscription().then((existingSubscription) => {
+            if (!existingSubscription) {
+              return registration.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+              }).then((newSubscription) => {
+                // Send subscription to server
+                fetch('/api/subscribe', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    subscription: newSubscription,
+                    userId: user.id
+                  })
+                });
+              });
+            }
+          });
+        });
+      }
 
       return unsubscribe;
     }
@@ -119,6 +159,15 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
   const requestNotificationPermission = async () => {
     if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
+    }
+  };
+
+  const handleEnablePushNotifications = async () => {
+    const success = await subscribeToPushNotifications(user?.id || '');
+    if (success) {
+      alert('Push notifications enabled!');
+    } else {
+      alert('Failed to enable push notifications. Please check permissions.');
     }
   };
 
@@ -206,14 +255,22 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
           {/* Header */}
           <div className="flex items-center justify-between p-4 border-b border-white/10">
             <h3 className="text-lg font-bold text-white">Notifications</h3>
-            {unreadCount > 0 && (
+            <div className="flex space-x-2">
               <button
-                onClick={handleMarkAllAsRead}
-                className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors"
+                onClick={handleEnablePushNotifications}
+                className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
               >
-                Mark all read
+                Enable Push
               </button>
-            )}
+              {unreadCount > 0 && (
+                <button
+                  onClick={handleMarkAllAsRead}
+                  className="text-xs text-yellow-400 hover:text-yellow-300 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Notifications List */}

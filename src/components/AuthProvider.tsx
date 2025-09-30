@@ -34,29 +34,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   // Check for existing user in localStorage on mount
   useEffect(() => {
-    console.log('AuthProvider: Checking for saved user...');
-    
     const savedUser = localStorage.getItem('user');
-    console.log('AuthProvider: Saved user:', savedUser);
     if (savedUser) {
       try {
         setUser(JSON.parse(savedUser));
         setIsProUser(true); // For demo purposes, treat all users as Pro
-        console.log('AuthProvider: User loaded from localStorage');
+        // User loaded from localStorage
       } catch (error) {
         console.error('Error parsing saved user:', error);
         localStorage.removeItem('user'); // Clear corrupted data
       }
-    } else {
-      console.log('AuthProvider: No saved user found');
     }
     setLoading(false); // Ensure loading is set to false
-    console.log('AuthProvider: Loading set to false');
   }, []);
 
   const signInWithGoogle = async () => {
     try {
-      console.log('Starting sign in process...');
       setLoading(true);
       setError(null);
       
@@ -68,21 +61,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         photoURL: 'https://via.placeholder.com/150'
       };
       
-      console.log('Creating mock user:', mockUser);
+      // Creating mock user
       
       // Save to localStorage
       localStorage.setItem('user', JSON.stringify(mockUser));
-      console.log('User saved to localStorage');
+      // User saved to localStorage
       
       setUser(mockUser);
       setIsProUser(true);
       
-      console.log('Demo user signed in successfully:', mockUser);
+      // Demo user signed in successfully
     } catch (error) {
       console.error('Sign in error:', error);
       setError('Failed to sign in. Please try again.');
     } finally {
-      console.log('Setting loading to false');
       setLoading(false);
     }
   };
@@ -93,7 +85,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('user');
       setUser(null);
       setIsProUser(false);
-      console.log('User signed out');
+      // User signed out
     } catch (error) {
       console.error('Logout error:', error);
       setError('Failed to sign out. Please try again.');

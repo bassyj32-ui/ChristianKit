@@ -42,56 +42,60 @@ class AuthService {
   // Ensure profile record exists for user with enhanced error handling
   private async ensureProfileExists(user: any): Promise<void> {
     try {
+      // First check if profile exists (using maybeSingle to avoid errors)
       const { data: existingProfile, error: checkError } = await supabase
         .from('profiles')
         .select('id')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
+      // If there's a real database error (not just "no rows found"), log it
       if (checkError && checkError.code !== 'PGRST116') {
         console.error('❌ Error checking profile existence:', checkError)
         return
       }
 
-      if (!existingProfile) {
-        // Create profile record with comprehensive data
-        const profileData = {
-          id: user.id,
-          email: user.email,
-          display_name: user.user_metadata?.display_name || user.email?.split('@')[0] || 'User',
-          avatar_url: user.user_metadata?.avatar_url,
-          bio: user.user_metadata?.bio,
-          favorite_verse: user.user_metadata?.favoriteVerse,
-          location: user.user_metadata?.location,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
+      // If profile already exists, we're good
+      if (existingProfile) {
+        // Profile already exists for user
+        return
+      }
 
-        const { error } = await supabase
-          .from('profiles')
-          .insert(profileData)
+      // Only create profile if it doesn't exist
+      // Use only the columns that definitely exist in the database
+      const profileData = {
+        id: user.id,
+        email: user.email,
+        display_name: user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'User',
+        avatar_url: user.user_metadata?.avatar_url
+      }
 
-        if (error) {
-          console.error('❌ Error creating profile:', {
-            code: error.code,
-            message: error.message,
-            userId: user.id
-          })
+      const { error } = await supabase
+        .from('profiles')
+        .insert(profileData)
 
-          // Provide specific error messages
-          if (error.code === '23505') {
-            console.error('❌ Profile already exists for this user')
-          } else if (error.code === '42P01') {
-            console.error('❌ Profiles table does not exist')
-          }
+      if (error) {
+        console.error('❌ Error creating profile:', {
+          code: error.code,
+          message: error.message,
+          userId: user.id
+        })
+
+        // Specific error handling
+        if (error.code === '23505') {
+          // Profile already exists (race condition)
+        } else if (error.code === '42P01') {
+          console.error('❌ Profiles table does not exist')
         } else {
-          console.log('✅ Profile record created successfully for user:', user.id)
+          console.error('❌ Unexpected profile creation error:', error.message)
         }
       } else {
-        console.log('ℹ️ Profile already exists for user:', user.id)
+        // Profile record created successfully for user
       }
+
     } catch (error) {
       console.error('❌ Error ensuring profile exists:', error)
+      // Don't throw - let the signup continue even if profile creation fails
     }
   }
 

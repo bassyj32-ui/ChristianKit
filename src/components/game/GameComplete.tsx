@@ -8,6 +8,10 @@ interface GameCompleteProps {
   difficulty: 'easy' | 'medium' | 'hard';
   perfectMatches: number;
   totalMatches: number;
+  currentLevel: number;
+  nextLevel: number;
+  currentLevelIndex: number;
+  totalLevels: number;
   onNextLevel: () => void;
   onPlayAgain: () => void;
   onMainMenu: () => void;
@@ -21,6 +25,10 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
   difficulty,
   perfectMatches,
   totalMatches,
+  currentLevel,
+  nextLevel,
+  currentLevelIndex,
+  totalLevels,
   onNextLevel,
   onPlayAgain,
   onMainMenu
@@ -70,7 +78,7 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
     return "Keep practicing! 💪";
   };
 
-  const canAdvance = difficulty !== 'hard';
+  const canAdvance = currentLevel < totalLevels;
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
@@ -78,8 +86,10 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
         {/* Header */}
         <div className={`bg-gradient-to-r ${theme.bg} p-6 text-center`}>
           <div className="text-white text-4xl mb-2">🎉</div>
-          <h2 className="text-white text-2xl font-bold mb-1">Level Complete!</h2>
-          <p className="text-white/90 text-sm">{getPerformanceMessage()}</p>
+          <h2 className="text-white text-2xl font-bold mb-1">Level {currentLevel} Complete!</h2>
+          <p className="text-white/90 text-sm">
+            {getPerformanceMessage()} • Level {currentLevel} of {totalLevels}
+          </p>
         </div>
 
         {/* Stats */}
@@ -124,7 +134,7 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
             {/* Auto-advance message */}
             {canAdvance && (
               <div className="text-center text-sm text-gray-600 mb-4">
-                Auto-advancing to next level in 3 seconds...
+                Auto-advancing to Level {nextLevel} in 3 seconds...
               </div>
             )}
 
@@ -140,21 +150,29 @@ export const GameComplete: React.FC<GameCompleteProps> = ({
                   shadow-lg
                 `}
               >
-                Continue to Next Level →
+                {canAdvance ? `Continue to Level ${nextLevel} →` : 'Play Again →'}
               </button>
             ) : (
-              <button
-                onClick={onPlayAgain}
-                className={`
-                  w-full ${theme.button}
-                  text-white font-semibold py-3 px-6 rounded-xl
-                  transform transition-all duration-200
-                  hover:scale-105 active:scale-95
-                  shadow-lg
-                `}
-              >
-                Play Again
-              </button>
+              <div className="text-center space-y-3">
+                <div className="text-lg font-semibold text-gray-800">
+                  🎉 All {totalLevels} Levels Complete! 🎉
+                </div>
+                <div className="text-sm text-gray-600 mb-4">
+                  Congratulations! You've mastered all Bible verse levels!
+                </div>
+                <button
+                  onClick={onPlayAgain}
+                  className={`
+                    w-full ${theme.button}
+                    text-white font-semibold py-3 px-6 rounded-xl
+                    transform transition-all duration-200
+                    hover:scale-105 active:scale-95
+                    shadow-lg
+                  `}
+                >
+                  Play Again
+                </button>
+              </div>
             )}
 
             {/* Secondary Actions */}

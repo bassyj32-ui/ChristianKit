@@ -22,7 +22,7 @@ export class EmailAutomationService {
    */
   async sendWelcomeEmail(userId: string, userEmail: string, userName?: string) {
     try {
-      console.log('📧 Sending welcome email to:', userEmail)
+      // Sending welcome email
       
       const emailContent = {
         to: userEmail,
@@ -49,7 +49,7 @@ export class EmailAutomationService {
       const result = await this.emailService.sendEmail(emailContent)
       
       if (result) {
-        console.log('✅ Welcome email sent successfully')
+        // Welcome email sent successfully
         // Log email sent in database
         await this.logEmailSent(userId, 'welcome', 'sent')
       } else {
@@ -70,7 +70,7 @@ export class EmailAutomationService {
    */
   async sendDailyPrayerReminder(userId: string, userEmail: string, userName?: string) {
     try {
-      console.log('📧 Sending daily prayer reminder to:', userEmail)
+      // Sending daily prayer reminder
       
       const emailContent = {
         to: userEmail,
@@ -92,7 +92,7 @@ export class EmailAutomationService {
       const result = await this.emailService.sendEmail(emailContent)
       
       if (result) {
-        console.log('✅ Daily prayer reminder sent successfully')
+        // Daily prayer reminder sent successfully
         await this.logEmailSent(userId, 'prayer_reminder', 'sent')
       } else {
         console.error('❌ Daily prayer reminder failed')
@@ -112,7 +112,7 @@ export class EmailAutomationService {
    */
   async sendAchievementEmail(userId: string, userEmail: string, achievementName: string, achievementDescription: string) {
     try {
-      console.log('📧 Sending achievement email to:', userEmail)
+      // Sending achievement email
       
       const emailContent = {
         to: userEmail,
@@ -134,7 +134,7 @@ export class EmailAutomationService {
       const result = await this.emailService.sendEmail(emailContent)
       
       if (result) {
-        console.log('✅ Achievement email sent successfully')
+        // Achievement email sent successfully
         await this.logEmailSent(userId, 'achievement', 'sent')
       } else {
         console.error('❌ Achievement email failed')
@@ -154,7 +154,7 @@ export class EmailAutomationService {
    */
   async sendWeeklyReport(userId: string, userEmail: string, userName?: string, weeklyStats?: any) {
     try {
-      console.log('📧 Sending weekly report to:', userEmail)
+      // Sending weekly report
       
       const emailContent = {
         to: userEmail,
@@ -182,7 +182,7 @@ export class EmailAutomationService {
       const result = await this.emailService.sendEmail(emailContent)
       
       if (result) {
-        console.log('✅ Weekly report sent successfully')
+        // Weekly report sent successfully
         await this.logEmailSent(userId, 'weekly_report', 'sent')
       } else {
         console.error('❌ Weekly report failed')

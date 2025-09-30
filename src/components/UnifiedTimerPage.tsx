@@ -3,6 +3,7 @@ import { SharePrayerSession } from './SharePrayerSession'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { DailyProgressReminder } from './DailyProgressReminder'
 import ProgressService from '../services/ProgressService'
+import { useAppStore } from '../store/appStore'
 
 interface PrayerSession {
   id: string
@@ -37,7 +38,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
   isFirstTimeUser = false 
 }) => {
   const { user, signInWithGoogle } = useSupabaseAuth();
-  console.log('UnifiedTimerPage rendered with propSelectedMinutes:', propSelectedMinutes);
+  // UnifiedTimerPage rendered
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
@@ -54,8 +55,12 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
   const [showAdvanced, setShowAdvanced] = useState(false)
   const [currentTitleIndex, setCurrentTitleIndex] = useState(0)
   const [currentVerseIndex, setCurrentVerseIndex] = useState(0)
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [completedSessionData, setCompletedSessionData] = useState<any>(null)
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const reminderIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const { addPrayerSession } = useAppStore()
 
   // Encouraging titles and subtitles for slideshow
   const encouragingTitles = [
@@ -114,7 +119,7 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
   // Update timer when prop changes
   useEffect(() => {
     if (propSelectedMinutes && propSelectedMinutes > 0) {
-      console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
+      // Prop changed, updating timer
       setSelectedMinutes(propSelectedMinutes);
       setTimeRemaining(propSelectedMinutes * 60);
     }
@@ -150,27 +155,42 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
           started_at: new Date().toISOString(),
           ended_at: new Date().toISOString(),
           duration_minutes: selectedMinutes,
-          prayer_type: 'prayer',
+          prayer_type: timerType,
           notes: prayerFocus ? `Focus: ${prayerFocus}` : undefined
         });
-        console.log('✅ Prayer session recorded successfully');
+        // Prayer session recorded successfully
       } catch (error) {
         console.error('❌ Error recording prayer session:', error);
         // Continue even if database recording fails
       }
     }
-    
+
+    // Add to app store for cross-component access
+    addPrayerSession(newSession);
+
     setIsPraying(false);
     setPrayerCompleted(true);
     setShowReminder(false);
-    
+
+    // Show share modal instead of just calling completion handler
+    const sessionData = {
+      duration: selectedMinutes,
+      focus: prayerFocus,
+      date: new Date().toISOString(),
+      mood: prayerMood,
+      sessionType: timerType
+    };
+
+    setCompletedSessionData(sessionData);
+    setShowShareModal(true);
+
     // Call timer completion handler
     onTimerComplete?.();
   };
 
   useEffect(() => {
     // Start timer immediately when component mounts
-    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
+    // Component mounted, starting timer
     
     if (isPraying && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {
@@ -492,6 +512,14 @@ export const UnifiedTimerPage: React.FC<UnifiedTimerPageProps> = ({
         )}
         </div>
       </div>
+
+      {/* Share Modal */}
+      {showShareModal && completedSessionData && (
+        <SharePrayerSession
+          sessionData={completedSessionData}
+          onClose={() => setShowShareModal(false)}
+        />
+      )}
 
     </div>
   );

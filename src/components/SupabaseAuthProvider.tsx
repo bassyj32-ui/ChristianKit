@@ -27,7 +27,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    console.log('🔐 SupabaseAuthProvider: Initializing...')
     
     // Check if Supabase is available
     if (!supabase) {
@@ -37,7 +36,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
     
     try {
       // Test Supabase connection first
-      console.log('🔐 SupabaseAuthProvider: Testing connection...')
       
       
       // Get initial session
@@ -46,7 +44,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
           console.error('❌ Supabase session error:', error)
           setError(error.message)
         } else {
-          console.log('✅ Supabase session loaded:', session?.user?.email)
           setSession(session)
           setUser(session?.user ?? null)
         }
@@ -59,11 +56,8 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const urlParams = new URLSearchParams(window.location.search)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
       
-      if (urlParams.has('access_token') || urlParams.has('error') || 
+      if (urlParams.has('access_token') || urlParams.has('error') ||
           hashParams.has('access_token') || hashParams.has('error')) {
-        console.log('🔄 SupabaseAuthProvider: Processing OAuth callback...')
-        console.log('🔄 URL params:', Object.fromEntries(urlParams))
-        console.log('🔄 Hash params:', Object.fromEntries(hashParams))
         // The session will be updated by the auth state change listener
       }
 
@@ -71,29 +65,29 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        console.log('🔄 Auth state changed:', _event, session?.user?.email)
-        
         // Create user profile when they first sign in (non-blocking)
         if (_event === 'SIGNED_IN' && session?.user && supabase) {
-          console.log('👤 Creating user profile for:', session.user.email)
-          
+
           // Create profile in background without blocking auth flow
           supabase
             .from('profiles')
             .upsert({
               id: session.user.id,
               email: session.user.email,
-              full_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+              display_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
               avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
             }, {
               onConflict: 'id'
             })
             .then(async ({ error }) => {
               if (error) {
-                console.error('❌ Profile creation error:', error)
+                // Handle race condition where profile was created by database trigger
+                if (error.code === '23505') {
+                  // Profile already exists (created by database trigger)
+                } else {
+                  console.error('❌ Profile creation error:', error)
+                }
               } else {
-                console.log('✅ User profile created/updated successfully')
-                
                 // Send welcome email (non-blocking)
                 if (session.user.email) {
                   try {
@@ -102,16 +96,14 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
                       session.user.email,
                       session.user.user_metadata?.full_name || session.user.user_metadata?.name
                     )
-                    console.log('✅ Welcome email sent successfully')
                   } catch (emailError) {
                     console.error('❌ Welcome email failed:', emailError)
                   }
                 }
-                
+
                 // Create default reminder schedule (non-blocking)
                 try {
                   await reminderAutomationService.createDefaultReminderSchedule(session.user.id)
-                  console.log('✅ Default reminder schedule created')
                 } catch (reminderError) {
                   console.error('❌ Reminder schedule creation failed:', reminderError)
                 }
@@ -184,9 +176,6 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Use current location for redirect (works for both localhost and Vercel)
       const currentOrigin = window.location.origin
       const redirectUrl = `${currentOrigin}/auth/callback`
-      console.log('🔐 Signing in with Google, redirect to:', redirectUrl)
-      console.log('🔐 Current origin:', currentOrigin)
-      console.log('🔐 Full redirect URL:', redirectUrl)
       
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',

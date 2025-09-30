@@ -235,7 +235,7 @@ class DailyReEngagementService {
   // Send daily encouragement message
   async sendDailyEncouragement(): Promise<void> {
     if (!this.checkProAccess()) {
-      console.log('Daily re-engagement is a Pro feature')
+      // Daily re-engagement is a Pro feature
       return
     }
 
@@ -259,7 +259,7 @@ class DailyReEngagementService {
         ] : undefined
       })
 
-      console.log('✅ Daily encouragement sent:', message.title)
+      // Daily encouragement sent
 
     } catch (error) {
       console.error('Error sending daily encouragement:', error)
@@ -269,7 +269,7 @@ class DailyReEngagementService {
   // Schedule daily reminders
   async scheduleDailyReminders(): Promise<void> {
     if (!this.checkProAccess()) {
-      console.log('Daily re-engagement scheduling is a Pro feature')
+      // Daily re-engagement scheduling is a Pro feature
       return
     }
 
@@ -285,7 +285,7 @@ class DailyReEngagementService {
         const [hour, minute] = userData.preferredTimes.morning.split(':')
         tomorrow.setHours(parseInt(hour), parseInt(minute), 0, 0)
 
-        console.log('📅 Scheduled morning reminder for:', tomorrow.toLocaleString())
+        // Scheduled morning reminder
       }
 
       // Schedule evening reminder
@@ -296,7 +296,7 @@ class DailyReEngagementService {
 
         // Only schedule if time hasn't passed today
         if (today > new Date()) {
-          console.log('📅 Scheduled evening reminder for:', today.toLocaleString())
+          // Scheduled evening reminder
         }
       }
 
@@ -417,14 +417,14 @@ class DailyReEngagementService {
   // Initialize the service
   async initialize(): Promise<void> {
     if (!this.checkProAccess()) {
-      console.log('Daily re-engagement service requires Pro subscription')
+      // Daily re-engagement service requires Pro subscription
       return
     }
 
     try {
       await this.checkMissedDays()
       await this.scheduleDailyReminders()
-      console.log('✅ Daily re-engagement service initialized')
+      // Daily re-engagement service initialized
     } catch (error) {
       console.error('Error initializing daily re-engagement service:', error)
     }

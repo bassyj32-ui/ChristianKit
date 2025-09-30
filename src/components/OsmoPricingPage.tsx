@@ -73,7 +73,7 @@ export const OsmoPricingPage: React.FC = () => {
   ]
 
   const handleUpgrade = (planName: string) => {
-    console.log('Upgrade to plan:', planName)
+    // Upgrade to plan
     // TODO: Implement actual upgrade logic
   }
 

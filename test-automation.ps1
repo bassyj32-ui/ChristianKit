@@ -42,3 +42,9 @@ Write-Host "4. 📈 Monitor with SQL queries from monitor-automation.sql"
 
 
 
+
+
+
+
+
+

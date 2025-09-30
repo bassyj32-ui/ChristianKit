@@ -37,9 +37,7 @@ class BibleService {
   // Test method to check if service is working
   private testService() {
     try {
-      console.log('Bible Service initialized successfully');
-      const testVerse = this.getFallbackVerse('John 3:16');
-      console.log('Fallback content test:', testVerse);
+      // Bible Service initialized successfully
     } catch (error) {
       console.error('Bible Service test failed:', error);
     }
@@ -60,7 +58,7 @@ class BibleService {
   // Get a complete chapter
   async getChapter(book: string, chapter: number, translation: string = 'NIV'): Promise<BibleChapter | null> {
     try {
-      console.log(`Fetching chapter: ${book} ${chapter} in ${translation}`);
+      // Fetching chapter
 
       // Try Bible API first
       const apiChapter = await this.fetchChapterFromAPI(book, chapter, translation);
@@ -175,7 +173,7 @@ class BibleService {
   // Get a specific verse or passage
   async getVerse(reference: string, translation: string = 'NIV'): Promise<BibleVerse | null> {
     try {
-      console.log(`Fetching verse: ${reference} in ${translation}`);
+      // Fetching verse
       
       // Check if we have specific fallback content for this reference
       const fallbackVerse = this.getFallbackVerse(reference);
@@ -191,7 +189,7 @@ class BibleService {
       
     } catch (error) {
       console.error('Error fetching verse:', error);
-      console.log('Using fallback content instead');
+      // Using fallback content instead
       return this.getFallbackVerse(reference) || this.createComingSoonVerse(reference, translation);
     }
   }
@@ -224,7 +222,7 @@ class BibleService {
   // Search for verses
   async searchVerses(query: string, translation: string = 'NIV', limit: number = 10): Promise<BibleSearchResult[]> {
     try {
-      console.log(`Searching for: "${query}" in ${translation}`);
+      // Searching for
       
       // Use fallback search results for now
       const results = this.getFallbackSearchResults(query);
@@ -237,7 +235,7 @@ class BibleService {
       
     } catch (error) {
       console.error('Search error:', error);
-      console.log('Using fallback search results');
+      // Using fallback search results
       return this.getFallbackSearchResults(query);
     }
   }

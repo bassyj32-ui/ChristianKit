@@ -211,7 +211,7 @@ export class EnhancedCacheService {
         await this.cacheService.delete(key);
       }
 
-      console.log(`Invalidated ${keysToDelete.length} cache entries for pattern: ${pattern}`);
+      // Cache entries invalidated for pattern
     } catch (error) {
       console.error('Cache invalidation error:', error);
     }
@@ -236,7 +236,7 @@ export class EnhancedCacheService {
         await this.cacheService.delete(key);
       }
 
-      console.log(`Invalidated ${keysToDelete.length} cache entries for category: ${category}`);
+      // Cache entries invalidated for category
     } catch (error) {
       console.error('Category invalidation error:', error);
     }
@@ -305,7 +305,7 @@ export class EnhancedCacheService {
       // Note: This would require a method to clear all persistent cache
       // await this.cacheService.clearAll();
       
-      console.log('All caches cleared');
+      // All caches cleared
     } catch (error) {
       console.error('Cache clear error:', error);
     }
@@ -442,7 +442,7 @@ export class EnhancedCacheService {
     }
 
     if (keysToDelete.length > 0) {
-      console.log(`Cleaned up ${keysToDelete.length} expired cache entries`);
+      // Cleaned up expired cache entries
     }
   }
 
@@ -465,7 +465,7 @@ export class EnhancedCacheService {
    */
   public async preload(keys: string[], category: string = 'general'): Promise<void> {
     // This would be implemented based on your specific data loading needs
-    console.log(`Preloading ${keys.length} items for category: ${category}`);
+    // Preloading items for category
   }
 }
 

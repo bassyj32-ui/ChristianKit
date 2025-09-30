@@ -18,7 +18,7 @@ export async function simulatePushNotification(
   payload: PushNotificationPayload
 ): Promise<boolean> {
   try {
-    console.log('📱 Simulating push notification:', payload);
+    // Simulating push notification
     
     // Check if we have permission and can show notifications
     if (Notification.permission !== 'granted') {
@@ -70,7 +70,7 @@ export async function simulatePushNotification(
       notification.close();
     };
 
-    console.log('✅ Simulated push notification displayed');
+    // Simulated push notification displayed
     return true;
   } catch (error) {
     console.error('❌ Error simulating push notification:', error);

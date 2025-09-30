@@ -88,6 +88,18 @@ export interface GameScore {
   date: string
 }
 
+export interface CommunityShare {
+  id: string
+  userId: string
+  sessionType: 'prayer' | 'bible' | 'meditation'
+  duration: number
+  focus?: string
+  mood?: string
+  message?: string
+  date: string
+  postId?: string
+}
+
 export interface AppState {
   // User & Auth
   user: User | null
@@ -103,6 +115,7 @@ export interface AppState {
   bibleSessions: BibleSession[]
   meditationSessions: MeditationSession[]
   gameScores: GameScore[]
+  communityShares: CommunityShare[]
   
   // UI State
   isDrawerOpen: boolean
@@ -115,12 +128,15 @@ export interface AppState {
   setUserPlan: (plan: UserPlan | null) => void
   setActiveTab: (tab: string) => void
   setLoading: (loading: boolean) => void
-  
+  navigateToCommunity: () => void
+
   // Data Actions
   addPrayerSession: (session: PrayerSession) => void
   addBibleSession: (session: BibleSession) => void
   addMeditationSession: (session: MeditationSession) => void
   addGameScore: (score: GameScore) => void
+  addCommunityShare: (share: CommunityShare) => void
+  updateCommunityShare: (shareId: string, postId: string) => void
   
   // UI Actions
   toggleDrawer: () => void
@@ -148,6 +164,7 @@ export const useAppStore = create<AppState>()(
       bibleSessions: [],
       meditationSessions: [],
       gameScores: [],
+      communityShares: [],
       
       isDrawerOpen: false,
       showQuestionnaire: false,
@@ -166,8 +183,10 @@ export const useAppStore = create<AppState>()(
         previousTab: state.activeTab,
         activeTab: tab
       })),
-      
+
       setLoading: (loading) => set({ isLoading: loading }),
+
+      navigateToCommunity: () => set({ activeTab: 'community' }),
       
       // Data Actions
       addPrayerSession: (session) => set((state) => ({
@@ -185,6 +204,16 @@ export const useAppStore = create<AppState>()(
       addGameScore: (score) => set((state) => ({
         gameScores: [...state.gameScores, score]
       })),
+
+      addCommunityShare: (share) => set((state) => ({
+        communityShares: [...state.communityShares, share]
+      })),
+
+      updateCommunityShare: (shareId, postId) => set((state) => ({
+        communityShares: state.communityShares.map(share =>
+          share.id === shareId ? { ...share, postId } : share
+        )
+      })),
       
       // UI Actions
       toggleDrawer: () => set((state) => ({ 
@@ -201,6 +230,7 @@ export const useAppStore = create<AppState>()(
         bibleSessions: [],
         meditationSessions: [],
         gameScores: [],
+        communityShares: [],
         userPlan: null,
         showQuestionnaire: false,
         isFirstTimeUser: true
@@ -214,6 +244,7 @@ export const useAppStore = create<AppState>()(
           bibleSessions: state.bibleSessions,
           meditationSessions: state.meditationSessions,
           gameScores: state.gameScores,
+          communityShares: state.communityShares,
           exportDate: new Date().toISOString()
         })
       },
@@ -226,7 +257,8 @@ export const useAppStore = create<AppState>()(
             prayerSessions: imported.prayerSessions || [],
             bibleSessions: imported.bibleSessions || [],
             meditationSessions: imported.meditationSessions || [],
-            gameScores: imported.gameScores || []
+            gameScores: imported.gameScores || [],
+            communityShares: imported.communityShares || []
           })
         } catch (error) {
           console.error('Failed to import data:', error)
@@ -242,6 +274,7 @@ export const useAppStore = create<AppState>()(
         bibleSessions: state.bibleSessions,
         meditationSessions: state.meditationSessions,
         gameScores: state.gameScores,
+        communityShares: state.communityShares,
         isFirstTimeUser: state.isFirstTimeUser,
         showQuestionnaire: state.showQuestionnaire
       })
@@ -257,3 +290,4 @@ export const usePrayerSessions = () => useAppStore((state) => state.prayerSessio
 export const useBibleSessions = () => useAppStore((state) => state.bibleSessions)
 export const useMeditationSessions = () => useAppStore((state) => state.meditationSessions)
 export const useGameScores = () => useAppStore((state) => state.gameScores)
+export const useCommunityShares = () => useAppStore((state) => state.communityShares)

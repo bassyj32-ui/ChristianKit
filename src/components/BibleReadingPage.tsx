@@ -37,7 +37,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
   isFirstTimeUser = false 
 }) => {
   const { user, signInWithGoogle } = useSupabaseAuth();
-  console.log('BibleReadingPage rendered with propSelectedMinutes:', propSelectedMinutes);
+  // BibleReadingPage rendered
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
@@ -124,7 +124,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
   // Update timer when prop changes
   useEffect(() => {
     if (propSelectedMinutes && propSelectedMinutes > 0) {
-      console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
+      // Prop changed, updating timer
       setSelectedMinutes(propSelectedMinutes);
       setTimeRemaining(propSelectedMinutes * 60);
     }
@@ -171,7 +171,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
           prayer_type: 'bible',
           notes: readingFocus ? `Focus: ${readingFocus}` : 'Bible Quest completed'
         });
-        console.log('✅ Bible reading session recorded successfully');
+        // Bible reading session recorded successfully
       } catch (error) {
         console.error('❌ Error recording bible reading session:', error);
         // Continue even if database recording fails
@@ -188,7 +188,7 @@ export const BibleReadingPage: React.FC<BibleReadingPageProps> = ({
 
   useEffect(() => {
     // Start timer when isReading becomes true
-    console.log('Timer state changed, isReading:', isReading, 'timeRemaining:', timeRemaining);
+    // Timer state changed
     
     if (isReading && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {

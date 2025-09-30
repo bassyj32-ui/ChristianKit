@@ -48,7 +48,7 @@ export async function handlePayooerWebhook(
     // Process the webhook event
     await payooerService.handleWebhook(request.body);
     
-    console.log('Webhook processed successfully:', request.body.type);
+    // Webhook processed successfully
     
     return {
       statusCode: 200,
@@ -107,7 +107,7 @@ export function setupPayooerWebhookRoutes(app: any) {
       // Process the webhook
       await payooerService.handleWebhook(webhookData);
       
-      console.log('Webhook processed successfully:', webhookData.type);
+      // Webhook processed successfully
       res.status(200).send('OK');
       
     } catch (error) {
@@ -150,7 +150,7 @@ export async function payooerWebhookHandler(req: any, res: any) {
     // Process the webhook
     await payooerService.handleWebhook(req.body);
     
-    console.log('Webhook processed successfully:', req.body.type);
+    // Webhook processed successfully
     res.status(200).send('OK');
     
   } catch (error) {

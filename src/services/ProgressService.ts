@@ -19,6 +19,7 @@ export interface DailyProgress {
   journal: number;
   totalMinutes: number;
   sessionsCount: number;
+  [key: string]: number | string; // Allow dynamic property access
 }
 
 export interface WeeklyProgressData {
@@ -36,7 +37,7 @@ class ProgressService {
    */
   static async getWeeklyProgress(userId: string, weekStart?: string): Promise<WeeklyProgressData> {
     try {
-      console.log('📊 ProgressService: Getting weekly progress for user:', userId);
+      // Getting weekly progress for user
 
       // Calculate week boundaries
       const today = new Date();
@@ -48,7 +49,7 @@ class ProgressService {
       endOfWeek.setDate(startOfWeek.getDate() + 6); // End of week (Saturday)
       endOfWeek.setHours(23, 59, 59, 999);
 
-      console.log('📊 ProgressService: Week range:', startOfWeek.toISOString(), 'to', endOfWeek.toISOString());
+      // Week range calculated
 
       // Fetch sessions from Supabase
       const { data: sessions, error } = await supabase
@@ -64,7 +65,7 @@ class ProgressService {
         throw error;
       }
 
-      console.log('✅ ProgressService: Found', sessions?.length || 0, 'sessions');
+      // Found sessions for the week
 
       // Process sessions into daily progress
       const dailyProgress: { [key: string]: DailyProgress } = {};
@@ -114,7 +115,7 @@ class ProgressService {
         dailyProgress[dayName].totalMinutes += session.duration_minutes;
         dailyProgress[dayName].sessionsCount += 1;
 
-        console.log(`📊 ProgressService: ${dayName} - ${activityType}: ${percentage}% (${session.duration_minutes} min)`);
+        // Progress calculated for day and activity
       });
 
       // Calculate current streak
@@ -155,12 +156,8 @@ class ProgressService {
         averageSessionDuration
       };
 
-      console.log('✅ ProgressService: Weekly progress calculated:', {
-        sessions: result.sessions.length,
-        streak: result.currentStreak,
-        goal: result.weeklyGoal,
-        totalMinutes: result.totalMinutesThisWeek
-      });
+      // Weekly progress calculated
+      // (logging removed)
 
       return result;
     } catch (error) {
@@ -286,7 +283,7 @@ class ProgressService {
         return null;
       }
 
-      console.log('✅ ProgressService: Session saved:', data.id);
+      // Session saved successfully
       return data;
     } catch (error) {
       console.error('❌ ProgressService: Error saving session:', error);

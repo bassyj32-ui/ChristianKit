@@ -5,13 +5,14 @@ import { AuthButton } from '../AuthButton'
 
 export const PostCreation: React.FC = () => {
   const { user } = useSupabaseAuth()
-  const { createPost, isCreatingPost, error } = useCommunityStore()
+  const { createPost, isCreatingPost, error, isOnline } = useCommunityStore()
   const [content, setContent] = useState('')
 
   const handleSubmit = async () => {
     if (!content.trim() || isCreatingPost) return
-    
+
     const success = await createPost(content)
+
     if (success) {
       setContent('')
     }
@@ -26,90 +27,76 @@ export const PostCreation: React.FC = () => {
     }
   }
 
-  if (!user) {
-    return (
-      <div className="bg-black border-b border-gray-800 p-4 text-center">
-        <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-lg mx-auto mb-3">
-          ✝️
-        </div>
-        <h3 className="text-base font-bold mb-1 text-white">Sign In to Share Your Faith</h3>
-        <p className="text-gray-500 text-sm mb-4">Join the community to share your prayers and encouragement</p>
-        <AuthButton />
-      </div>
-    )
-  }
-
   return (
-    <div className="bg-black border-b border-gray-800 p-3">
+    <div className="bg-black border-b border-gray-800 p-3 sm:p-4">
       <div className="flex items-start space-x-3">
         {/* User Avatar */}
-        <div className="w-10 h-10 bg-yellow-500 rounded-full flex items-center justify-center text-black text-sm font-medium flex-shrink-0">
+        <div className="w-10 h-10 sm:w-12 sm:h-12 bg-yellow-500 rounded-full flex items-center justify-center text-black text-sm font-medium flex-shrink-0">
           {user?.user_metadata?.avatar_url ? (
-            <img 
-              src={user.user_metadata.avatar_url} 
-              alt="Profile" 
+            <img
+              src={user.user_metadata.avatar_url}
+              alt="Profile"
               className="w-full h-full object-cover rounded-full"
             />
           ) : (
-            <span>{user?.user_metadata?.display_name?.[0] || user.email?.[0] || '👤'}</span>
+            <span>{user?.user_metadata?.display_name?.[0] || user?.email?.[0] || '👤'}</span>
           )}
         </div>
-        
+
         {/* Post Form */}
-        <div className="flex-1">
+        <div className="flex-1 min-w-0">
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="What's on your heart today?"
-            className="w-full p-3 bg-transparent text-white placeholder-gray-500 resize-none focus:outline-none text-lg min-h-[50px] leading-relaxed"
+            className="w-full p-3 bg-gray-900/50 text-white placeholder-gray-500 resize-none focus:outline-none focus:ring-2 focus:ring-yellow-400 text-base sm:text-lg min-h-[50px] leading-relaxed border border-gray-700 rounded-lg touch-manipulation"
             rows={2}
             maxLength={500}
           />
-          
+
           {/* Error Message */}
           {error && (
-            <div className="text-red-400 text-sm mb-2">
+            <div className="text-red-400 text-sm mb-2 p-2 bg-red-500/10 rounded-lg border border-red-500/20">
               {error}
             </div>
           )}
-          
-          <div className="flex items-center justify-between mt-3">
-            <div className="flex items-center space-x-3">
-              {/* Christian-themed icons */}
-              <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </button>
-              <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                </svg>
-              </button>
-              <button className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                </svg>
-              </button>
-              
-              {/* Character Count */}
-              <span className="text-xs text-gray-500 ml-2">
-                {content.length}/500
-              </span>
+
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-2 text-xs text-gray-500">
+              <span>{content.length}/500</span>
             </div>
-            
-            <button
-              onClick={handleSubmit}
-              disabled={!content.trim() || isCreatingPost}
-              className="bg-yellow-500 hover:bg-yellow-400 text-black px-5 py-1.5 rounded-full font-bold text-sm transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isCreatingPost ? 'Posting...' : 'Post'}
-            </button>
+
+            <div className="flex items-center space-x-2">
+              {/* Sign in prompt */}
+              {!user && (
+                <div className="text-xs text-gray-400 flex items-center gap-1">
+                  <span>Sign in to post</span>
+                  <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                  </svg>
+                </div>
+              )}
+
+              <button
+                onClick={handleSubmit}
+                disabled={!content.trim() || isCreatingPost || !user}
+                className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 text-black px-4 sm:px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation active:scale-95 shadow-lg"
+              >
+                {isCreatingPost ? 'Posting...' : 'Post'}
+              </button>
+            </div>
           </div>
+
+          {/* Offline indicator */}
+          {!isOnline && (
+            <div className="mt-2 text-xs text-yellow-400 flex items-center gap-1">
+              <span>📱</span>
+              <span>Post will be saved locally and shared when online</span>
+            </div>
+          )}
         </div>
       </div>
     </div>
   )
 }
-

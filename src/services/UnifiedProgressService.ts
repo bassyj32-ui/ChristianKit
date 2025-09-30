@@ -41,7 +41,7 @@ class UnifiedProgressService {
    * Get comprehensive progress stats with graceful fallbacks
    */
   async getProgressStats(userId?: string): Promise<UnifiedProgressStats> {
-    console.log('📊 UnifiedProgressService: Getting progress stats for user:', userId);
+    // Getting progress stats for user
     
     try {
       // Try Supabase first (if user is logged in)
@@ -49,7 +49,6 @@ class UnifiedProgressService {
         try {
           const supabaseStats = await this.getSupabaseStats(userId);
           if (supabaseStats) {
-            console.log('✅ Using Supabase data');
             return { ...supabaseStats, dataSource: 'supabase' };
           }
         } catch (error) {
@@ -60,19 +59,16 @@ class UnifiedProgressService {
       // Fallback to localStorage + PrayerSystemService
       const localStats = await this.getLocalStorageStats(userId);
       if (localStats && (localStats.totalPrayers > 0 || localStats.currentStreak > 0)) {
-        console.log('✅ Using localStorage data');
         return { ...localStats, dataSource: 'localStorage' };
       }
       
       // Final fallback to PrayerSystemService
       const prayerSystemStats = await this.getPrayerSystemStats(userId);
       if (prayerSystemStats && prayerSystemStats.totalPrayers > 0) {
-        console.log('✅ Using PrayerSystem data');
         return { ...prayerSystemStats, dataSource: 'prayerSystem' };
       }
       
       // Return empty state (new user)
-      console.log('📝 No progress data found - new user');
       return this.getEmptyStats();
       
     } catch (error) {
@@ -85,7 +81,7 @@ class UnifiedProgressService {
    * Get weekly progress data with fallbacks
    */
   async getWeeklyProgress(userId?: string): Promise<WeeklyProgressData> {
-    console.log('📊 UnifiedProgressService: Getting weekly progress for user:', userId);
+    // Getting weekly progress for user
     
     try {
       // Try Supabase first
@@ -93,7 +89,6 @@ class UnifiedProgressService {
         try {
           const supabaseWeekly = await this.getSupabaseWeeklyProgress(userId);
           if (supabaseWeekly) {
-            console.log('✅ Using Supabase weekly data');
             return supabaseWeekly;
           }
         } catch (error) {
@@ -104,12 +99,10 @@ class UnifiedProgressService {
       // Fallback to localStorage
       const localWeekly = await this.getLocalStorageWeeklyProgress();
       if (localWeekly && localWeekly.dailyProgress.some(day => day.totalMinutes > 0)) {
-        console.log('✅ Using localStorage weekly data');
         return localWeekly;
       }
       
       // Return empty weekly progress
-      console.log('📝 No weekly progress data found');
       return this.getEmptyWeeklyProgress();
       
     } catch (error) {
@@ -165,7 +158,7 @@ class UnifiedProgressService {
         return null;
       }
       
-      console.log('✅ Found', sessions.length, 'Supabase sessions');
+      // Found Supabase sessions
       
       // Calculate stats from sessions
       return this.calculateStatsFromSessions(sessions, 'supabase');
@@ -182,7 +175,7 @@ class UnifiedProgressService {
   private async getLocalStorageStats(userId?: string): Promise<UnifiedProgressStats | null> {
     try {
       const sessions = await prayerService.getPrayerSessions();
-      console.log('📱 Found', sessions.length, 'localStorage sessions');
+      // Found localStorage sessions
       
       if (sessions.length === 0) {
         return null;
@@ -206,7 +199,7 @@ class UnifiedProgressService {
       const profile = prayerSystemService.getUserProfile(userId);
       if (!profile) return null;
       
-      console.log('🙏 Found PrayerSystem profile:', profile);
+      // Found PrayerSystem profile
       
       return {
         currentStreak: profile.currentStreak || 0,

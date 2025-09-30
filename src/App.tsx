@@ -15,6 +15,7 @@ import { SupabaseAuthProvider, useSupabaseAuth } from './components/SupabaseAuth
 import { AnalyticsProvider } from './components/AnalyticsProvider'
 import { LoadingSpinner } from './components/LoadingSpinner'
 import { useAppStore } from './store/appStore'
+import { useCommunityStore } from './store/communityStore'
 import { authService } from './services/authService'
 import { cloudSyncService } from './services/cloudSyncService'
 import { useSEO } from './hooks/useSEO'
@@ -108,18 +109,35 @@ const AppContent: React.FC = () => {
   })
   const [showTrialExpired, setShowTrialExpired] = useState(false)
 
+  // Community store for offline detection
+  const { updateOnlineStatus } = useCommunityStore()
 
-  // Debug logging
+  // Online/Offline detection
   useEffect(() => {
-    console.log('🔍 AppContent Debug:', {
-      user: user?.email,
-      activeTab,
-      showQuestionnaire,
-      isFirstTimeUser
-    })
+    const handleOnline = () => {
+      console.log('🌐 Back online! Syncing offline posts...')
+      updateOnlineStatus(true)
+    }
 
-    // Track app load for analytics
-    console.log('🎯 App loaded, GA4 should be tracking...')
+    const handleOffline = () => {
+      console.log('📱 Gone offline. Posts will be queued for later.')
+      updateOnlineStatus(false)
+    }
+
+    // Add event listeners
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [updateOnlineStatus])
+
+  // Initialize app state
+  useEffect(() => {
+    // App initialization handled by services
   }, [user, activeTab, showQuestionnaire, isFirstTimeUser])
 
   // Initialize performance optimizations
@@ -130,7 +148,6 @@ const AppContent: React.FC = () => {
   // Check if user has completed questionnaire
   const determineIsFirstTimeUser = (): boolean => {
     const hasCompleted = localStorage.getItem('hasCompletedQuestionnaire')
-    console.log('🔍 Checking questionnaire completion:', { hasCompleted, result: !hasCompleted })
 
     // Return true if questionnaire hasn't been completed (meaning user is first time)
     return !hasCompleted
@@ -171,17 +188,14 @@ const AppContent: React.FC = () => {
   // Check if questionnaire should be shown for first-time users
   useEffect(() => {
     const shouldShowQuestionnaire = determineIsFirstTimeUser()
-    console.log('🔍 Should show questionnaire:', shouldShowQuestionnaire)
 
     if (shouldShowQuestionnaire) {
-      console.log('📝 Showing questionnaire for first-time user')
       setShowQuestionnaire(true)
     }
   }, [])
 
   // Handle navigation between tabs
   const handleNavigate = (tab: string, duration?: number) => {
-    console.log('🔄 Navigating to:', tab, 'with duration:', duration)
     // Normalize known aliases
     const normalized = tab === 'faith-runner' ? 'runner' : tab
     
@@ -256,15 +270,13 @@ const AppContent: React.FC = () => {
   useEffect(() => {
     const tabFromUrl = getTabFromUrlPath(location.pathname)
     if (tabFromUrl !== activeTab) {
-      console.log('🔄 URL changed, syncing activeTab to:', tabFromUrl)
       setActiveTab(tabFromUrl)
     }
   }, [location.pathname])
 
   // Handle timer completion
   const handleTimerComplete = () => {
-    console.log('⏰ Timer completed!')
-    // You can add logic here for when prayer timer finishes
+    // Timer completion logic can be added here
   }
 
 
@@ -297,7 +309,6 @@ const AppContent: React.FC = () => {
     return (
       <UserQuestionnaire
         onComplete={(plan) => {
-          console.log('Questionnaire completed with plan:', plan)
           setUserPlan(plan)
           setShowQuestionnaire(false)
           setIsFirstTimeUser(false)

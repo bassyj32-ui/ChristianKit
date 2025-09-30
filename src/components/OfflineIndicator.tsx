@@ -1,46 +1,19 @@
 import React, { useState, useEffect } from 'react'
-import { offlineService } from '../services/offlineService'
+import { useCommunityStore } from '../store/communityStore'
 import { MobileOptimizedCard } from './MobileOptimizedCard'
 import { MobileOptimizedButton } from './MobileOptimizedButton'
 
 export const OfflineIndicator: React.FC = () => {
-  const [isOnline, setIsOnline] = useState(navigator.onLine)
-  const [queueLength, setQueueLength] = useState(0)
+  const { isOnline, offlineQueue, syncOfflineQueue } = useCommunityStore()
   const [syncInProgress, setSyncInProgress] = useState(false)
   const [showDetails, setShowDetails] = useState(false)
 
-  useEffect(() => {
-    const updateStatus = () => {
-      const status = offlineService.getStatus()
-      setIsOnline(status.isOnline)
-      setQueueLength(status.queueLength)
-      setSyncInProgress(status.syncInProgress)
-    }
-
-    // Initial status
-    updateStatus()
-
-    // Listen for online/offline events
-    const handleOnline = () => updateStatus()
-    const handleOffline = () => updateStatus()
-
-    window.addEventListener('online', handleOnline)
-    window.addEventListener('offline', handleOffline)
-
-    // Update status periodically
-    const interval = setInterval(updateStatus, 2000)
-
-    return () => {
-      window.removeEventListener('online', handleOnline)
-      window.removeEventListener('offline', handleOffline)
-      clearInterval(interval)
-    }
-  }, [])
+  const queueLength = offlineQueue.length
 
   const handleForceSync = async () => {
     try {
       setSyncInProgress(true)
-      await offlineService.forceSync()
+      await syncOfflineQueue()
     } catch (error) {
       console.error('Force sync failed:', error)
     } finally {
@@ -49,8 +22,8 @@ export const OfflineIndicator: React.FC = () => {
   }
 
   const handleClearQueue = () => {
-    offlineService.clearQueue()
-    setQueueLength(0)
+    // Clear offline queue from community store
+    useCommunityStore.getState().clearOfflineQueue()
   }
 
   // Always show indicator for testing/debugging purposes
@@ -73,11 +46,11 @@ export const OfflineIndicator: React.FC = () => {
             </div>
             <div>
               <div className="font-medium text-sm">
-                {isOnline ? 'Syncing...' : 'Offline'}
+                {isOnline ? (queueLength > 0 ? 'Syncing Posts...' : 'Online') : 'Offline'}
               </div>
               {queueLength > 0 && (
                 <div className="text-xs opacity-75">
-                  {queueLength} item{queueLength !== 1 ? 's' : ''} pending
+                  {queueLength} post{queueLength !== 1 ? 's' : ''} pending
                 </div>
               )}
             </div>
@@ -101,9 +74,9 @@ export const OfflineIndicator: React.FC = () => {
 
               {queueLength > 0 && (
                 <div className="text-sm">
-                  <div className="font-medium mb-1">Pending Items:</div>
+                  <div className="font-medium mb-1">Community Posts:</div>
                   <div className="opacity-75">
-                    {queueLength} item{queueLength !== 1 ? 's' : ''} waiting to sync
+                    {queueLength} post{queueLength !== 1 ? 's' : ''} will be shared when online
                   </div>
                 </div>
               )}

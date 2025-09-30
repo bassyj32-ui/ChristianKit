@@ -114,7 +114,7 @@ export const performanceConfig = {
       if ('serviceWorker' in navigator) {
         try {
           const registration = await navigator.serviceWorker.register('/sw.js');
-          console.log('✅ Service Worker registered:', registration.scope);
+          // Service Worker registered
 
           // Handle updates
           registration.addEventListener('updatefound', () => {
@@ -146,7 +146,7 @@ export const performanceConfig = {
         for (const registration of registrations) {
           await registration.unregister();
         }
-        console.log('✅ Service Worker unregistered');
+        // Service Worker unregistered
       }
     }
   },
@@ -186,7 +186,7 @@ export const performanceConfig = {
     forceGC: () => {
       if ((window as any).gc) {
         (window as any).gc();
-        console.log('🧹 Forced garbage collection');
+        // Forced garbage collection
       }
     }
   }
@@ -205,7 +205,7 @@ export const performanceMonitor = {
       try {
         performance.measure(name, startMark, endMark);
         const measure = performance.getEntriesByName(name)[0];
-        console.log(`⏱️ ${name}: ${measure.duration.toFixed(2)}ms`);
+        // Performance measure logged
         return measure.duration;
       } catch (error) {
         console.warn('Performance measure failed:', error);

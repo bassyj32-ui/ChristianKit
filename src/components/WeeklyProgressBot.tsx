@@ -194,7 +194,7 @@ export const WeeklyProgressBot: React.FC<WeeklyProgressBotProps> = ({
 
   const handleStartSession = () => {
     // This would typically navigate to the prayer timer
-    console.log('Start session clicked');
+    // Start session clicked
   };
 
   if (!isVisible || loading) return null;

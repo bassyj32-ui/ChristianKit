@@ -55,13 +55,13 @@ class OfflineService {
   }
 
   private handleOnline() {
-    console.log('🌐 App is online - syncing offline data')
+    // App is online - syncing offline data
     this.isOnline = true
     this.syncOfflineQueue()
   }
 
   private handleOffline() {
-    console.log('📴 App is offline - queuing operations')
+    // App is offline - queuing operations
     this.isOnline = false
   }
 
@@ -79,7 +79,7 @@ class OfflineService {
     this.offlineQueue.push(item)
     this.saveOfflineQueue()
 
-    console.log(`📝 Added to offline queue: ${type} ${action}`, item)
+    // Added to offline queue
 
     // Try to sync immediately if online
     if (this.isOnline) {
@@ -96,7 +96,7 @@ class OfflineService {
     }
 
     this.syncInProgress = true
-    console.log(`🔄 Syncing ${this.offlineQueue.length} offline items`)
+    // Syncing offline items
 
     const itemsToSync = [...this.offlineQueue]
     const successfulItems: string[] = []
@@ -106,7 +106,7 @@ class OfflineService {
       try {
         await this.syncItem(item)
         successfulItems.push(item.id)
-        console.log(`✅ Synced offline item: ${item.type} ${item.action}`)
+        // Synced offline item
       } catch (error) {
         console.error(`❌ Failed to sync offline item: ${item.type} ${item.action}`, error)
         
@@ -135,7 +135,7 @@ class OfflineService {
     this.syncInProgress = false
 
     if (successfulItems.length > 0) {
-      console.log(`🎉 Successfully synced ${successfulItems.length} items`)
+      // Successfully synced items
     }
   }
 
@@ -218,7 +218,7 @@ class OfflineService {
   clearQueue() {
     this.offlineQueue = []
     this.saveOfflineQueue()
-    console.log('🗑️ Cleared offline queue')
+    // Cleared offline queue
   }
 
   // Get queue items

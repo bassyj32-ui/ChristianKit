@@ -24,7 +24,7 @@ export default async function handler(req: any, res: any) {
     await paddleService.handleWebhook(req.body);
 
     // Log the event for debugging
-    console.log('Webhook processed:', req.body.event_type);
+    // Webhook processed
 
     return res.status(200).json({ success: true });
   } catch (error) {

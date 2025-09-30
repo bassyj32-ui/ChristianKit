@@ -38,25 +38,24 @@ class RealNotificationService {
    */
   public async initialize(): Promise<void> {
     try {
-      console.log('🔔 Initializing Real Notification Service...');
+      // Initializing Real Notification Service
       
       // Check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('ℹ️ No authenticated user, skipping real notification setup');
         return;
       }
 
       // Get user preferences
       const preferences = await this.getUserPreferences(user.id);
       if (preferences) {
-        console.log('✅ Real notification preferences loaded:', preferences);
+        // Real notification preferences loaded
       }
 
       // Request push notification permission
       await this.requestPushPermission();
       
-      console.log('✅ Real Notification Service initialized');
+      // Real Notification Service initialized
     } catch (error) {
       console.error('❌ Error initializing Real Notification Service:', error);
     }
@@ -130,7 +129,6 @@ class RealNotificationService {
         return false;
       }
 
-      console.log('✅ Real notification preferences saved');
       return true;
     } catch (error) {
       console.error('Error saving user preferences:', error);
@@ -182,11 +180,9 @@ class RealNotificationService {
       const granted = permission === 'granted';
       
       if (granted) {
-        console.log('✅ Notification permission granted');
         await this.setupPushSubscription();
         return true;
       } else {
-        console.log('❌ Notification permission denied');
         return false;
       }
     } catch (error) {
@@ -207,7 +203,7 @@ class RealNotificationService {
 
       // Register service worker
       const registration = await navigator.serviceWorker.register('/sw.js');
-      console.log('✅ Service worker registered');
+      // Service worker registered
 
       // Get push subscription
       const subscription = await registration.pushManager.subscribe({
@@ -221,7 +217,7 @@ class RealNotificationService {
         await this.savePushSubscription(user.id, subscription);
       }
 
-      console.log('✅ Push subscription set up');
+      // Push subscription set up
     } catch (error) {
       console.error('Error setting up push subscription:', error);
     }
@@ -245,7 +241,7 @@ class RealNotificationService {
       if (error) {
         console.error('Error saving push subscription:', error);
       } else {
-        console.log('✅ Push subscription saved');
+        // Push subscription saved
       }
     } catch (error) {
       console.error('Error saving push subscription:', error);
@@ -319,7 +315,6 @@ class RealNotificationService {
         return false;
       }
 
-      console.log('🔕 Notifications disabled');
       return true;
     } catch (error) {
       console.error('Error disabling notifications:', error);
@@ -362,7 +357,7 @@ class RealNotificationService {
         return false;
       }
 
-      console.log('🧪 Sending test notification for user:', user.id);
+      // Sending test notification
 
       // First, ensure user has notification preferences set up
       await this.ensureUserNotificationSetup(user.id);
@@ -378,7 +373,6 @@ class RealNotificationService {
         return false;
       }
 
-      console.log('✅ Test notification sent:', data);
       return data?.success || false;
     } catch (error) {
       console.error('Error sending test notification:', error);
@@ -410,7 +404,7 @@ class RealNotificationService {
             email_enabled: true,
             is_active: true
           });
-        console.log('✅ Created default notification preferences');
+        // Created default notification preferences
       }
 
       // Check if user profile exists
@@ -431,7 +425,7 @@ class RealNotificationService {
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           });
-        console.log('✅ Created default user profile');
+        // Created default user profile
       }
     } catch (error) {
       console.error('Error setting up user notifications:', error);

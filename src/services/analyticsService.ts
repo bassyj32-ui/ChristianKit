@@ -122,7 +122,7 @@ export class AnalyticsService {
     try {
       // In a real app, you would send to your analytics service
       // For now, we'll just log it
-      console.log('Analytics Event:', event)
+      // Analytics Event logged
       
       // Example: Send to Google Analytics, Mixpanel, or custom endpoint
       // await fetch('/api/analytics', {

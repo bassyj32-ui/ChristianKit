@@ -34,7 +34,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
   isFirstTimeUser = false 
 }) => {
   const { user, signInWithGoogle } = useSupabaseAuth();
-  console.log('MeditationPage rendered with propSelectedMinutes:', propSelectedMinutes);
+  // MeditationPage rendered
   
   const [selectedMinutes, setSelectedMinutes] = useState(10) // Default to 10 minutes
   const [timeRemaining, setTimeRemaining] = useState(10 * 60) // Default to 10 minutes
@@ -111,7 +111,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
   // Update timer when prop changes
   useEffect(() => {
     if (propSelectedMinutes && propSelectedMinutes > 0) {
-      console.log('Prop changed, updating timer to:', propSelectedMinutes, 'minutes');
+      // Prop changed, updating timer
       setSelectedMinutes(propSelectedMinutes);
       setTimeRemaining(propSelectedMinutes * 60);
     }
@@ -151,7 +151,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
           session_date: new Date().toISOString().split('T')[0],
           notes: meditationFocus ? `Focus: ${meditationFocus}` : undefined
         });
-        console.log('✅ Meditation session recorded successfully');
+        // Meditation session recorded successfully
       } catch (error) {
         console.error('❌ Error recording meditation session:', error);
         // Continue even if database recording fails
@@ -168,7 +168,7 @@ export const MeditationPage: React.FC<MeditationPageProps> = ({
 
   useEffect(() => {
     // Start timer immediately when component mounts
-    console.log('Component mounted, starting timer with:', selectedMinutes, 'minutes');
+    // Component mounted, starting timer
     
     if (isMeditating && timeRemaining > 0) {
       intervalRef.current = setInterval(() => {
