@@ -3,7 +3,7 @@
 -- FCM Tokens table to store Firebase Cloud Messaging tokens
 CREATE TABLE IF NOT EXISTS fcm_tokens (
   id SERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
   fcm_token TEXT NOT NULL,
   is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -13,7 +13,7 @@ CREATE TABLE IF NOT EXISTS fcm_tokens (
 -- Push Subscriptions table for web push notifications
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   id SERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
   endpoint TEXT NOT NULL,
   p256dh TEXT NOT NULL,
   auth TEXT NOT NULL,
@@ -25,7 +25,7 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 -- User Notification Preferences
 CREATE TABLE IF NOT EXISTS user_notification_preferences (
   id SERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
   email_enabled BOOLEAN DEFAULT true,
   push_enabled BOOLEAN DEFAULT true,
   prayer_reminders BOOLEAN DEFAULT true,
@@ -44,7 +44,7 @@ CREATE TABLE IF NOT EXISTS user_notification_preferences (
 -- Scheduled Notifications
 CREATE TABLE IF NOT EXISTS scheduled_notifications (
   id SERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
   title TEXT NOT NULL,
   body TEXT NOT NULL,
   notification_type TEXT NOT NULL CHECK (notification_type IN ('prayer', 'bible', 'meditation', 'journal', 'reminder', 'achievement')),
@@ -59,7 +59,7 @@ CREATE TABLE IF NOT EXISTS scheduled_notifications (
 -- User Notifications Log
 CREATE TABLE IF NOT EXISTS user_notifications (
   id SERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL,
+  user_id UUID NOT NULL,
   title TEXT NOT NULL,
   body TEXT NOT NULL,
   notification_type TEXT NOT NULL CHECK (notification_type IN ('prayer', 'bible', 'meditation', 'journal', 'reminder', 'achievement')),
@@ -67,6 +67,8 @@ CREATE TABLE IF NOT EXISTS user_notifications (
   sent_at TIMESTAMP DEFAULT NOW(),
   status TEXT DEFAULT 'sent' CHECK (status IN ('sent', 'failed', 'delivered', 'clicked')),
   delivery_method TEXT DEFAULT 'push' CHECK (delivery_method IN ('push', 'email', 'sms')),
+  read BOOLEAN DEFAULT false,
+  read_at TIMESTAMP,
   created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -98,6 +100,10 @@ CREATE INDEX IF NOT EXISTS idx_fcm_tokens_user_id ON fcm_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_fcm_tokens_active ON fcm_tokens(is_active);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_user_id ON push_subscriptions(user_id);
 CREATE INDEX IF NOT EXISTS idx_push_subscriptions_active ON push_subscriptions(is_active);
+
+-- Enforce one active subscription per user (prevents duplicate notifications)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_push ON push_subscriptions (user_id) WHERE is_active;
+CREATE UNIQUE INDEX IF NOT EXISTS idx_one_active_fcm ON fcm_tokens (user_id) WHERE is_active;
 CREATE INDEX IF NOT EXISTS idx_user_notification_preferences_user_id ON user_notification_preferences(user_id);
 CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_user_id ON scheduled_notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_status ON scheduled_notifications(status);
@@ -105,26 +111,28 @@ CREATE INDEX IF NOT EXISTS idx_scheduled_notifications_scheduled_for ON schedule
 CREATE INDEX IF NOT EXISTS idx_user_notifications_user_id ON user_notifications(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_notifications_sent_at ON user_notifications(sent_at);
 CREATE INDEX IF NOT EXISTS idx_user_notifications_type ON user_notifications(notification_type);
+CREATE INDEX IF NOT EXISTS idx_user_notifications_read ON user_notifications(read);
+CREATE INDEX IF NOT EXISTS idx_user_notifications_read_at ON user_notifications(read_at);
 
 -- Functions for notification management
-CREATE OR REPLACE FUNCTION get_user_notification_count(user_id_param TEXT)
+CREATE OR REPLACE FUNCTION get_user_notification_count(user_id_param UUID)
 RETURNS INTEGER AS $$
 BEGIN
   RETURN (
-    SELECT COUNT(*) 
-    FROM user_notifications 
+    SELECT COUNT(*)
+    FROM user_notifications
     WHERE user_id = user_id_param AND status = 'sent'
   );
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION get_user_unread_notification_count(user_id_param TEXT)
+CREATE OR REPLACE FUNCTION get_user_unread_notification_count(user_id_param UUID)
 RETURNS INTEGER AS $$
 BEGIN
   RETURN (
-    SELECT COUNT(*) 
-    FROM user_notifications 
-    WHERE user_id = user_id_param AND status = 'sent' AND data->>'read' IS NULL
+    SELECT COUNT(*)
+    FROM user_notifications
+    WHERE user_id = user_id_param AND read = false
   );
 END;
 $$ LANGUAGE plpgsql;

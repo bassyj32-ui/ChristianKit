@@ -9,9 +9,7 @@ import {
   type Notification
 } from '../services/notificationService';
 import { useSupabaseAuth } from './SupabaseAuthProvider';
-
-// VAPID public key from env1.md
-const VAPID_PUBLIC_KEY = 'BEd9I1aA4TrQnASkZfKFKylZuy_-EjSeNwBsD32JvHFrbaZxTbfcPme2KhboVY8QMK47OoYtpus0alGzuJuR-60';
+import { getValidatedVapidPublicKey } from '../utils/vapidKeys';
 
 // Utility function to convert VAPID key
 function urlBase64ToUint8Array(base64String: string) {
@@ -62,12 +60,19 @@ export const NotificationCenter: React.FC<NotificationCenterProps> = ({
 
       // Subscribe to push notifications for PWA
       if ('serviceWorker' in navigator && 'PushManager' in window) {
+        // Get validated VAPID key
+        const vapidKey = getValidatedVapidPublicKey();
+        if (!vapidKey) {
+          console.warn('⚠️ Cannot setup push notifications: Invalid VAPID key');
+          return;
+        }
+
         navigator.serviceWorker.ready.then((registration) => {
           return registration.pushManager.getSubscription().then((existingSubscription) => {
             if (!existingSubscription) {
               return registration.pushManager.subscribe({
                 userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                applicationServerKey: urlBase64ToUint8Array(vapidKey)
               }).then((newSubscription) => {
                 // Send subscription to server
                 fetch('/api/subscribe', {

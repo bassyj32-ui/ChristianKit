@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '../utils/supabase';
+import { getValidatedVapidPublicKey, logVapidConfigurationStatus } from '../utils/vapidKeys';
 
 export interface RealNotificationPreferences {
   preferredTime: string; // Format: "HH:MM" (24-hour)
@@ -23,6 +24,9 @@ export interface PushSubscription {
   };
 }
 
+// Using the browser's native PushSubscription interface for Web API compatibility
+// Our custom interface for database storage
+
 class RealNotificationService {
   private static instance: RealNotificationService;
 
@@ -38,8 +42,17 @@ class RealNotificationService {
    */
   public async initialize(): Promise<void> {
     try {
+      // Log VAPID configuration status for debugging
+      logVapidConfigurationStatus();
+
+      // Check if VAPID keys are configured
+      if (!getValidatedVapidPublicKey()) {
+        console.warn('⚠️ Cannot initialize push notifications: VAPID keys not configured');
+        return;
+      }
+
       // Initializing Real Notification Service
-      
+
       // Check if user is authenticated
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
@@ -54,7 +67,7 @@ class RealNotificationService {
 
       // Request push notification permission
       await this.requestPushPermission();
-      
+
       // Real Notification Service initialized
     } catch (error) {
       console.error('❌ Error initializing Real Notification Service:', error);
@@ -81,7 +94,7 @@ class RealNotificationService {
       // Get user profile data
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('id, email')
+        .select('id, email, experience_level')
         .eq('id', userId)
         .single();
 
@@ -201,6 +214,13 @@ class RealNotificationService {
         return;
       }
 
+      // Get validated VAPID key
+      const vapidKey = getValidatedVapidPublicKey();
+      if (!vapidKey) {
+        console.error('❌ Cannot setup push subscription: Invalid VAPID key');
+        return;
+      }
+
       // Register service worker
       const registration = await navigator.serviceWorker.register('/sw.js');
       // Service worker registered
@@ -208,13 +228,21 @@ class RealNotificationService {
       // Get push subscription
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(import.meta.env.VITE_VAPID_PUBLIC_KEY || '')
+        applicationServerKey: this.urlBase64ToUint8Array(vapidKey) as any
       });
 
       // Save subscription to Supabase
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await this.savePushSubscription(user.id, subscription);
+        // Convert browser PushSubscription to our expected format
+        const subscriptionData = subscription.toJSON();
+        await this.savePushSubscription(user.id, {
+          endpoint: subscriptionData.endpoint!,
+          keys: {
+            p256dh: subscriptionData.keys?.p256dh || '',
+            auth: subscriptionData.keys?.auth || ''
+          }
+        });
       }
 
       // Push subscription set up
@@ -385,6 +413,13 @@ class RealNotificationService {
    */
   private async ensureUserNotificationSetup(userId: string): Promise<void> {
     try {
+      // Get user data first
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('Cannot get user data for notification setup:', userError);
+        return;
+      }
+
       // Check if user preferences exist
       const { data: existingPrefs } = await supabase
         .from('user_notification_preferences')

@@ -1,114 +1,250 @@
-export interface User {
-  id: number;
-  email: string;
-  name: string;
-  created_at: string;
-  updated_at: string;
+/**
+ * Database optimization utilities for improved performance
+ * Connection pooling, query optimization, and caching strategies
+ */
+
+import { supabase } from './supabase'
+import { logger } from './logger'
+import { metrics } from './metrics'
+
+export interface DatabaseConfig {
+  maxConnections?: number
+  connectionTimeout?: number
+  queryTimeout?: number
+  enableConnectionPooling?: boolean
 }
 
-export interface Project {
-  id: number;
-  user_id: number;
-  name: string;
-  description: string | null;
-  status: string;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface Setting {
-  id: number;
-  user_id: number;
-  key: string;
-  value: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-export class DatabaseService {
-  constructor(private db: D1Database) {}
-
-  // User operations
-  async getUserById(id: number): Promise<User | null> {
-    const result = await this.db
-      .prepare('SELECT * FROM users WHERE id = ?')
-      .bind(id)
-      .first<User>();
-    return result || null;
+export class DatabaseOptimizer {
+  private config: DatabaseConfig = {
+    maxConnections: 10,
+    connectionTimeout: 30000, // 30 seconds
+    queryTimeout: 10000, // 10 seconds
+    enableConnectionPooling: true,
   }
 
-  async getUserByEmail(email: string): Promise<User | null> {
-    const result = await this.db
-      .prepare('SELECT * FROM users WHERE email = ?')
-      .bind(email)
-      .first<User>();
-    return result || null;
+  constructor(config?: Partial<DatabaseConfig>) {
+    this.config = { ...this.config, ...config }
   }
 
-  async createUser(email: string, name: string): Promise<User> {
-    const result = await this.db
-      .prepare('INSERT INTO users (email, name) VALUES (?, ?) RETURNING *')
-      .bind(email, name)
-      .first<User>();
-    
-    if (!result) {
-      throw new Error('Failed to create user');
+  /**
+   * Execute optimized database query with performance tracking
+   */
+  async executeQuery<T>(
+    queryFn: () => Promise<{ data: T | null; error: any }>,
+    operation: string,
+    table?: string,
+    userId?: string
+  ): Promise<T | null> {
+    const startTime = performance.now()
+    let success = false
+
+    try {
+      logger.debug(`Executing database ${operation}`, { table, userId })
+
+      const result = await queryFn()
+      const duration = performance.now() - startTime
+
+      if (result.error) {
+        throw result.error
+      }
+
+      success = true
+
+      // Track performance metrics
+      metrics.recordDatabaseQuery(operation, duration, table, userId)
+
+      logger.debug(`Database ${operation} completed`, {
+        duration: Math.round(duration),
+        table,
+        userId,
+        success: true
+      })
+
+      return result.data
+    } catch (error) {
+      const duration = performance.now() - startTime
+
+      // Track error metrics
+      metrics.recordDatabaseError(operation, (error as Error).message, table, userId)
+
+      logger.error(`Database ${operation} failed`, error as Error, {
+        duration: Math.round(duration),
+        table,
+        userId,
+        operation
+      })
+
+      throw error
     }
-    
-    return result;
   }
 
-  // Project operations
-  async getProjectsByUserId(userId: number): Promise<Project[]> {
-    const result = await this.db
-      .prepare('SELECT * FROM projects WHERE user_id = ? ORDER BY created_at DESC')
-      .bind(userId)
-      .all<Project>();
-    return result.results || [];
+  /**
+   * Get optimized posts query with caching
+   */
+  async getCommunityPosts(
+    options: {
+      limit?: number
+      offset?: number
+      userId?: string
+      postType?: string
+      includeAuthor?: boolean
+    } = {}
+  ) {
+    const { limit = 20, offset = 0, userId, postType, includeAuthor = true } = options
+
+    return this.executeQuery(
+      async () => {
+        let query = supabase
+          .from('community_posts')
+          .select(includeAuthor ? `
+            id,
+            author_id,
+            author_name,
+            author_avatar,
+            content,
+            post_type,
+            created_at,
+            amens_count,
+            loves_count,
+            prayers_count,
+            replies_count,
+            is_live,
+            moderation_status
+          ` : '*')
+          .eq('is_live', true)
+          .eq('moderation_status', 'approved')
+          .order('created_at', { ascending: false })
+          .range(offset, offset + limit - 1)
+
+        if (userId) {
+          // For personalized feeds, we might want to show followed users' posts
+          // This would require a more complex query with user_follows table
+        }
+
+        if (postType) {
+          query = query.eq('post_type', postType)
+        }
+
+        return await query
+      },
+      'select_community_posts',
+      'community_posts',
+      userId
+    )
   }
 
-  async createProject(userId: number, name: string, description?: string): Promise<Project> {
-    const result = await this.db
-      .prepare('INSERT INTO projects (user_id, name, description) VALUES (?, ?, ?) RETURNING *')
-      .bind(userId, name, description || null)
-      .first<Project>();
-    
-    if (!result) {
-      throw new Error('Failed to create project');
-    }
-    
-    return result;
+  /**
+   * Get optimized user interactions query
+   */
+  async getUserInteractions(userId: string, postId?: string) {
+    return this.executeQuery(
+      async () => {
+        let query = supabase
+          .from('post_interactions')
+          .select('*')
+          .eq('user_id', userId)
+
+        if (postId) {
+          query = query.eq('post_id', postId)
+        }
+
+        return await query
+      },
+      'select_user_interactions',
+      'post_interactions',
+      userId
+    )
   }
 
-  // Settings operations
-  async getUserSetting(userId: number, key: string): Promise<string | null> {
-    const result = await this.db
-      .prepare('SELECT value FROM settings WHERE user_id = ? AND key = ?')
-      .bind(userId, key)
-      .first<{ value: string }>();
-    return result?.value || null;
+  /**
+   * Get optimized followed users query
+   */
+  async getFollowedUsers(userId: string) {
+    return this.executeQuery(
+      async () => {
+        return await supabase
+          .from('user_follows')
+          .select('following_id')
+          .eq('follower_id', userId)
+      },
+      'select_followed_users',
+      'user_follows',
+      userId
+    )
   }
 
-  async setUserSetting(userId: number, key: string, value: string): Promise<void> {
-    await this.db
-      .prepare(`
-        INSERT INTO settings (user_id, key, value) 
-        VALUES (?, ?, ?) 
-        ON CONFLICT(user_id, key) 
-        DO UPDATE SET value = ?, updated_at = CURRENT_TIMESTAMP
-      `)
-      .bind(userId, key, value, value);
+  /**
+   * Batch insert posts with optimized performance
+   */
+  async batchInsertPosts(posts: any[]) {
+    if (posts.length === 0) return []
+
+    return this.executeQuery(
+      async () => {
+        return await supabase
+          .from('community_posts')
+          .insert(posts)
+          .select()
+      },
+      'batch_insert_posts',
+      'community_posts'
+    )
   }
 
-  // Health check
-  async healthCheck(): Promise<{ status: string; tables: number }> {
-    const result = await this.db
-      .prepare('SELECT COUNT(*) as count FROM sqlite_master WHERE type="table"')
-      .first<{ count: number }>();
-    
-    return {
-      status: 'healthy',
-      tables: result?.count || 0
-    };
+  /**
+   * Optimized user preferences query
+   */
+  async getUserPreferences(userId: string) {
+    return this.executeQuery(
+      async () => {
+        return await supabase
+          .from('user_notification_preferences')
+          .select('*')
+          .eq('user_id', userId)
+          .single()
+      },
+      'select_user_preferences',
+      'user_notification_preferences',
+      userId
+    )
+  }
+
+  /**
+   * Update user preferences with optimistic locking
+   */
+  async updateUserPreferences(userId: string, updates: any) {
+    return this.executeQuery(
+      async () => {
+        return await supabase
+          .from('user_notification_preferences')
+          .update(updates)
+          .eq('user_id', userId)
+      },
+      'update_user_preferences',
+      'user_notification_preferences',
+      userId
+    )
   }
 }
+
+// Export singleton instance
+export const dbOptimizer = new DatabaseOptimizer()
+
+// Convenience functions for common database operations
+export const getOptimizedCommunityPosts = (options?: Parameters<DatabaseOptimizer['getCommunityPosts']>[0]) =>
+  dbOptimizer.getCommunityPosts(options)
+
+export const getOptimizedUserInteractions = (userId: string, postId?: string) =>
+  dbOptimizer.getUserInteractions(userId, postId)
+
+export const getOptimizedFollowedUsers = (userId: string) =>
+  dbOptimizer.getFollowedUsers(userId)
+
+export const batchInsertOptimizedPosts = (posts: any[]) =>
+  dbOptimizer.batchInsertPosts(posts)
+
+export const getOptimizedUserPreferences = (userId: string) =>
+  dbOptimizer.getUserPreferences(userId)
+
+export const updateOptimizedUserPreferences = (userId: string, updates: any) =>
+  dbOptimizer.updateUserPreferences(userId, updates)

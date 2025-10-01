@@ -1,5 +1,9 @@
 import { supabase } from '../utils/supabase';
 import { savePushSubscription } from '../api/pushSubscription';
+import { logger, logNotificationEvent, logNotificationError } from '../utils/logger';
+import { metrics, recordNotificationDelivery, recordNotificationFailure } from '../utils/metrics';
+import { notificationCache, cacheUserPreferences, getCachedUserPreferences, cacheUserNotifications, getCachedUserNotifications, invalidateUserCache } from '../utils/cache';
+import { withDatabaseRetry, withNotificationRetry } from '../utils/retry';
 
 export interface Notification {
   id: string;
@@ -38,7 +42,11 @@ export const createNotification = async (
   message: string,
   data?: Notification['data']
 ): Promise<boolean> => {
+  const timer = metrics.startTimer('create_notification', userId)
+
   try {
+    logger.debug('Creating notification', { userId, type, title })
+
     const { error } = await supabase
       .from('notifications')
       .insert({
@@ -51,95 +59,164 @@ export const createNotification = async (
       });
 
     if (error) throw error;
+
+    timer() // Record timing
+    logNotificationEvent('created', userId, undefined, { type, title })
+    logger.info('Notification created successfully', { userId, type, title })
+
     return true;
   } catch (error) {
-    console.error('Error creating notification:', error);
+    timer() // Record timing even for failures
+    logNotificationError('Failed to create notification', error as Error, userId)
+    recordNotificationFailure(type, 'database', (error as Error).message, userId)
     return false;
   }
 };
 
 /**
- * Get user notifications
+ * Get user notifications with caching
  */
 export const getUserNotifications = async (
   userId: string,
   limit: number = 20,
   unreadOnly: boolean = false
 ): Promise<Notification[]> => {
+  const cacheKey = `notifications_${userId}_${limit}_${unreadOnly}`
+
+  // Check cache first
+  const cached = getCachedUserNotifications(cacheKey)
+  if (cached) {
+    logger.debug('Returning cached notifications', { userId, limit, unreadOnly })
+    return cached
+  }
+
   try {
-    let query = supabase
-      .from('notifications')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false })
-      .limit(limit);
+    const result = await withDatabaseRetry(async () => {
+      let query = supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false })
+        .limit(limit);
 
-    if (unreadOnly) {
-      query = query.eq('read', false);
-    }
+      if (unreadOnly) {
+        query = query.eq('read', false);
+      }
 
-    const { data, error } = await query;
+      const { data, error } = await query;
 
-    if (error) throw error;
-    return data || [];
+      if (error) throw error;
+      return data || [];
+    })
+
+    // Cache the result
+    cacheUserNotifications(cacheKey, result)
+
+    logger.debug('Fetched notifications from database', { userId, count: result.length })
+    return result;
   } catch (error) {
-    console.error('Error fetching notifications:', error);
+    logger.error('Error fetching notifications', error as Error, { userId, limit, unreadOnly })
     return [];
   }
 };
 
 /**
- * Mark notification as read
+ * Mark notification as read with cache invalidation
  */
-export const markNotificationAsRead = async (notificationId: string): Promise<boolean> => {
+export const markNotificationAsRead = async (notificationId: string, userId?: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('id', notificationId);
+    const result = await withNotificationRetry(async () => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({
+          read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('id', notificationId);
 
-    if (error) throw error;
-    return true;
+      if (error) throw error;
+      return true;
+    }, { userId, notificationId })
+
+    if (result.success && userId) {
+      // Invalidate user notification cache since read status changed
+      invalidateUserCache(userId)
+
+      logger.info('Notification marked as read', { notificationId, userId })
+    }
+
+    return result.success;
   } catch (error) {
-    console.error('Error marking notification as read:', error);
+    logger.error('Error marking notification as read', error as Error, { notificationId, userId })
     return false;
   }
 };
 
 /**
- * Mark all notifications as read for a user
+ * Mark all notifications as read for a user with cache invalidation
  */
 export const markAllNotificationsAsRead = async (userId: string): Promise<boolean> => {
   try {
-    const { error } = await supabase
-      .from('notifications')
-      .update({ read: true })
-      .eq('user_id', userId)
-      .eq('read', false);
+    const result = await withNotificationRetry(async () => {
+      const { error } = await supabase
+        .from('notifications')
+        .update({
+          read: true,
+          read_at: new Date().toISOString()
+        })
+        .eq('user_id', userId)
+        .eq('read', false);
 
-    if (error) throw error;
-    return true;
+      if (error) throw error;
+      return true;
+    }, { userId })
+
+    if (result.success) {
+      // Invalidate user notification cache since all notifications marked as read
+      invalidateUserCache(userId)
+
+      logger.info('All notifications marked as read', { userId })
+    }
+
+    return result.success;
   } catch (error) {
-    console.error('Error marking all notifications as read:', error);
+    logger.error('Error marking all notifications as read', error as Error, { userId })
     return false;
   }
 };
 
 /**
- * Get unread notification count
+ * Get unread notification count with caching
  */
 export const getUnreadNotificationCount = async (userId: string): Promise<number> => {
-  try {
-    const { count, error } = await supabase
-      .from('notifications')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .eq('read', false);
+  const cacheKey = `unread_count_${userId}`
 
-    if (error) throw error;
-    return count || 0;
+  // Check cache first (short TTL since this changes frequently)
+  const cached = notificationCache.get(cacheKey)
+  if (cached && (Date.now() - cached.timestamp) < 30000) { // 30 second cache
+    logger.debug('Returning cached unread count', { userId, count: cached.data })
+    return cached.data
+  }
+
+  try {
+    const result = await withDatabaseRetry(async () => {
+      const { count, error } = await supabase
+        .from('notifications')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('read', false);
+
+      if (error) throw error;
+      return count || 0;
+    })
+
+    // Cache the result
+    notificationCache.set(cacheKey, result, 30000) // 30 seconds
+
+    logger.debug('Fetched unread count from database', { userId, count: result })
+    return result;
   } catch (error) {
-    console.error('Error getting unread count:', error);
+    logger.error('Error getting unread count', error as Error, { userId })
     return 0;
   }
 };
@@ -411,7 +488,10 @@ export const createPushSubscriptionsTableSQL = `
 CREATE TABLE IF NOT EXISTS push_subscriptions (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES profiles(id) ON DELETE CASCADE,
-  subscription JSONB NOT NULL,
+  endpoint TEXT NOT NULL,
+  p256dh TEXT NOT NULL,
+  auth TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
   UNIQUE(user_id)

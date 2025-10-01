@@ -1,5 +1,28 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import webpush from 'https://esm.sh/web-push@3.6.7';
+
+// Enhanced logging utility for Deno environment with structured logging
+const logger = {
+  info: (message: string, data?: any) => {
+    console.log(`[INFO] ${new Date().toISOString()}: ${message}`, data ? JSON.stringify(data, null, 2) : '')
+  },
+  error: (message: string, error?: Error, context?: any) => {
+    console.error(`[ERROR] ${new Date().toISOString()}: ${message}`, {
+      error: error?.message,
+      stack: error?.stack,
+      context: context ? JSON.stringify(context, null, 2) : undefined
+    })
+  },
+  warn: (message: string, data?: any) => {
+    console.warn(`[WARN] ${new Date().toISOString()}: ${message}`, data ? JSON.stringify(data, null, 2) : '')
+  },
+  debug: (message: string, data?: any) => {
+    if (Deno.env.get('DEBUG') === 'true') {
+      console.debug(`[DEBUG] ${new Date().toISOString()}: ${message}`, data ? JSON.stringify(data, null, 2) : '')
+    }
+  },
+}
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +47,20 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Configure web-push with VAPID keys
+    const vapidPublicKey = Deno.env.get('VITE_VAPID_PUBLIC_KEY');
+    const vapidPrivateKey = Deno.env.get('VITE_VAPID_PRIVATE_KEY');
+
+    if (!vapidPublicKey || !vapidPrivateKey) {
+      console.error('❌ VAPID keys not configured for web-push');
+    } else {
+      webpush.setVapidDetails(
+        'mailto:notifications@christiankit.app',
+        vapidPublicKey,
+        vapidPrivateKey
+      );
+    }
     
     // Check if this is a test request
     const body = await req.json().catch(() => ({}));
@@ -35,14 +72,19 @@ serve(async (req) => {
       return await handleTestNotification(supabase, testUserId);
     }
 
-    console.log('🔔 Starting daily notification process...');
+    const startTime = performance.now()
+    logger.info('Starting daily notification process', {
+      isAutomated: body.automated === true,
+      targetTimezone: body.timezone || 'UTC',
+      timestamp: new Date().toISOString()
+    })
 
     // Check if this is an automated run
     const isAutomated = body.automated === true;
     const targetTimezone = body.timezone || 'UTC';
-    
+
     if (isAutomated) {
-      console.log('🤖 Automated daily notification run started');
+      logger.info('Automated daily notification run started')
     }
 
     // Get all users who have notifications enabled and it's their notification time
@@ -104,22 +146,36 @@ serve(async (req) => {
           continue;
         }
 
+        // Validate user still exists and preferences are still active (atomic check)
+        const { data: currentPrefs, error: prefsError } = await supabase
+          .from('user_notification_preferences')
+          .select('is_active, push_enabled, email_enabled')
+          .eq('user_id', user.user_id)
+          .single();
+
+        if (prefsError || !currentPrefs?.is_active) {
+          console.log(`⏭️ User ${user.user_id} preferences no longer active`);
+          continue;
+        }
+
         // Generate personalized message
           const message = await generatePersonalizedMessage(user);
           
-        // Send push notification if user has push subscriptions
-        const { data: pushSubscriptions } = await supabase
-          .from('push_subscriptions')
-          .select('*')
-          .eq('user_id', user.user_id)
-          .eq('is_active', true);
+        // Send push notification if user has push subscriptions and push is enabled
+        if (currentPrefs.push_enabled) {
+          const { data: pushSubscriptions } = await supabase
+            .from('push_subscriptions')
+            .select('*')
+            .eq('user_id', user.user_id)
+            .eq('is_active', true);
 
-        if (pushSubscriptions && pushSubscriptions.length > 0) {
-          await sendPushNotifications(supabase, pushSubscriptions, message);
+          if (pushSubscriptions && pushSubscriptions.length > 0) {
+            await sendPushNotifications(supabase, pushSubscriptions, message);
+          }
         }
 
         // Send email notification if enabled
-        if (user.email_notifications && user.user_profiles?.email) {
+        if (currentPrefs.email_enabled && user.user_profiles?.email) {
           await sendEmailNotification(user.user_profiles.email, message);
         }
 
@@ -185,6 +241,27 @@ serve(async (req) => {
       }
     }
 
+    const duration = performance.now() - startTime
+
+    logger.info('Daily notification process completed', {
+      duration,
+      processed: processedCount,
+      successful: successCount,
+      failed: errorCount,
+      automated: isAutomated,
+      timezone: targetTimezone
+    })
+
+    // Alert if error rate is too high
+    const errorRate = errorCount / processedCount
+    if (errorRate > 0.1) { // More than 10% error rate
+      logger.error('High error rate detected in notification processing', new Error(`Error rate: ${(errorRate * 100).toFixed(1)}%`), {
+        processedCount,
+        errorCount,
+        errorRate: errorRate * 100
+      })
+    }
+
     return new Response(JSON.stringify({
       success: true,
       message: 'Daily notifications processed',
@@ -193,7 +270,8 @@ serve(async (req) => {
         successful: successCount,
         failed: errorCount,
         automated: isAutomated,
-        timezone: targetTimezone
+        timezone: targetTimezone,
+        duration_ms: Math.round(duration)
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -291,7 +369,7 @@ async function handleTestNotification(supabase: any, userId: string | undefined)
       .eq('user_id', userId)
       .eq('is_active', true);
 
-    // Send push notification if available
+    // Send test push notification if available
     if (pushSubscriptions && pushSubscriptions.length > 0) {
       await sendPushNotifications(supabase, pushSubscriptions, {
         ...testMessage,
@@ -348,17 +426,42 @@ async function handleTestNotification(supabase: any, userId: string | undefined)
 }
 
 /**
- * Check if it's the right time to send notification for this user
+ * Check if it's the right time to send notification for this user (timezone-aware)
  */
 function isNotificationTime(user: any): boolean {
   const now = new Date();
-  const userHour = now.getHours(); // This should consider user's timezone in production
-  
-  // Default notification time is 8 AM if not specified
-  const preferredHour = user.preferred_time_hour || 8;
-  
-  // Allow notifications within 1 hour window
-  return Math.abs(userHour - preferredHour) <= 1;
+
+  // Get user's timezone (default to UTC if not specified)
+  const userTimezone = user.timezone || 'UTC';
+
+  // Create date in user's timezone
+  const userTime = new Intl.DateTimeFormat('en-US', {
+    timeZone: userTimezone,
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    hour12: false
+  }).format(now);
+
+  // Parse the user's local time
+  const [datePart, timePart] = userTime.split(', ');
+  const userHour = parseInt(timePart.split(':')[0]);
+
+  // Get preferred notification time (parse from TIME format like '09:00:00')
+  let preferredHour = 8; // default
+  if (user.preferred_time) {
+    // Handle TIME format like '09:00:00' or '09:00'
+    const timeStr = user.preferred_time.toString();
+    const timeMatch = timeStr.match(/(\d{1,2}):(\d{2})/);
+    if (timeMatch) {
+      preferredHour = parseInt(timeMatch[1]);
+    }
+  }
+
+  // Allow notifications within 15-minute window of preferred time
+  const timeDiff = Math.abs(userHour - preferredHour);
+  return timeDiff <= 0.25; // 15 minutes in hours
 }
 
 /**
@@ -437,42 +540,112 @@ async function generatePersonalizedMessage(user: any) {
 }
 
 /**
- * Send push notifications to user's devices
+ * Send push notifications to user's devices using web-push directly with retry logic
  */
 async function sendPushNotifications(supabase: any, subscriptions: any[], message: any) {
-  const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-  
+  if (!vapidPublicKey || !vapidPrivateKey) {
+    logger.error('Cannot send push notifications: VAPID keys not configured')
+    return;
+  }
+
   for (const subscription of subscriptions) {
-    try {
-      const response = await fetch(`${supabaseUrl}/functions/v1/send-push-notification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({
-          subscription: subscription.subscription_data,
-        payload: {
+    // Retry logic for push notifications
+    const maxRetries = 2
+    let attempt = 0
+
+    while (attempt <= maxRetries) {
+      try {
+        attempt++
+
+        // Reconstruct subscription object from DB fields
+        const pushSubscription = {
+          endpoint: subscription.endpoint,
+          keys: {
+            p256dh: subscription.p256dh,
+            auth: subscription.auth
+          }
+        };
+
+        // Prepare notification payload
+        const payload = JSON.stringify({
           title: message.title,
           body: message.message,
-            icon: '/icon-192x192.png',
-            badge: '/icon-72x72.png',
+          icon: '/icon-192x192.png',
+          badge: '/icon-72x72.png',
           data: {
             verse: message.verse,
             reference: message.reference,
-              url: '/'
-            }
+            url: '/'
           }
-        })
-      });
+        });
 
-      if (!response.ok) {
-        console.error(`❌ Failed to send push notification:`, await response.text());
-      } else {
-        console.log(`✅ Push notification sent successfully`);
+        // Send push notification directly
+        const pushStartTime = performance.now()
+        await webpush.sendNotification(pushSubscription, payload);
+        const pushDuration = performance.now() - pushStartTime
+
+        logger.info(`Push notification sent successfully`, {
+          userId: subscription.user_id,
+          duration: pushDuration,
+          endpoint: subscription.endpoint.substring(0, 50) + '...',
+          attempt
+        })
+
+        // Success - break out of retry loop
+        break
+
+      } catch (error: any) {
+        logger.error(`Push notification attempt ${attempt} failed`, error, {
+          userId: subscription.user_id,
+          subscriptionId: subscription.id,
+          attempt,
+          statusCode: error.statusCode
+        })
+
+        // Handle specific error types
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          // Subscription is no longer valid (device unsubscribed or endpoint expired)
+          logger.info(`Cleaning up invalid subscription for user ${subscription.user_id}`, {
+            subscriptionId: subscription.id,
+            reason: `HTTP ${error.statusCode}`
+          })
+
+          try {
+            await supabase
+              .from('push_subscriptions')
+              .update({ is_active: false })
+              .eq('id', subscription.id);
+          } catch (cleanupError) {
+            logger.error('Failed to cleanup invalid subscription', cleanupError, {
+              subscriptionId: subscription.id,
+              userId: subscription.user_id
+            })
+          }
+
+          // Don't retry permanent errors
+          break
+
+        } else if (error.statusCode >= 500 && attempt <= maxRetries) {
+          // Temporary server error - retry with exponential backoff
+          const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000) // Max 5 second delay
+          logger.warn(`Retrying push notification in ${delay}ms`, {
+            userId: subscription.user_id,
+            attempt,
+            delay
+          })
+
+          await new Promise(resolve => setTimeout(resolve, delay))
+          continue
+
+        } else {
+          // Other errors (400-level except 410/404) - don't retry
+          logger.error(`Non-retryable push notification error`, error, {
+            userId: subscription.user_id,
+            statusCode: error.statusCode
+          })
+          break
+        }
       }
-  } catch (error) {
-      console.error(`❌ Error sending push notification:`, error);
     }
   }
 }

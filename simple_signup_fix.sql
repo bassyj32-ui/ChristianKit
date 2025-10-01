@@ -38,3 +38,7 @@ SELECT 'Simple signup fix applied! Test with a new user now.' as message;
 
 
 
+
+
+
+

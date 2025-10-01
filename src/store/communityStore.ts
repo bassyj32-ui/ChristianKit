@@ -1,5 +1,9 @@
 import { create } from 'zustand'
 import { supabase } from '../utils/supabase'
+import { logger, logUserAction, logDatabaseOperation } from '../utils/logger'
+import { metrics, trackUserAction, trackDatabaseOperation } from '../utils/metrics'
+import { getOptimizedCommunityPosts, getOptimizedUserInteractions, getOptimizedFollowedUsers } from '../utils/database'
+import { communityRateLimitMiddleware, checkCommunityRateLimit } from '../utils/rateLimit'
 
 // Offline cache and queue interfaces
 interface CachedPost {
@@ -236,7 +240,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       if (!refresh && cache.has(cacheKey)) {
         const cachedData = cache.get(cacheKey)!
         if (Date.now() - cachedData.timestamp < cachedData.ttl) {
-          console.log('📋 Loading posts from cache')
+          logger.debug('Loading posts from cache', { cacheKey, postCount: cachedData.data.length })
           set({
             posts: cachedData.data,
             hasMorePosts: true, // Assume more posts available when using cache
@@ -251,7 +255,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
 
       // If offline, try to load from localStorage as fallback
       if (!isOnline) {
-        console.log('📱 Offline mode - attempting to load cached posts')
+        logger.info('Offline mode - attempting to load cached posts', { refresh })
         const offlinePosts = localStorage.getItem('community_posts_cache')
         if (offlinePosts) {
           try {
@@ -262,9 +266,10 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
               isLoading: false,
               error: 'You\'re offline. Showing cached posts. 🔄'
             })
+            logger.info('Loaded cached posts from localStorage', { postCount: parsedPosts.length })
             return
           } catch (error) {
-            console.error('Failed to parse offline posts:', error)
+            logger.error('Failed to parse offline posts', error as Error)
           }
         }
 
@@ -272,6 +277,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           error: 'You\'re offline and no cached posts are available. 📱',
           isLoading: false
         })
+        logger.warn('No cached posts available in offline mode')
         return
       }
 
@@ -280,30 +286,23 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         throw new Error('Supabase client not initialized')
       }
 
-      // Optimized query with better error handling
-      let query = supabase
-        .from('community_posts')
-        .select(`
-          *,
-          profiles:author_id (
-            display_name,
-            avatar_url
-          )
-        `)
-        .eq('is_live', true)
-        .eq('moderation_status', 'approved')
+      // Use optimized database query with performance tracking
+      const postsResult = await getOptimizedCommunityPosts({
+        limit: POSTS_PER_PAGE,
+        offset: refresh ? 0 : get().posts.length,
+        userId: contentFilter === 'following' ? undefined : undefined,
+        postType: undefined,
+        includeAuthor: true
+      })
 
-      // Apply filter based on contentFilter
-      if (contentFilter === 'following' && followedUsers.length > 0) {
-        query = query.in('author_id', followedUsers)
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(POSTS_PER_PAGE)
+      const { data, error } = { data: postsResult, error: null }
 
       if (error) {
-        console.error('❌ Query error:', error)
+        logger.error('Community posts query failed', error as Error, {
+          code: error.code,
+          message: error.message,
+          refresh
+        })
 
         // Provide more specific error messages
         if (error.code === 'PGRST116') {
@@ -393,7 +392,21 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       // Implement cursor-based pagination
       const { data, error } = await supabase
         .from('community_posts')
-        .select('*')
+        .select(`
+          id,
+          author_id,
+          author_name,
+          author_avatar,
+          content,
+          post_type,
+          created_at,
+          amens_count,
+          loves_count,
+          prayers_count,
+          replies_count,
+          is_live,
+          moderation_status
+        `)
         .eq('is_live', true)
         .eq('moderation_status', 'approved')
         .order('created_at', { ascending: false })
@@ -416,13 +429,21 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   createPost: async (content: string, category: 'post' | 'prayer_request' | 'encouragement' | 'testimony' | 'prayer_share' = 'post') => {
-    if (!get().checkRateLimit('posts')) {
-      set({ error: 'Rate limit exceeded: 15 posts per day maximum' })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      set({ error: 'Please sign in to create posts' })
+      return false
+    }
+
+    // Use new rate limiting system
+    const rateLimitResult = await checkCommunityRateLimit(user.id, 'post')
+    if (!rateLimitResult.success) {
+      set({ error: rateLimitResult.error || 'Rate limit exceeded' })
       return false
     }
 
     const { isOnline } = get()
-    let user = null
+    let currentUser = null
 
     try {
       set({ isCreatingPost: true, error: null })
@@ -440,12 +461,12 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           return false
         }
 
-        user = authUser
+        currentUser = authUser
 
         get().addToOfflineQueue({
           content: content.trim(),
           category,
-          userId: user.id
+          userId: currentUser.id
         })
 
         set({
@@ -466,13 +487,13 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       const { data: { user: authUser } } = await supabase.auth.getUser()
       if (!authUser) throw new Error('User not authenticated')
 
-      user = authUser
+      currentUser = authUser
 
       // Get user profile for author data
       const { data: profile } = await supabase
         .from('profiles')
         .select('display_name, avatar_url')
-        .eq('id', user.id)
+        .eq('id', currentUser.id)
         .single()
 
       if (!supabase) throw new Error('Supabase client not initialized');
@@ -484,11 +505,22 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar: profile?.avatar_url || user.user_metadata?.avatar_url || '👤',
           content: content.trim(),
           post_type: category,
-          hashtags: extractHashtags(content),
           is_live: true,
           moderation_status: 'approved'
         })
-        .select('*')
+        .select(`
+          id,
+          author_id,
+          author_name,
+          author_avatar,
+          content,
+          post_type,
+          created_at,
+          amens_count,
+          loves_count,
+          prayers_count,
+          replies_count
+        `)
         .single()
 
       if (error) throw error
@@ -517,8 +549,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   toggleFollow: async (userId: string) => {
-    if (!get().checkRateLimit('follows')) {
-      set({ error: 'Rate limit exceeded: 50 follows per day maximum' })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      set({ error: 'Please sign in to follow users' })
+      return false
+    }
+
+    // Use new rate limiting system
+    const rateLimitResult = await checkCommunityRateLimit(user.id, 'follow')
+    if (!rateLimitResult.success) {
+      set({ error: rateLimitResult.error || 'Rate limit exceeded' })
       return false
     }
 
@@ -570,8 +610,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
   },
 
   addInteraction: async (postId: string, type: 'amen' | 'love' | 'prayer') => {
-    if (!get().checkRateLimit('interactions')) {
-      set({ error: 'Rate limit exceeded: 25 interactions per minute maximum' })
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+      set({ error: 'Please sign in to interact with posts' })
+      return false
+    }
+
+    // Use new rate limiting system
+    const rateLimitResult = await checkCommunityRateLimit(user.id, 'interact')
+    if (!rateLimitResult.success) {
+      set({ error: rateLimitResult.error || 'Rate limit exceeded' })
       return false
     }
 
@@ -580,18 +628,18 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       return false
     }
 
-    let user = null
+    let currentUser = null
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-      user = authUser
-      if (authError || !user) return false
+      currentUser = authUser
+      if (authError || !currentUser) return false
 
       // Check if interaction already exists
       const { data: existingInteraction } = await supabase
         .from('post_interactions')
         .select('id')
         .eq('post_id', postId)
-        .eq('user_id', user.id)
+        .eq('user_id', currentUser.id)
         .eq('interaction_type', type)
         .maybeSingle()
 
@@ -612,42 +660,25 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           .from('post_interactions')
           .insert({
             post_id: postId,
-            user_id: user.id,
+            user_id: currentUser.id,
             interaction_type: type
           })
 
         if (insertError) throw insertError
       }
 
-      // Update post counts in database
+      // Update local state - counts will be updated by database triggers
       const countField = `${type}s_count`
-      const { data: currentPost } = await supabase
-        .from('community_posts')
-        .select(countField)
-        .eq('id', postId)
-        .single()
+      const currentCount = get().posts.find(p => p.id === postId)?.[countField] || 0
+      const newCount = isAdding ? currentCount + 1 : Math.max(0, currentCount - 1)
 
-      if (currentPost) {
-        const newCount = isAdding 
-          ? ((currentPost as any)[countField] || 0) + 1
-          : Math.max(0, ((currentPost as any)[countField] || 1) - 1)
-
-        const { error: updateError } = await supabase
-          .from('community_posts')
-          .update({ [countField]: newCount })
-          .eq('id', postId)
-
-        if (updateError) throw updateError
-
-        // Update local state with the correct count
-        set({
-          posts: get().posts.map(post =>
-            post.id === postId
-              ? { ...post, [countField]: newCount }
-              : post
-          )
-        })
-      }
+      set({
+        posts: get().posts.map(post =>
+          post.id === postId
+            ? { ...post, [countField]: newCount }
+            : post
+        )
+      })
 
       updateRateLimit('interactions')
       return true
@@ -657,7 +688,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       console.error('❌ Error details:', {
         postId,
         type,
-        userId: user?.id || 'unknown',
+        userId: currentUser?.id || 'unknown',
         error: error instanceof Error ? error.message : String(error)
       })
       set({ error: `Failed to add ${type} interaction. Please try again.` })
@@ -671,21 +702,37 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       return false
     }
 
-    let user = null
+    let currentUser = null
     try {
       const { data: { user: authUser }, error: authError } = await supabase.auth.getUser()
-      user = authUser
-      if (authError || !user) return false
+      currentUser = authUser
+      if (authError || !currentUser) return false
 
       const { data: replyData, error } = await supabase
         .from('community_posts')
         .insert({
-          author_id: user.id,
+          author_id: currentUser.id,
+          author_name: currentUser.user_metadata?.display_name || currentUser.email || 'Anonymous',
+          author_avatar: currentUser.user_metadata?.avatar_url || '👤',
           content: content.trim(),
-          post_type: 'prayer',
-          parent_id: postId
+          post_type: 'post',
+          parent_id: postId,
+          is_live: true,
+          moderation_status: 'approved'
         })
-        .select('*')
+        .select(`
+          id,
+          author_id,
+          author_name,
+          author_avatar,
+          content,
+          post_type,
+          created_at,
+          amens_count,
+          loves_count,
+          prayers_count,
+          replies_count
+        `)
         .single()
 
       if (error) throw error
@@ -713,7 +760,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       console.error('❌ Error details:', {
         postId,
         content,
-        userId: user?.id || 'unknown',
+        userId: currentUser?.id || 'unknown',
         error: error instanceof Error ? error.message : String(error)
       })
       set({ error: 'Failed to add reply. Please try again.' })
@@ -982,17 +1029,24 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_id: user.id,
           author_name: user.user_metadata?.display_name || user.email || 'Anonymous',
           author_avatar: user.user_metadata?.avatar_url || '👤',
-          content: request.description, // Use description as content
+          content: request.description,
           post_type: 'prayer_request',
-          prayer_category: request.category, // Assuming you add this field to community_posts
-          urgency: request.urgency, // Assuming you add this field
-          is_prayer_request: true,
-          is_public: request.is_public,
-          linked_session_id: request.linked_session_id,
           is_live: true,
           moderation_status: 'approved'
         })
-        .select('*')
+        .select(`
+          id,
+          author_id,
+          author_name,
+          author_avatar,
+          content,
+          post_type,
+          created_at,
+          amens_count,
+          loves_count,
+          prayers_count,
+          replies_count
+        `)
         .single();
       if (error) throw error;
 
@@ -1047,16 +1101,22 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar: user.user_metadata?.avatar_url || '👤',
           content: encouragement.content,
           post_type: 'encouragement',
-          encouragement_type: encouragement.encouragement_type, // Assuming you add this field
-          target_user_id: encouragement.target_user_id,
-          scripture_reference: encouragement.scripture_reference,
-          is_anonymous: encouragement.is_anonymous,
-          linked_session_id: encouragement.linked_session_id,
-          session_type: encouragement.session_type,
           is_live: true,
           moderation_status: 'approved'
         })
-        .select('*')
+        .select(`
+          id,
+          author_id,
+          author_name,
+          author_avatar,
+          content,
+          post_type,
+          created_at,
+          amens_count,
+          loves_count,
+          prayers_count,
+          replies_count
+        `)
         .single();
       if (error) throw error;
 
