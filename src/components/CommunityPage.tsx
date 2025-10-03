@@ -4,6 +4,7 @@ import { useCommunityStore } from '../store/communityStore'
 import { PostCard } from './community/PostCard'
 import { PostCreation } from './community/PostCreation'
 import { FeedControls } from './community/FeedControls'
+import { DailyBibleVerseSidebar } from './DailyBibleVerseSidebar'
 import { useSupabaseAuth } from './SupabaseAuthProvider'
 import { CommunityPost } from '../store/communityStore'
 import { useAppStore, useCommunityShares, usePrayerSessions } from '../store/appStore'
@@ -57,10 +58,13 @@ const CommunityPage = () => {
   const filteredPosts = posts
 
   return (
-    <div className="min-h-screen bg-black">
+    <div className="min-h-screen bg-black overflow-x-hidden">
+      {/* Daily Bible Verse Sidebar - Desktop Only */}
+      <DailyBibleVerseSidebar />
+
       {/* Header */}
       <div className="border-b border-gray-800 bg-black">
-        <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4">
+        <div className="w-full px-3 sm:px-4 py-4">
           <div className="flex items-center justify-between">
             <h1 className="text-xl sm:text-2xl font-bold text-white">Community</h1>
             <FeedControls />
@@ -69,7 +73,7 @@ const CommunityPage = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-2xl mx-auto">
+      <div className="w-full max-w-2xl mx-auto">
         {/* Post Creation */}
         <PostCreation />
 

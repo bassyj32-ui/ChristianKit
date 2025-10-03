@@ -19,20 +19,36 @@ export const useGameAudio = () => {
 
   const playSound = useCallback((type: SoundType) => {
     const audioContext = getAudioContext();
-    if (!audioContext) return;
+    if (!audioContext) {
+      console.warn('Audio context not available');
+      return;
+    }
 
     try {
       // Resume audio context if suspended (mobile requirement)
       if (audioContext.state === 'suspended') {
-        audioContext.resume();
+        audioContext.resume().then(() => {
+          playSoundInternal(audioContext, type);
+        }).catch(error => {
+          console.error('Failed to resume audio context:', error);
+        });
+        return;
       }
 
+      playSoundInternal(audioContext, type);
+    } catch (error) {
+      console.error('Error playing sound:', error);
+    }
+  }, [getAudioContext]);
+
+  const playSoundInternal = useCallback((audioContext: AudioContext, type: SoundType) => {
+    try {
       const oscillator = audioContext.createOscillator();
       const gainNode = audioContext.createGain();
-      
+
       oscillator.connect(gainNode);
       gainNode.connect(audioContext.destination);
-      
+
       // Sound configurations
       const soundConfig = {
         cardFlip: { freq: 400, duration: 0.1, volume: 0.08 },
@@ -41,38 +57,38 @@ export const useGameAudio = () => {
         gameComplete: { freq: 800, duration: 0.4, volume: 0.15 },
         perfectMatch: { freq: 1000, duration: 0.3, volume: 0.15 }
       };
-      
+
       const config = soundConfig[type];
       oscillator.frequency.setValueAtTime(config.freq, audioContext.currentTime);
       oscillator.type = type === 'noMatch' ? 'sawtooth' : 'sine';
-      
+
       // Smooth volume envelope
       gainNode.gain.setValueAtTime(0, audioContext.currentTime);
       gainNode.gain.linearRampToValueAtTime(config.volume, audioContext.currentTime + 0.01);
       gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + config.duration);
-      
+
       oscillator.start(audioContext.currentTime);
       oscillator.stop(audioContext.currentTime + config.duration);
-      
+
       // Add harmonics for special sounds
       if (type === 'perfectMatch' || type === 'gameComplete') {
         const harmonic = audioContext.createOscillator();
         const harmonicGain = audioContext.createGain();
-        
+
         harmonic.connect(harmonicGain);
         harmonicGain.connect(audioContext.destination);
-        
+
         harmonic.frequency.setValueAtTime(config.freq * 1.5, audioContext.currentTime);
         harmonic.type = 'triangle';
-        
+
         harmonicGain.gain.setValueAtTime(0, audioContext.currentTime);
         harmonicGain.gain.linearRampToValueAtTime(config.volume * 0.4, audioContext.currentTime + 0.05);
         harmonicGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + config.duration);
-        
+
         harmonic.start(audioContext.currentTime + 0.05);
         harmonic.stop(audioContext.currentTime + config.duration);
       }
-      
+
       // Clean up oscillator references
       setTimeout(() => {
         try {
@@ -82,11 +98,11 @@ export const useGameAudio = () => {
           // Oscillator already disconnected
         }
       }, (config.duration * 1000) + 100);
-      
+
     } catch (error) {
-      // Audio playback failed
+      console.error('Audio playback failed:', error);
     }
-  }, [getAudioContext]);
+  }, []);
 
   // Initialize audio context on user interaction
   const initializeAudio = useCallback(() => {

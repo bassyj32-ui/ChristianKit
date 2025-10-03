@@ -1,0 +1,121 @@
+import { test, expect } from '@playwright/test';
+
+test.describe('Community Mobile Experience', () => {
+  test('mobile layout prevents horizontal scrollbar', async ({ page }) => {
+    // Set mobile viewport
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/community');
+
+    // Wait for page to load
+    await page.waitForSelector('[data-testid="community-page"]');
+
+    // Check that page width doesn't exceed viewport
+    const pageWidth = await page.evaluate(() => {
+      return Math.max(
+        document.body.scrollWidth,
+        document.documentElement.scrollWidth,
+        document.body.offsetWidth,
+        document.documentElement.offsetWidth,
+        document.documentElement.clientWidth
+      );
+    });
+
+    const viewportWidth = await page.evaluate(() => window.innerWidth);
+
+    // Page width should not exceed viewport width by more than 10px
+    expect(pageWidth).toBeLessThan(viewportWidth + 10);
+  });
+
+  test('bottom navigation works on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/');
+
+    // Wait for bottom navigation to appear
+    await page.waitForSelector('nav[style*="bottom: 0"]');
+
+    // Click on community tab
+    await page.click('nav button:has-text("Community")');
+
+    // Should navigate to community page
+    await expect(page).toHaveURL(/.*community/);
+  });
+
+  test('interaction buttons work on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/community');
+
+    // Wait for posts to load
+    await page.waitForSelector('[data-testid="post-card"]');
+
+    // Try to click interaction buttons
+    const loveButton = page.locator('[data-testid="love-button"]').first();
+    const amenButton = page.locator('[data-testid="amen-button"]').first();
+    const prayButton = page.locator('[data-testid="pray-button"]').first();
+
+    // Buttons should be clickable
+    await expect(loveButton).toBeVisible();
+    await expect(amenButton).toBeVisible();
+    await expect(prayButton).toBeVisible();
+
+    // Try clicking a button
+    await loveButton.click();
+
+    // Should not cause any errors
+    await page.waitForTimeout(1000);
+  });
+
+  test('reply system works on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/community');
+
+    // Wait for posts to load
+    await page.waitForSelector('[data-testid="post-card"]');
+
+    // Click reply button on first post
+    const replyButton = page.locator('[data-testid="reply-button"]').first();
+    await replyButton.click();
+
+    // Reply box should appear
+    await expect(page.locator('[data-testid="reply-textarea"]')).toBeVisible();
+
+    // Type a reply
+    await page.fill('[data-testid="reply-textarea"]', 'Test reply from mobile');
+
+    // Submit reply
+    await page.click('[data-testid="submit-reply"]');
+
+    // Reply should be submitted without errors
+    await page.waitForTimeout(1000);
+  });
+
+  test('threaded replies display correctly on mobile', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 });
+
+    await page.goto('/community');
+
+    // Wait for posts to load
+    await page.waitForSelector('[data-testid="post-card"]');
+
+    // Check for threaded reply structure
+    const replyThread = page.locator('[data-testid="reply-thread"]').first();
+
+    if (await replyThread.isVisible()) {
+      // Threading line should be visible
+      await expect(replyThread.locator('.thread-line')).toBeVisible();
+
+      // Reply should be indented
+      const replyIndentation = await replyThread.evaluate(el => {
+        const style = window.getComputedStyle(el);
+        return parseInt(style.marginLeft || '0');
+      });
+
+      expect(replyIndentation).toBeGreaterThan(0);
+    }
+  });
+});
+
+

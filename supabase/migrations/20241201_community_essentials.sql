@@ -139,22 +139,110 @@ VALUES
   ('00000000-0000-0000-0000-000000000002', 'Prayer Warrior', '🙏', 'Please pray for healing for my family member who is going through a difficult illness. Your prayers mean so much! 💙', 'prayer_request')
 ON CONFLICT DO NOTHING;
 
--- 7. Verification
+-- 7. CREATE PROFILES TABLE FOR AUTHENTICATION
+-- Create the missing profiles table (simple approach)
+CREATE TABLE IF NOT EXISTS profiles (
+  id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email VARCHAR(255) NOT NULL,
+  display_name VARCHAR(100) NOT NULL,
+  avatar_url TEXT,
+  bio TEXT,
+  location VARCHAR(255),
+  website VARCHAR(255),
+  favorite_verse TEXT,
+  custom_links JSONB,
+  banner_image TEXT,
+  profile_image TEXT,
+  follower_count INTEGER DEFAULT 0,
+  following_count INTEGER DEFAULT 0,
+  post_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable Row Level Security
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies (these will be skipped if they already exist)
+DO $$
+BEGIN
+    CREATE POLICY "Users can view all profiles" ON profiles FOR SELECT USING (true);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$
+BEGIN
+    CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$
+BEGIN
+    CREATE POLICY "Users can insert own profile" ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+-- Create trigger function for automatic profile creation
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+BEGIN
+  INSERT INTO public.profiles (id, email, display_name, avatar_url)
+  VALUES (
+    new.id,
+    new.email,
+    COALESCE(new.raw_user_meta_data->>'display_name', new.raw_user_meta_data->>'full_name', split_part(new.email, '@', 1)),
+    new.raw_user_meta_data->>'avatar_url'
+  );
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Create trigger (drop if exists first)
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+
+-- Create updated_at trigger
+CREATE OR REPLACE FUNCTION update_profiles_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_profiles_updated_at ON profiles;
+CREATE TRIGGER update_profiles_updated_at
+  BEFORE UPDATE ON profiles
+  FOR EACH ROW EXECUTE FUNCTION update_profiles_updated_at_column();
+
+-- Create indexes
+CREATE INDEX IF NOT EXISTS idx_profiles_email ON profiles(email);
+CREATE INDEX IF NOT EXISTS idx_profiles_display_name ON profiles(display_name);
+
+-- 8. Verification
 DO $$
 DECLARE
   community_posts_count INTEGER;
   user_follows_count INTEGER;
   post_interactions_count INTEGER;
+  profiles_count INTEGER;
 BEGIN
   SELECT COUNT(*) INTO community_posts_count FROM community_posts;
   SELECT COUNT(*) INTO user_follows_count FROM user_follows;
   SELECT COUNT(*) INTO post_interactions_count FROM post_interactions;
+  SELECT COUNT(*) INTO profiles_count FROM profiles;
 
   RAISE NOTICE '✅ Community system setup complete!';
   RAISE NOTICE '📊 Current data:';
   RAISE NOTICE '- Community posts: %', community_posts_count;
   RAISE NOTICE '- User follows: %', user_follows_count;
   RAISE NOTICE '- Post interactions: %', post_interactions_count;
+  RAISE NOTICE '- User profiles: %', profiles_count;
 
   RAISE NOTICE '🎯 Your community features are now ready to use!';
   RAISE NOTICE '📋 Next: Deploy your app and test the community features';

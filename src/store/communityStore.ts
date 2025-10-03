@@ -526,9 +526,16 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
       if (error) throw error
 
       const newPost = formatPost(data)
-      set({ 
+      set({
         posts: [newPost, ...get().posts],
         isCreatingPost: false
+      })
+
+      // Track user action for analytics
+      trackUserAction('create_post', currentUser.id, {
+        postId: newPost.id,
+        postType: category,
+        contentLength: content.length
       })
 
       // Update rate limit
@@ -568,9 +575,6 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     }
 
     try {
-      const { data: { user }, error: authError } = await supabase.auth.getUser()
-      if (authError || !user) return false
-
       const { followedUsers } = get()
       const isFollowing = followedUsers.includes(userId)
 
@@ -585,6 +589,10 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         if (error) throw error
 
         set({ followedUsers: followedUsers.filter(id => id !== userId) })
+
+        // Track unfollow action
+        trackUserAction('unfollow_user', user.id, { targetUserId: userId })
+
       } else {
         // Follow
         const { error } = await supabase
@@ -597,7 +605,9 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         if (error) throw error
 
         set({ followedUsers: [...followedUsers, userId] })
-        updateRateLimit('follows')
+
+        // Track follow action
+        trackUserAction('follow_user', user.id, { targetUserId: userId })
       }
 
       return true
@@ -678,6 +688,13 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
             ? { ...post, [countField]: newCount }
             : post
         )
+      })
+
+      // Track interaction for analytics
+      trackUserAction(`interact_${type}`, currentUser.id, {
+        postId,
+        interactionType: type,
+        isAdding
       })
 
       updateRateLimit('interactions')

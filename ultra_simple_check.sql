@@ -14,3 +14,8 @@ SELECT 'trigger exists' as check_name,
 
 
 
+
+
+
+
+

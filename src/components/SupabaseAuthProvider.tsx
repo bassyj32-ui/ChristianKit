@@ -55,62 +55,105 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       // Handle OAuth callback if present (check both query params and hash)
       const urlParams = new URLSearchParams(window.location.search)
       const hashParams = new URLSearchParams(window.location.hash.substring(1))
-      
+
       if (urlParams.has('access_token') || urlParams.has('error') ||
           hashParams.has('access_token') || hashParams.has('error')) {
         // The session will be updated by the auth state change listener
+        // Clean URL to prevent callback loops
+        window.history.replaceState({}, document.title, '/')
       }
 
       // Listen for auth changes
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange(async (_event, session) => {
-        // Create user profile when they first sign in (non-blocking)
+        // Enhanced user onboarding when they first sign in
         if (_event === 'SIGNED_IN' && session?.user && supabase) {
-
-          // Create profile in background without blocking auth flow
-          supabase
-            .from('profiles')
-            .upsert({
+          try {
+            // Create or update user profile with complete data
+            const profileData = {
               id: session.user.id,
               email: session.user.email,
-              display_name: session.user.user_metadata?.full_name || session.user.user_metadata?.name || session.user.email?.split('@')[0] || 'User',
-              avatar_url: session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture
-            }, {
-              onConflict: 'id'
-            })
-            .then(async ({ error }) => {
-              if (error) {
-                // Handle race condition where profile was created by database trigger
-                if (error.code === '23505') {
-                  // Profile already exists (created by database trigger)
-                } else {
-                  console.error('❌ Profile creation error:', error)
-                }
-              } else {
-                // Send welcome email (non-blocking)
-                if (session.user.email) {
-                  try {
-                    await emailAutomationService.sendWelcomeEmail(
-                      session.user.id,
-                      session.user.email,
-                      session.user.user_metadata?.full_name || session.user.user_metadata?.name
-                    )
-                  } catch (emailError) {
-                    console.error('❌ Welcome email failed:', emailError)
-                  }
-                }
+              display_name: session.user.user_metadata?.full_name ||
+                           session.user.user_metadata?.name ||
+                           session.user.email?.split('@')[0] ||
+                           'User',
+              avatar_url: session.user.user_metadata?.avatar_url ||
+                         session.user.user_metadata?.picture,
+              experience_level: 'beginner', // Default experience level
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
+            }
 
-                // Create default reminder schedule (non-blocking)
-                try {
-                  await reminderAutomationService.createDefaultReminderSchedule(session.user.id)
-                } catch (reminderError) {
-                  console.error('❌ Reminder schedule creation failed:', reminderError)
-                }
+            // Create profile
+            const { error: profileError } = await supabase
+              .from('profiles')
+              .upsert(profileData, { onConflict: 'id' })
+
+            if (profileError) {
+              if (profileError.code !== '23505') { // Ignore duplicate key errors
+                console.error('❌ Profile creation error:', profileError)
               }
-            })
+            } else {
+              console.log('✅ User profile created successfully')
+            }
+
+            // Create default notification preferences
+            const { error: prefsError } = await supabase
+              .from('user_notification_preferences')
+              .upsert({
+                user_id: session.user.id,
+                email_enabled: true,
+                push_enabled: true,
+                prayer_reminders: true,
+                community_updates: true,
+                daily_motivation: true,
+                weekly_progress: false,
+                bible_study: true,
+                preferred_time: '09:00:00',
+                reminder_intensity: 'gentle',
+                timezone: 'UTC',
+                is_active: true,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString()
+              }, { onConflict: 'user_id' })
+
+            if (prefsError) {
+              if (prefsError.code !== '23505') {
+                console.error('❌ Notification preferences creation error:', prefsError)
+              }
+            } else {
+              console.log('✅ Default notification preferences created')
+            }
+
+            // Send welcome email (non-blocking)
+            if (session.user.email) {
+              try {
+                await emailAutomationService.sendWelcomeEmail(
+                  session.user.id,
+                  session.user.email,
+                  session.user.user_metadata?.full_name || session.user.user_metadata?.name
+                )
+                console.log('✅ Welcome email sent')
+              } catch (emailError) {
+                console.error('❌ Welcome email failed:', emailError)
+              }
+            }
+
+            // Create default reminder schedule (non-blocking)
+            try {
+              await reminderAutomationService.createDefaultReminderSchedule(session.user.id)
+              console.log('✅ Default reminder schedule created')
+            } catch (reminderError) {
+              console.error('❌ Reminder schedule creation failed:', reminderError)
+            }
+
+          } catch (onboardingError) {
+            console.error('❌ User onboarding failed:', onboardingError)
+            // Don't block auth flow on onboarding errors
+          }
         }
-        
+
         setSession(session)
         setUser(session?.user ?? null)
       })
@@ -171,44 +214,42 @@ export const SupabaseAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
       alert('Authentication service not available. Please check environment configuration.')
       return
     }
-    
+
     try {
-      // Use current location for redirect (works for both localhost and Vercel)
+      // Use current location for redirect
       const currentOrigin = window.location.origin
       const redirectUrl = `${currentOrigin}/auth/callback`
-      
+
+      console.log('🔐 Initiating Google OAuth sign-in', { redirectUrl })
+
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: redirectUrl
+          redirectTo: redirectUrl,
+          queryParams: {
+            prompt: 'select_account' // Allow account selection
+          }
         }
       })
-      
+
       if (error) {
         console.error('❌ OAuth sign-in error:', error)
-        console.error('❌ Error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name,
-          currentOrigin: window.location.origin,
-          redirectUrl: redirectUrl
-        })
-        
-        // Provide specific error messages
+
+        // Provide user-friendly error messages
         if (error.message.includes('redirect_uri_mismatch')) {
-          const currentUrl = window.location.origin
-          throw new Error(`OAuth redirect URL not configured. Current URL: ${currentUrl}/callback. Please check Supabase settings.`)
+          throw new Error('Google sign-in is not properly configured. Please contact support.')
         } else if (error.message.includes('invalid_client')) {
-          throw new Error('Google OAuth client not configured. Please check Google Cloud Console.')
-        } else if (error.message.includes('not found') || error.message.includes('NOT_FOUND')) {
-          throw new Error(`OAuth redirect URL not found. Please ensure ${window.location.origin}/callback is configured in Supabase. Current error: ${error.message}`)
+          throw new Error('Google sign-in is not properly configured. Please contact support.')
+        } else if (error.message.includes('network') || error.message.includes('fetch')) {
+          throw new Error('Network error. Please check your internet connection and try again.')
         } else {
-          throw error
+          throw new Error('Sign-in failed. Please try again.')
         }
       }
+
+      console.log('✅ Google OAuth sign-in initiated successfully')
     } catch (error) {
-      console.error('Error signing in with Google:', error)
-      // You can add a toast notification here if you have a notification system
+      console.error('❌ Sign-in error:', error)
       alert(`Sign-in failed: ${error instanceof Error ? error.message : 'Unknown error'}`)
     }
   }

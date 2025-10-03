@@ -91,7 +91,7 @@ export const getUserNotifications = async (
   }
 
   try {
-    const result = await withDatabaseRetry(async () => {
+      const data = await withDatabaseRetry(async () => {
       let query = supabase
         .from('notifications')
         .select('*')
@@ -110,10 +110,10 @@ export const getUserNotifications = async (
     })
 
     // Cache the result
-    cacheUserNotifications(cacheKey, result)
+    cacheUserNotifications(cacheKey, data)
 
-    logger.debug('Fetched notifications from database', { userId, count: result.length })
-    return result;
+    logger.debug('Fetched notifications from database', { userId, count: data.length })
+    return data;
   } catch (error) {
     logger.error('Error fetching notifications', error as Error, { userId, limit, unreadOnly })
     return [];

@@ -1,12 +1,44 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { GameCard } from './game/GameCard';
-import { GameBoard } from './game/GameBoard';
-import { GameHeader } from './game/GameHeader';
-import { GameComplete } from './game/GameComplete';
-import { useGameAudio } from '../hooks/useGameAudio';
-import { useGameSave } from '../hooks/useGameSave';
-import { OsmoCard, OsmoButton, OsmoGradientText, OsmoSectionHeader, OsmoBadge } from '../theme/osmoComponents';
+import { OsmoCard, OsmoButton, OsmoBadge } from '../theme/osmoComponents';
 import { bibleVersesByLevel, levelProgression, getVersesForLevel, getTotalLevels } from '../data/verseLevels';
+import { useGameAudio } from '../hooks/useGameAudio';
+
+// Simple save utility (no external dependencies)
+const saveGameData = (data: any) => {
+  try {
+    localStorage.setItem('bible-memory-match-data', JSON.stringify(data));
+    return true;
+  } catch (error) {
+    console.error('Failed to save game data:', error);
+    return false;
+  }
+};
+
+const loadGameData = () => {
+  try {
+    const saved = localStorage.getItem('bible-memory-match-data');
+    return saved ? JSON.parse(saved) : {};
+  } catch (error) {
+    console.error('Failed to load game data:', error);
+    return {};
+  }
+};
+
+const recordGameComplete = (score: number, matches: number, timeElapsed: number) => {
+  const currentData = loadGameData();
+  const bestScore = Math.max((currentData.bestScore as number) || 0, score);
+  const newData = {
+    ...currentData,
+    bestScore,
+    lastScore: score,
+    lastMatches: matches,
+    lastTime: timeElapsed,
+    gamesPlayed: (currentData.gamesPlayed as number) || 0 + 1
+  };
+
+  saveGameData(newData);
+  return { bestScore };
+};
 
 // Game Types
 interface Card {
@@ -45,9 +77,8 @@ interface BibleVerse {
 }
 
 const BibleVerseMemoryMatch: React.FC = () => {
-  // Hooks
+  // Audio hooks
   const { playSound, initializeAudio } = useGameAudio();
-  const { loadGameData, recordGameComplete } = useGameSave();
 
   // Initialize with saved data
   const savedData = loadGameData();
@@ -63,7 +94,7 @@ const BibleVerseMemoryMatch: React.FC = () => {
     gameCompleted: false,
     difficulty: 'easy',
     streak: 0,
-    bestScore: savedData.bestScore,
+    bestScore: savedData.bestScore || 0,
     perfectMatches: 0,
     perfectGamesInRow: 0,
     currentCategory: 'popular',
@@ -71,10 +102,23 @@ const BibleVerseMemoryMatch: React.FC = () => {
     currentLevel: 1
   });
 
-  const [showStats, setShowStats] = useState(false);
   const [showGameComplete, setShowGameComplete] = useState(false);
   const [autoContinueTimer, setAutoContinueTimer] = useState(3);
   const [autoAdvanceTimer, setAutoAdvanceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [soundEnabled, setSoundEnabled] = useState(true);
+
+  // Load sound preference from localStorage
+  useEffect(() => {
+    const savedSoundEnabled = localStorage.getItem('bible-game-sound-enabled');
+    if (savedSoundEnabled !== null) {
+      setSoundEnabled(savedSoundEnabled === 'true');
+    }
+  }, []);
+
+  // Save sound preference to localStorage
+  useEffect(() => {
+    localStorage.setItem('bible-game-sound-enabled', soundEnabled.toString());
+  }, [soundEnabled]);
 
   // Get current level in the non-sequential progression
   const getCurrentLevelIndex = () => {
@@ -146,8 +190,8 @@ const BibleVerseMemoryMatch: React.FC = () => {
     const savedData = localStorage.getItem('bible-memory-match-data');
     if (savedData) {
       const data = JSON.parse(savedData);
-      setGameState(prev => ({ 
-        ...prev, 
+      setGameState(prev => ({
+        ...prev,
         bestScore: data.bestScore || 0,
         perfectGamesInRow: data.perfectGamesInRow || 0,
         currentCategory: data.currentCategory || 'popular',
@@ -243,10 +287,13 @@ const BibleVerseMemoryMatch: React.FC = () => {
       return;
     }
 
-    // Initialize audio on first interaction
+    // Initialize audio on first user interaction
     initializeAudio();
-    // Play card flip sound
-    playSound('cardFlip');
+
+    // Play card flip sound (always enabled)
+    if (soundEnabled) {
+      playSound('cardFlip');
+    }
 
     const newFlippedCards = [...gameState.flippedCards, clickedCard];
     const updatedCards = gameState.cards.map(card =>
@@ -292,11 +339,11 @@ const BibleVerseMemoryMatch: React.FC = () => {
             gameCompleted: newMatches === (gameState.difficulty === 'easy' ? 4 : gameState.difficulty === 'medium' ? 6 : 8)
           }));
 
-          // Play match sound
+          // Play match sound (always enabled)
           if (isPerfectMatch) {
-            playSound('perfectMatch');
+            if (soundEnabled) playSound('perfectMatch');
           } else {
-            playSound('match');
+            if (soundEnabled) playSound('match');
           }
           // Match found
         } else {
@@ -313,44 +360,44 @@ const BibleVerseMemoryMatch: React.FC = () => {
             streak: 0 // Reset streak on wrong match
           }));
 
-          // Play no match sound
-          playSound('noMatch');
+          // Play no match sound (always enabled)
+          if (soundEnabled) playSound('noMatch');
           // No match
         }
       }, 1000);
     }
-  }, [gameState.cards, gameState.flippedCards, gameState.matches, gameState.attempts, gameState.score, gameState.streak, gameState.timeElapsed, gameState.difficulty]);
+  }, [gameState.cards, gameState.flippedCards, gameState.matches, gameState.attempts, gameState.score, gameState.streak, gameState.timeElapsed, gameState.difficulty, soundEnabled]);
 
 
   // Save game completion and handle progression
   useEffect(() => {
     if (gameState.gameCompleted && !showGameComplete) {
-      // Play game completion sound
-      playSound('gameComplete');
-      
+      // Play game completion sound (always enabled)
+      if (soundEnabled) playSound('gameComplete');
+
       // Record completion and check for new best score
       const result = recordGameComplete(gameState.score, gameState.matches, gameState.timeElapsed);
-      
+
       // Update best score in state
       setGameState(prev => ({
         ...prev,
         bestScore: result.bestScore
       }));
-      
+
       // Show completion screen
       setShowGameComplete(true);
-      
+
       // Auto-advance to next level if not on the final level
       if (gameState.currentLevel < getTotalLevels()) {
         const timer = setTimeout(() => {
           // Move to next level directly
           const nextLevel = gameState.currentLevel + 1;
           const nextLevelVerses = getVersesForLevel(nextLevel);
-          
+
           if (nextLevelVerses.length > 0) {
             // Create cards from verses (same logic as initializeGame)
             const newCards: Card[] = [];
-            
+
             nextLevelVerses.forEach(verse => {
               newCards.push({
                 id: `verse-${verse.id}`,
@@ -373,9 +420,9 @@ const BibleVerseMemoryMatch: React.FC = () => {
 
             // Shuffle cards
             const shuffledCards = newCards.sort(() => Math.random() - 0.5);
-      
-      setGameState(prev => ({ 
-        ...prev, 
+
+      setGameState(prev => ({
+        ...prev,
               currentLevel: nextLevel,
               cards: shuffledCards,
               flippedCards: [],
@@ -389,7 +436,7 @@ const BibleVerseMemoryMatch: React.FC = () => {
               perfectMatches: 0,
               perfectGamesInRow: prev.perfectGamesInRow + 1
             }));
-            
+
             setShowGameComplete(false);
             setShowStats(false);
           }
@@ -409,92 +456,6 @@ const BibleVerseMemoryMatch: React.FC = () => {
     };
   }, [autoAdvanceTimer]);
 
-  // Handle next level progression
-  const handleNextLevel = useCallback(() => {
-    if (autoAdvanceTimer) {
-      clearTimeout(autoAdvanceTimer);
-      setAutoAdvanceTimer(null);
-    }
-    
-    // Note: Difficulty is now determined by the level number in getNextGameSettings()
-    
-    setShowGameComplete(false);
-    // Get next level in the non-sequential progression
-    const nextLevel = getNextLevel();
-
-    setShowGameComplete(false);
-    setGameState(prev => ({
-      ...prev,
-      gameCompleted: false,
-      gameStarted: false,
-      cards: [],
-      flippedCards: [],
-      matches: 0,
-      attempts: 0,
-      score: 0,
-      timeElapsed: 0,
-      streak: 0,
-      perfectMatches: 0,
-      currentLevel: nextLevel,
-      bestScore: Math.max(prev.bestScore, prev.score)
-    }));
-    
-    // Initialize new game with new difficulty
-    setTimeout(() => {
-            initializeGame();
-    }, 100);
-  }, [gameState.difficulty, autoAdvanceTimer]);
-
-  // Handle play again
-  const handlePlayAgain = useCallback(() => {
-    if (autoAdvanceTimer) {
-      clearTimeout(autoAdvanceTimer);
-      setAutoAdvanceTimer(null);
-    }
-    
-    setShowGameComplete(false);
-    setGameState(prev => ({
-      ...prev,
-      gameCompleted: false,
-      gameStarted: false,
-      cards: [],
-      flippedCards: [],
-      matches: 0,
-      attempts: 0,
-      score: 0,
-      timeElapsed: 0,
-      streak: 0,
-      perfectMatches: 0
-    }));
-    
-    setTimeout(() => {
-      initializeGame();
-    }, 100);
-  }, [autoAdvanceTimer]);
-
-  // Handle return to main menu
-  const handleMainMenu = useCallback(() => {
-    if (autoAdvanceTimer) {
-      clearTimeout(autoAdvanceTimer);
-      setAutoAdvanceTimer(null);
-    }
-    
-    setShowGameComplete(false);
-    setGameState(prev => ({
-      ...prev,
-      gameCompleted: false,
-      gameStarted: false,
-      cards: [],
-      flippedCards: [],
-      matches: 0,
-      attempts: 0,
-      score: 0,
-      timeElapsed: 0,
-      streak: 0,
-      perfectMatches: 0,
-      difficulty: 'easy'
-    }));
-  }, [autoAdvanceTimer]);
 
   // Reset current game
   const resetGame = () => {
@@ -555,26 +516,20 @@ const BibleVerseMemoryMatch: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] relative overflow-hidden">
-      {/* Osmo Background Elements */}
+      {/* Simple Background */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-[var(--accent-primary)]/10 to-[var(--accent-secondary)]/10 rounded-full blur-3xl"></div>
-        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-[var(--spiritual-blue)]/10 to-[var(--spiritual-cyan)]/10 rounded-full blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-gradient-to-br from-[var(--spiritual-green)]/5 to-[var(--spiritual-blue)]/5 rounded-full blur-3xl"></div>
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-gradient-to-br from-[var(--accent-primary)]/5 to-[var(--accent-secondary)]/5 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-gradient-to-br from-[var(--spiritual-blue)]/5 to-[var(--spiritual-cyan)]/5 rounded-full blur-3xl"></div>
       </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto p-6">
-        {/* Osmo Hero Section */}
-        <div className="text-center mb-12">
-          <OsmoBadge variant="primary" className="mb-6">
-            ✨ Bible Memory Challenge
-          </OsmoBadge>
-          
-          <OsmoGradientText className="text-4xl md:text-6xl font-bold mb-6">
+      <div className="relative z-10 max-w-6xl mx-auto p-4 sm:p-6">
+        {/* Simple Header */}
+        <div className="text-center mb-8">
+          <h1 className="text-3xl md:text-4xl font-bold text-white mb-4">
             Bible Verse Match
-          </OsmoGradientText>
-          
-          <p className="text-[var(--text-secondary)] text-lg md:text-xl max-w-2xl mx-auto leading-relaxed mb-8">
-            Strengthen your faith through God's Word. Match verses with their references and grow in spiritual knowledge.
+          </h1>
+          <p className="text-[var(--text-secondary)] text-base md:text-lg">
+            Match Bible verses with their references
           </p>
           
           {/* Soldier Image Button with Rotating Gradient Border */}
@@ -624,111 +579,46 @@ const BibleVerseMemoryMatch: React.FC = () => {
           )}
         </div>
 
-        {/* Game Progress Info */}
+        {/* Simple Game Start */}
         {!gameState.gameStarted && !gameState.gameCompleted && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Current Progress */}
-            <OsmoCard className="p-6">
-              <OsmoSectionHeader title="Your Progress" subtitle="Track your spiritual growth journey" />
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[var(--accent-primary)] mb-2">
-                    {categories.find(cat => cat.id === gameState.currentCategory)?.name}
+          <div className="max-w-2xl mx-auto space-y-6">
+            {/* Simple Stats */}
+            <OsmoCard className="p-4">
+              <div className="flex justify-center space-x-6 text-center">
+                <div>
+                  <div className="text-2xl font-bold text-[var(--accent-primary)]">Level {gameState.currentLevel}</div>
+                  <div className="text-[var(--text-secondary)] text-sm">Current</div>
                   </div>
-                  <div className="text-[var(--text-secondary)] text-sm">Current Category</div>
+                <div>
+                  <div className="text-2xl font-bold text-[var(--spiritual-blue)]">{(gameState.bestScore || 0).toLocaleString()}</div>
+                  <div className="text-[var(--text-secondary)] text-sm">Best Score</div>
                 </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[var(--spiritual-blue)] mb-2">
-                    {gameState.difficulty === 'easy' ? '4' : gameState.difficulty === 'medium' ? '6' : '8'} Pairs
-                  </div>
-                  <div className="text-[var(--text-secondary)] text-sm">Difficulty Level</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-[var(--spiritual-green)] mb-2">
-                    {gameState.unlockedCategories.length}/4
-                  </div>
-                  <div className="text-[var(--text-secondary)] text-sm">Categories Unlocked</div>
+                <div>
+                  <div className="text-2xl font-bold text-[var(--spiritual-green)]">{gameState.perfectGamesInRow || 0}</div>
+                  <div className="text-[var(--text-secondary)] text-sm">Perfect</div>
                 </div>
               </div>
-              
-              {/* Stats Cards */}
-              <div className="flex justify-center space-x-4 md:space-x-6 mt-6">
-                <OsmoCard className="px-4 py-3 text-center">
-                  <div className="text-[var(--accent-primary)] font-bold text-lg">Level {gameState.currentLevel}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm">
-                    {gameState.difficulty === 'easy' ? 'Beginner' : 
-                     gameState.difficulty === 'medium' ? 'Intermediate' : 'Advanced'}
-                  </div>
-                  <div className="text-[var(--spiritual-blue)] text-xs">
-                    {gameState.currentLevel} of {getTotalLevels()}
-                  </div>
                 </OsmoCard>
-                <OsmoCard className="px-4 py-3 text-center">
-                  <div className="text-[var(--spiritual-blue)] font-bold text-lg">{gameState.bestScore.toLocaleString()}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm">Best Score</div>
-                </OsmoCard>
-                <OsmoCard className="px-4 py-3 text-center">
-                  <div className="text-[var(--spiritual-green)] font-bold text-lg">{gameState.perfectGamesInRow}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm">Perfect Games</div>
-                </OsmoCard>
-              </div>
-              
-              {/* Reset Button */}
-              <div className="mt-6 text-center">
+
+            {/* Quick Reset */}
+            <div className="text-center">
                 <OsmoButton
                   onClick={resetAllProgress}
                   variant="secondary"
                   size="sm"
-                  className="px-6 py-2"
                 >
-                  Reset All Progress
+                Reset Progress
                 </OsmoButton>
               </div>
-            </OsmoCard>
-
-            {/* Unlocked Categories Display */}
-            <OsmoCard className="p-6">
-              <OsmoSectionHeader title="Unlocked Categories" subtitle="Categories you've earned access to" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                {categories.map((category) => {
-                  const isUnlocked = gameState.unlockedCategories.includes(category.id);
-                  return (
-                    <div
-                      key={category.id}
-                      className={`text-center p-4 rounded-xl border-2 transition-all duration-300 ${
-                        isUnlocked 
-                          ? 'border-[var(--accent-primary)] bg-[var(--accent-primary)]/10' 
-                          : 'border-[var(--bg-tertiary)] bg-[var(--bg-tertiary)]/30 opacity-50'
-                      }`}
-                    >
-                      <div className="text-2xl mb-2">
-                        {category.icon}
-          </div>
-                      <div className={`font-semibold text-sm ${
-                        isUnlocked ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'
-                      }`}>
-                        {category.name}
-                      </div>
-                      {isUnlocked ? (
-                        <div className="text-[var(--accent-primary)] text-xs mt-1">✓ Unlocked</div>
-                      ) : (
-                        <div className="text-[var(--text-tertiary)] text-xs mt-1">Locked</div>
-                      )}
-                    </div>
-                  );
-                })}
-                  </div>
-                </OsmoCard>
               </div>
             )}
 
         {/* Game in Progress */}
         {gameState.gameStarted && !gameState.gameCompleted && (
-          <div className="max-w-6xl mx-auto space-y-6">
-
-            {/* Osmo Game Board */}
-            <OsmoCard className="p-6">
-              <div className={`grid ${getGridClasses()} max-w-4xl mx-auto`}>
+          <div className="max-w-4xl mx-auto space-y-4">
+            {/* Game Board */}
+            <OsmoCard className="p-4">
+              <div className={`grid ${getGridClasses()} max-w-2xl mx-auto`}>
                 {gameState.cards.map((card, index) => (
                   <div
                     key={card.id}
@@ -738,46 +628,33 @@ const BibleVerseMemoryMatch: React.FC = () => {
                     }`}
                     style={{ transformStyle: 'preserve-3d' }}
                   >
-                    {/* Card Back - Bible-Themed Design */}
-                    <div className={`absolute inset-0 rounded-xl bg-gradient-to-br from-[var(--bg-tertiary)] to-[var(--bg-secondary)] border-2 border-[var(--border-primary)] shadow-lg flex items-center justify-center ${
+                    {/* Card Back */}
+                    <div className={`absolute inset-0 rounded-lg bg-gradient-to-br from-gray-800 to-gray-900 border-2 border-gray-600 shadow-lg flex items-center justify-center ${
                       card.flipped || card.matched ? 'opacity-0' : 'opacity-100'
-                    } transition-opacity duration-300 group-hover:border-[var(--accent-primary)] group-hover:shadow-xl`}>
-                      {/* Bible Icon with Decorative Elements */}
-                      <div className="relative">
-                        {/* Main Christian Cross Icon */}
-                        <svg className="w-12 h-12 text-[var(--accent-primary)]/70 group-hover:text-[var(--accent-primary)] transition-colors duration-300" fill="currentColor" viewBox="0 0 24 24">
+                    } transition-opacity duration-300 group-hover:border-yellow-400`}>
+                      <svg className="w-8 h-8 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
                           <path d="M10 2h4v6h8v4h-8v8h-4v-8H2V8h8V2z"/>
                         </svg>
-                        
-                        {/* Decorative Elements */}
-                        <div className="absolute -top-1 -right-1 w-4 h-4 bg-[var(--accent-primary)] rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-                        <div className="absolute -bottom-1 -left-1 w-3 h-3 bg-[var(--spiritual-blue)] rounded-full group-hover:scale-110 transition-transform duration-300"></div>
-                        
-                        {/* Subtle Pattern Overlay */}
-                        <div className="absolute inset-0 opacity-10">
-                          <div className="w-full h-full bg-gradient-to-br from-transparent via-white/5 to-transparent"></div>
-                        </div>
-                      </div>
                     </div>
 
-                    {/* Card Front - Osmo Content */}
-                    <div className={`absolute inset-0 rounded-xl shadow-lg border-2 p-3 md:p-4 flex items-center justify-center text-center ${
+                    {/* Card Front */}
+                    <div className={`absolute inset-0 rounded-lg shadow-lg border-2 p-2 flex items-center justify-center text-center ${
                       card.flipped || card.matched ? 'opacity-100' : 'opacity-0'
                     } transition-opacity duration-300 ${
                       card.matched 
-                        ? 'border-[var(--spiritual-green)] bg-[var(--spiritual-green)]/10' 
-                        : 'border-[var(--spiritual-blue)] bg-[var(--spiritual-blue)]/10'
+                        ? 'border-green-400 bg-green-400/10'
+                        : 'border-blue-400 bg-blue-400/10'
                     }`}>
-                      <div className={`text-xs md:text-sm font-semibold leading-tight ${
+                      <div className={`text-xs font-semibold leading-tight ${
                         card.type === 'verse' 
-                          ? 'text-[var(--text-primary)]' 
-                          : 'text-[var(--accent-primary)] font-bold'
+                          ? 'text-white'
+                          : 'text-yellow-400 font-bold'
                       }`}>
                         {card.content}
                       </div>
                       {card.matched && (
-                        <div className="absolute top-2 right-2 w-6 h-6 bg-[var(--spiritual-green)] rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">✓</span>
+                        <div className="absolute top-1 right-1 w-4 h-4 bg-green-400 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs">✓</span>
                         </div>
                       )}
                     </div>
@@ -786,226 +663,100 @@ const BibleVerseMemoryMatch: React.FC = () => {
               </div>
             </OsmoCard>
 
-            {/* Reset Button */}
-            <div className="text-center">
-              <OsmoButton
-                onClick={resetGame}
-                variant="secondary"
-                size="lg"
-                className="px-8 py-3"
-              >
-                New Game
-              </OsmoButton>
+            {/* Game Stats */}
+            <OsmoCard className="p-3">
+              <div className="flex justify-center space-x-4 text-center">
+                <div>
+                  <div className="text-xl font-bold text-blue-400">{formatTime(gameState.timeElapsed)}</div>
+                  <div className="text-gray-400 text-xs">Time</div>
             </div>
-            
-            {/* Mobile Responsive Stats Below Game */}
-            <OsmoCard className="p-4 md:p-6">
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 md:gap-4 text-center">
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-lg md:rounded-xl p-3 md:p-4">
-                  <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[var(--spiritual-blue)] mb-1">{formatTime(gameState.timeElapsed)}</div>
-                  <div className="text-[var(--text-tertiary)] text-xs sm:text-sm font-semibold">⏱️ Time</div>
+                <div>
+                  <div className="text-xl font-bold text-green-400">{gameState.matches}</div>
+                  <div className="text-gray-400 text-xs">Matches</div>
                 </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-lg md:rounded-xl p-3 md:p-4">
-                  <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[var(--spiritual-green)] mb-1">{gameState.matches}</div>
-                  <div className="text-[var(--text-tertiary)] text-xs sm:text-sm font-semibold">🎯 Matches</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-lg md:rounded-xl p-3 md:p-4">
-                  <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[var(--accent-primary)] mb-1">{gameState.attempts}</div>
-                  <div className="text-[var(--text-tertiary)] text-xs sm:text-sm font-semibold">🔄 Attempts</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-lg md:rounded-xl p-3 md:p-4">
-                  <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[var(--spiritual-cyan)] mb-1">{gameState.streak}</div>
-                  <div className="text-[var(--text-tertiary)] text-xs sm:text-sm font-semibold">🔥 Streak</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-lg md:rounded-xl p-3 md:p-4 col-span-2 sm:col-span-1">
-                  <div className="text-lg sm:text-xl md:text-2xl lg:text-3xl font-bold text-[var(--accent-primary)] mb-1">{gameState.score.toLocaleString()}</div>
-                  <div className="text-[var(--text-tertiary)] text-xs sm:text-sm font-semibold">⭐ Points</div>
+                <div>
+                  <div className="text-xl font-bold text-yellow-400">{gameState.score.toLocaleString()}</div>
+                  <div className="text-gray-400 text-xs">Score</div>
                 </div>
               </div>
             </OsmoCard>
             
-            {/* Game Progress Text Below Stats */}
-            <div className="text-center mt-6">
-              <OsmoBadge variant="primary" className="mb-4">
-                🎯 Game in Progress
-              </OsmoBadge>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text-primary)] mb-2">
-                {categories.find(cat => cat.id === gameState.currentCategory)?.name} Challenge
-              </h2>
-              <p className="text-[var(--text-secondary)] text-sm sm:text-base md:text-lg">
-                Strengthen your faith through God's Word. Match verses with their references and grow in spiritual knowledge.
-              </p>
-              <p className="text-[var(--text-secondary)] mt-2 text-sm sm:text-base">
-                Match the verses with their references to complete the challenge!
-              </p>
+            {/* Reset Button and Sound Toggle */}
+            <div className="flex gap-3 justify-center">
+              <OsmoButton onClick={resetGame} variant="secondary" size="sm">
+                New Game
+              </OsmoButton>
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  soundEnabled
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                }`}
+              >
+                🔊 {soundEnabled ? 'Sound On' : 'Sound Off'}
+              </button>
             </div>
           </div>
         )}
 
         {/* Game Completed */}
         {gameState.gameCompleted && (
-          <div className="max-w-4xl mx-auto space-y-6">
-            {/* Osmo Victory Celebration */}
-            <OsmoCard className="p-8 text-center">
-              <div className="text-6xl mb-4">🏆</div>
-              <OsmoGradientText className="text-3xl md:text-4xl font-bold mb-4">
-                Challenge Completed!
-              </OsmoGradientText>
-              <p className="text-[var(--text-secondary)] text-lg md:text-xl mb-4">
-                You've successfully completed the {categories.find(cat => cat.id === gameState.currentCategory)?.name} challenge!
-              </p>
-              
-              {/* Perfect Game Bonus */}
-              {gameState.attempts === gameState.matches && (
-                <div className="bg-gradient-to-r from-[var(--spiritual-green)]/20 to-[var(--accent-primary)]/20 border border-[var(--spiritual-green)]/50 rounded-xl p-4 mb-4">
-                  <div className="text-2xl mb-2">✨ Perfect Game!</div>
-                  <div className="text-[var(--spiritual-green)] font-semibold">
-                    No wrong attempts - You're getting better!
-                  </div>
-                </div>
-              )}
-              
-              {/* Level Up Notification */}
-              {gameState.perfectGamesInRow > 0 && (
-                <div className="bg-gradient-to-r from-[var(--accent-primary)]/20 to-[var(--accent-secondary)]/20 border border-[var(--accent-primary)]/50 rounded-xl p-4 mb-4">
-                  <div className="text-2xl mb-2">🚀 {gameState.perfectGamesInRow} Perfect Games in a Row!</div>
-                  <div className="text-[var(--accent-primary)] font-semibold">
-                    Keep going to unlock new categories and increase difficulty!
-                  </div>
-                </div>
-              )}
-            </OsmoCard>
-
-            {/* Osmo Results */}
-            <OsmoCard className="p-6">
-              <OsmoSectionHeader title="🎯 Final Results" subtitle="Your performance summary" />
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center mt-6">
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-xl p-4">
-                  <div className="text-2xl md:text-3xl font-bold text-[var(--spiritual-blue)] mb-1">{formatTime(gameState.timeElapsed)}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm font-semibold">⏱️ Time</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-xl p-4">
-                  <div className="text-2xl md:text-3xl font-bold text-[var(--accent-primary)] mb-1">{gameState.attempts}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm font-semibold">🔄 Attempts</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-xl p-4">
-                  <div className="text-2xl md:text-3xl font-bold text-[var(--spiritual-cyan)] mb-1">{gameState.perfectMatches}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm font-semibold">✨ Perfect</div>
-                </div>
-                <div className="bg-[var(--bg-tertiary)]/30 rounded-xl p-4">
-                  <div className="text-2xl md:text-3xl font-bold text-[var(--accent-primary)] mb-1">{gameState.score.toLocaleString()}</div>
-                  <div className="text-[var(--text-tertiary)] text-sm font-semibold">⭐ Points</div>
-                </div>
-              </div>
-              
-              {gameState.score === gameState.bestScore && gameState.bestScore > 0 && (
-                <div className="mt-6 text-center">
-                  <OsmoBadge variant="primary" className="text-lg">
-                    🎉 New Personal Best!
-                  </OsmoBadge>
-                  <div className="text-[var(--text-secondary)] text-sm mt-2">You've set a new record!</div>
-                </div>
-              )}
-            </OsmoCard>
-
-            {/* Auto Continue Timer */}
+          <div className="max-w-2xl mx-auto space-y-4">
+            {/* Victory Message */}
             <OsmoCard className="p-6 text-center">
-                  <div className="text-lg font-semibold text-[var(--text-primary)] mb-4">
-                🎮 Next Level Starting in...
-                  </div>
-                  <div className="text-4xl font-bold text-[var(--accent-primary)] mb-4">
-                    {autoContinueTimer}
-                  </div>
-                  <div className="text-[var(--text-secondary)] text-sm mb-4">
-                The game will automatically continue to the next challenge
-                  </div>
-              <div className="flex flex-col md:flex-row gap-4 justify-center">
-                    <OsmoButton
-                  onClick={initializeGame}
-                  variant="primary"
-                  size="lg"
-                  className="text-lg px-8 py-4"
-                >
-                  Continue Now
-                </OsmoButton>
-                <OsmoButton
-                  onClick={resetGame}
-                  variant="secondary"
-                  size="lg"
-                  className="text-lg px-8 py-4"
-                >
-                  Take a Break
-                </OsmoButton>
-              </div>
+              <div className="text-4xl mb-4">🏆</div>
+              <h2 className="text-2xl font-bold text-white mb-4">Challenge Complete!</h2>
+              <p className="text-gray-300">
+                Score: {gameState.score.toLocaleString()} points
+              </p>
+
+              {gameState.attempts === gameState.matches && (
+                <div className="mt-4 p-3 bg-green-500/20 border border-green-500/30 rounded-lg">
+                  <p className="text-green-400 font-semibold">✨ Perfect Game!</p>
+                </div>
+              )}
             </OsmoCard>
+
+            {/* Action Buttons */}
+            <div className="flex gap-3">
+              <OsmoButton onClick={initializeGame} variant="primary" className="flex-1">
+                Next Level
+              </OsmoButton>
+              <OsmoButton onClick={resetGame} variant="secondary" className="flex-1">
+                Play Again
+              </OsmoButton>
+            </div>
+
+            {/* Sound Toggle */}
+            <div className="text-center">
+              <button
+                onClick={() => setSoundEnabled(!soundEnabled)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+                  soundEnabled
+                    ? 'bg-green-500 text-white hover:bg-green-600'
+                    : 'bg-gray-600 text-gray-300 hover:bg-gray-500'
+                }`}
+              >
+                🔊 {soundEnabled ? 'Sound On' : 'Sound Off'}
+              </button>
+            </div>
           </div>
         )}
 
-        {/* Instructions */}
-        <div className="mt-8 md:mt-12 max-w-4xl mx-auto">
-          <OsmoCard className="p-6">
-            <OsmoSectionHeader title="How to Play" subtitle="Learn the basics of Bible Verse Match" />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <div className="text-center">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <h4 className="font-medium text-white mb-1 md:mb-2 text-sm md:text-base">Choose Category</h4>
-                <p className="text-xs text-gray-400 leading-tight">Select from Popular Verses, Faith, Love, or Wisdom</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
-                  </svg>
-                </div>
-                <h4 className="font-medium text-white mb-1 md:mb-2 text-sm md:text-base">Flip Cards</h4>
-                <p className="text-xs text-gray-400 leading-tight">Click cards to reveal Bible verses and references</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-green-500/20 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-green-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <h4 className="font-medium text-white mb-1 md:mb-2 text-sm md:text-base">Find Matches</h4>
-                <p className="text-xs text-gray-400 leading-tight">Match each verse with its correct Bible reference</p>
-              </div>
-              <div className="text-center">
-                <div className="w-10 h-10 md:w-12 md:h-12 bg-yellow-500/20 rounded-lg flex items-center justify-center mx-auto mb-2 md:mb-3">
-                  <svg className="w-5 h-5 md:w-6 md:h-6 text-yellow-400" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
-                  </svg>
-                </div>
-                <h4 className="font-medium text-white mb-1 md:mb-2 text-sm md:text-base">Score Points</h4>
-                <p className="text-xs text-gray-400 leading-tight">Earn bonus points for speed and perfect matches</p>
-              </div>
+        {/* Simple Instructions */}
+        <div className="mt-8 max-w-2xl mx-auto">
+          <OsmoCard className="p-4">
+            <h3 className="text-lg font-bold text-white mb-3">How to Play</h3>
+            <div className="space-y-2 text-sm text-gray-300">
+              <p>• Click cards to reveal Bible verses</p>
+              <p>• Match each verse with its reference</p>
+              <p>• Complete all pairs to finish the level</p>
             </div>
           </OsmoCard>
         </div>
       </div>
 
-      {/* Game Complete Modal */}
-      {showGameComplete && (
-        <GameComplete
-          score={gameState.score}
-          bestScore={gameState.bestScore}
-          isNewBest={gameState.score > (gameState.bestScore - gameState.score)}
-          timeElapsed={gameState.timeElapsed}
-          difficulty={gameState.difficulty}
-          perfectMatches={gameState.perfectMatches}
-          totalMatches={gameState.matches}
-          currentLevel={gameState.currentLevel}
-          nextLevel={gameState.currentLevel + 1}
-          currentLevelIndex={gameState.currentLevel - 1}
-          totalLevels={getTotalLevels()}
-          onNextLevel={handleNextLevel}
-          onPlayAgain={handlePlayAgain}
-          onMainMenu={handleMainMenu}
-        />
-      )}
     </div>
   );
 };
