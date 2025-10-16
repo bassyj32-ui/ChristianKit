@@ -1,9 +1,16 @@
-import { supabase } from '../utils/supabase';
-import { savePushSubscription } from '../api/pushSubscription';
-import { logger, logNotificationEvent, logNotificationError } from '../utils/logger';
-import { metrics, recordNotificationDelivery, recordNotificationFailure } from '../utils/metrics';
-import { notificationCache, cacheUserPreferences, getCachedUserPreferences, cacheUserNotifications, getCachedUserNotifications, invalidateUserCache } from '../utils/cache';
-import { withDatabaseRetry, withNotificationRetry } from '../utils/retry';
+// DISABLED: Old notification service - replaced by SimpleNotificationService
+// import { supabase } from '../utils/supabase';
+// import { savePushSubscription } from '../api/pushSubscription';
+// import { logger, logNotificationEvent, logNotificationError } from '../utils/logger';
+// import { metrics, recordNotificationDelivery, recordNotificationFailure } from '../utils/metrics';
+// import { notificationCache, cacheUserPreferences, getCachedUserPreferences, cacheUserNotifications, getCachedUserNotifications, invalidateUserCache } from '../utils/cache';
+// import { withDatabaseRetry, withNotificationRetry } from '../utils/retry';
+
+// This file is DISABLED - use SimpleNotificationService instead
+// ===============================================================
+// This old notification service is disabled to simplify the system.
+// Only SimpleNotificationService.ts should be used for notifications.
+// ===============================================================
 
 export interface Notification {
   id: string;
@@ -42,35 +49,9 @@ export const createNotification = async (
   message: string,
   data?: Notification['data']
 ): Promise<boolean> => {
-  const timer = metrics.startTimer('create_notification', userId)
-
-  try {
-    logger.debug('Creating notification', { userId, type, title })
-
-    const { error } = await supabase
-      .from('notifications')
-      .insert({
-        user_id: userId,
-        type,
-        title,
-        message,
-        data,
-        read: false
-      });
-
-    if (error) throw error;
-
-    timer() // Record timing
-    logNotificationEvent('created', userId, undefined, { type, title })
-    logger.info('Notification created successfully', { userId, type, title })
-
-    return true;
-  } catch (error) {
-    timer() // Record timing even for failures
-    logNotificationError('Failed to create notification', error as Error, userId)
-    recordNotificationFailure(type, 'database', (error as Error).message, userId)
-    return false;
-  }
+  // This service is disabled - use SimpleNotificationService instead
+  console.warn('Old notification service is disabled. Use SimpleNotificationService instead.');
+  return false;
 };
 
 /**
@@ -81,144 +62,36 @@ export const getUserNotifications = async (
   limit: number = 20,
   unreadOnly: boolean = false
 ): Promise<Notification[]> => {
-  const cacheKey = `notifications_${userId}_${limit}_${unreadOnly}`
-
-  // Check cache first
-  const cached = getCachedUserNotifications(cacheKey)
-  if (cached) {
-    logger.debug('Returning cached notifications', { userId, limit, unreadOnly })
-    return cached
-  }
-
-  try {
-      const data = await withDatabaseRetry(async () => {
-      let query = supabase
-        .from('notifications')
-        .select('*')
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false })
-        .limit(limit);
-
-      if (unreadOnly) {
-        query = query.eq('read', false);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      return data || [];
-    })
-
-    // Cache the result
-    cacheUserNotifications(cacheKey, data)
-
-    logger.debug('Fetched notifications from database', { userId, count: data.length })
-    return data;
-  } catch (error) {
-    logger.error('Error fetching notifications', error as Error, { userId, limit, unreadOnly })
-    return [];
-  }
+  // This service is disabled - use SimpleNotificationService instead
+  console.warn('Old notification service is disabled. Use SimpleNotificationService instead.');
+  return [];
 };
 
 /**
  * Mark notification as read with cache invalidation
  */
 export const markNotificationAsRead = async (notificationId: string, userId?: string): Promise<boolean> => {
-  try {
-    const result = await withNotificationRetry(async () => {
-      const { error } = await supabase
-        .from('notifications')
-        .update({
-          read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('id', notificationId);
-
-      if (error) throw error;
-      return true;
-    }, { userId, notificationId })
-
-    if (result.success && userId) {
-      // Invalidate user notification cache since read status changed
-      invalidateUserCache(userId)
-
-      logger.info('Notification marked as read', { notificationId, userId })
-    }
-
-    return result.success;
-  } catch (error) {
-    logger.error('Error marking notification as read', error as Error, { notificationId, userId })
-    return false;
-  }
+  // This service is disabled - use SimpleNotificationService instead
+  console.warn('Old notification service is disabled. Use SimpleNotificationService instead.');
+  return false;
 };
 
 /**
  * Mark all notifications as read for a user with cache invalidation
  */
 export const markAllNotificationsAsRead = async (userId: string): Promise<boolean> => {
-  try {
-    const result = await withNotificationRetry(async () => {
-      const { error } = await supabase
-        .from('notifications')
-        .update({
-          read: true,
-          read_at: new Date().toISOString()
-        })
-        .eq('user_id', userId)
-        .eq('read', false);
-
-      if (error) throw error;
-      return true;
-    }, { userId })
-
-    if (result.success) {
-      // Invalidate user notification cache since all notifications marked as read
-      invalidateUserCache(userId)
-
-      logger.info('All notifications marked as read', { userId })
-    }
-
-    return result.success;
-  } catch (error) {
-    logger.error('Error marking all notifications as read', error as Error, { userId })
-    return false;
-  }
+  // This service is disabled - use SimpleNotificationService instead
+  console.warn('Old notification service is disabled. Use SimpleNotificationService instead.');
+  return false;
 };
 
 /**
  * Get unread notification count with caching
  */
 export const getUnreadNotificationCount = async (userId: string): Promise<number> => {
-  const cacheKey = `unread_count_${userId}`
-
-  // Check cache first (short TTL since this changes frequently)
-  const cached = notificationCache.get(cacheKey)
-  if (cached && (Date.now() - cached.timestamp) < 30000) { // 30 second cache
-    logger.debug('Returning cached unread count', { userId, count: cached.data })
-    return cached.data
-  }
-
-  try {
-    const result = await withDatabaseRetry(async () => {
-      const { count, error } = await supabase
-        .from('notifications')
-        .select('*', { count: 'exact', head: true })
-        .eq('user_id', userId)
-        .eq('read', false);
-
-      if (error) throw error;
-      return count || 0;
-    })
-
-    // Cache the result
-    notificationCache.set(cacheKey, result, 30000) // 30 seconds
-
-    logger.debug('Fetched unread count from database', { userId, count: result })
-    return result;
-  } catch (error) {
-    logger.error('Error getting unread count', error as Error, { userId })
-    return 0;
-  }
+  // This service is disabled - use SimpleNotificationService instead
+  console.warn('Old notification service is disabled. Use SimpleNotificationService instead.');
+  return 0;
 };
 
 /**
@@ -498,3 +371,10 @@ CREATE TABLE IF NOT EXISTS push_subscriptions (
 );
 `;
 
+// ===============================================================
+// WARNING: This file is DISABLED!
+// ===============================================================
+// This old notification service has been replaced by SimpleNotificationService.ts
+// DO NOT USE THIS FILE - it contains the old complex notification system
+// that was causing issues. Use SimpleNotificationService instead.
+// ===============================================================

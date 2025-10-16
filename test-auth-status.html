@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Auth Test</title>
+</head>
+<body>
+    <h1>Testing ChristianKit Authentication</h1>
+    <div id="status"></div>
+    <button onclick="testAuth()">Test Authentication</button>
+    
+    <script>
+        async function testAuth() {
+            const status = document.getElementById('status');
+            
+            try {
+                // Test if we can reach the app
+                const response = await fetch('http://localhost:5173');
+                if (response.ok) {
+                    status.innerHTML = '<p style="color: green;">✅ App is running at http://localhost:5173</p>';
+                    status.innerHTML += '<p>Please open the app in your browser and try signing in.</p>';
+                    status.innerHTML += '<p>Check the browser console for any authentication errors.</p>';
+                } else {
+                    status.innerHTML = '<p style="color: red;">❌ App not responding</p>';
+                }
+            } catch (error) {
+                status.innerHTML = '<p style="color: red;">❌ Cannot reach app: ' + error.message + '</p>';
+            }
+        }
+        
+        // Auto-test on load
+        window.onload = testAuth;
+    </script>
+</body>
+</html>

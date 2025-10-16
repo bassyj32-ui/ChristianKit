@@ -116,20 +116,22 @@ export const performanceConfig = {
           const registration = await navigator.serviceWorker.register('/sw.js');
           // Service Worker registered
 
-          // Handle updates
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            if (newWorker) {
-              newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                  // New version available
-                  if (confirm('New version available! Refresh to update?')) {
-                    window.location.reload();
+          // Handle updates only if registration succeeded and has the required methods
+          if (registration && typeof registration.addEventListener === 'function') {
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              if (newWorker && typeof newWorker.addEventListener === 'function') {
+                newWorker.addEventListener('statechange', () => {
+                  if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                    // New version available
+                    if (confirm('New version available! Refresh to update?')) {
+                      window.location.reload();
+                    }
                   }
-                }
-              });
-            }
-          });
+                });
+              }
+            });
+          }
 
           return registration;
         } catch (error) {

@@ -90,3 +90,17 @@ WHERE routine_name = 'handle_new_user' AND routine_schema = 'public';
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

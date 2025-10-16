@@ -71,3 +71,17 @@ SELECT 'New user signup fix applied successfully! 🎉' as message;
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

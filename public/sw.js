@@ -15,12 +15,40 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Fetch event for offline support
+// Fetch event for offline support (only cache static assets, not API calls)
 self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
+  // Skip caching for API requests and auth
+  if (event.request.url.includes('supabase.co') ||
+      event.request.url.includes('/api/') ||
+      event.request.url.includes('/auth/')) {
+    return;
+  }
+
+  // Only cache GET requests for static assets
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      caches.match(event.request)
+        .then((response) => {
+          // Return cached version or fetch from network
+          return response || fetch(event.request).then((fetchResponse) => {
+            // Don't cache if not a valid response
+            if (!fetchResponse || fetchResponse.status !== 200 || fetchResponse.type !== 'basic') {
+              return fetchResponse;
+            }
+
+            // Clone the response for caching
+            const responseToCache = fetchResponse.clone();
+
+            caches.open(CACHE_NAME)
+              .then((cache) => {
+                cache.put(event.request, responseToCache);
+              });
+
+            return fetchResponse;
+          });
+        })
+    );
+  }
 });
 
 // Push event for notifications

@@ -20,6 +20,7 @@ interface OfflinePost {
   timestamp: number
   retryCount: number
   userId: string
+  mediaData?: { media_url?: string; media_type?: string }
 }
 
 // Types
@@ -52,6 +53,9 @@ export interface CommunityPost {
   // Progress integration
   linked_session_id?: string
   session_type?: 'prayer' | 'bible' | 'meditation'
+  // Media fields
+  media_url?: string
+  media_type?: string
 }
 
 // Prayer Request interface
@@ -428,7 +432,7 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
     }
   },
 
-  createPost: async (content: string, category: 'post' | 'prayer_request' | 'encouragement' | 'testimony' | 'prayer_share' = 'post') => {
+  createPost: async (content: string, mediaData?: { media_url?: string; media_type?: string }, category: 'post' | 'prayer_request' | 'encouragement' | 'testimony' | 'prayer_share' = 'post') => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       set({ error: 'Please sign in to create posts' })
@@ -466,7 +470,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
         get().addToOfflineQueue({
           content: content.trim(),
           category,
-          userId: currentUser.id
+          userId: currentUser.id,
+          mediaData: mediaData || undefined
         })
 
         set({
@@ -506,7 +511,11 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           content: content.trim(),
           post_type: category,
           is_live: true,
-          moderation_status: 'approved'
+          moderation_status: 'approved',
+          ...(mediaData?.media_url && {
+            media_url: mediaData.media_url,
+            media_type: mediaData.media_type || 'image'
+          })
         })
         .select(`
           id,
@@ -515,6 +524,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar,
           content,
           post_type,
+          media_url,
+          media_type,
           created_at,
           amens_count,
           loves_count,
@@ -744,6 +755,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar,
           content,
           post_type,
+          media_url,
+          media_type,
           created_at,
           amens_count,
           loves_count,
@@ -1058,6 +1071,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar,
           content,
           post_type,
+          media_url,
+          media_type,
           created_at,
           amens_count,
           loves_count,
@@ -1128,6 +1143,8 @@ export const useCommunityStore = create<CommunityState>((set, get) => ({
           author_avatar,
           content,
           post_type,
+          media_url,
+          media_type,
           created_at,
           amens_count,
           loves_count,

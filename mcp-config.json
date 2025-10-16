@@ -1,0 +1,12 @@
+﻿{
+  "mcpServers": {
+    "supabase": {
+      "command": "node",
+      "args": ["C:/Users/Bassy J/AppData/Roaming/npm/node_modules/supabase-mcp/dist/esm/index.js"],
+      "env": {
+        "SUPABASE_URL": "https://hrznuhcwdjnpasfnqqwp.supabase.co",
+        "SUPABASE_ANON_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhyem51aGN3ZGpucGFzZm5xcXdwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTU2Mzg3ODAsImV4cCI6MjA3MTIxNDc4MH0.G4x6DJxwgdXGI47Zc4Gro_HBbDW0J2rwxru72f3z_Us"
+      }
+    }
+  }
+}

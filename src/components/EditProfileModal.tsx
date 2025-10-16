@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../utils/supabase';
+import { AvatarUpload } from './MediaUpload';
+import { mediaService } from '../services/mediaService';
 
 interface EditProfileModalProps {
   isOpen: boolean;
@@ -13,6 +15,7 @@ interface ProfileData {
   bio: string;
   location: string;
   favorite_verse: string;
+  avatar_url?: string;
 }
 
 export const EditProfileModal: React.FC<EditProfileModalProps> = ({
@@ -25,7 +28,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     display_name: '',
     bio: '',
     location: '',
-    favorite_verse: ''
+    favorite_verse: '',
+    avatar_url: ''
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -41,7 +45,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     try {
       const { data, error } = await supabase
         .from('profiles')
-        .select('display_name, bio, location, favorite_verse')
+        .select('display_name, bio, location, favorite_verse, avatar_url')
         .eq('id', userId)
         .single();
 
@@ -51,7 +55,8 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         display_name: data?.display_name || '',
         bio: data?.bio || '',
         location: data?.location || '',
-        favorite_verse: data?.favorite_verse || ''
+        favorite_verse: data?.favorite_verse || '',
+        avatar_url: data?.avatar_url || ''
       });
     } catch (error) {
       console.error('Error fetching profile:', error);
@@ -71,6 +76,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
           bio: profileData.bio.trim(),
           location: profileData.location.trim(),
           favorite_verse: profileData.favorite_verse.trim(),
+          avatar_url: profileData.avatar_url || null,
           updated_at: new Date().toISOString()
         });
 
@@ -90,6 +96,15 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       ...prev,
       [field]: value
     }));
+  };
+
+  const handleAvatarUpload = (result: any) => {
+    if (result.success && result.data) {
+      setProfileData(prev => ({
+        ...prev,
+        avatar_url: result.data.publicUrl
+      }));
+    }
   };
 
   if (!isOpen) return null;
@@ -119,6 +134,29 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             </div>
           ) : (
             <>
+              {/* Avatar Upload */}
+              <div>
+                <label className="block text-sm font-medium text-slate-300 mb-2">
+                  Profile Picture
+                </label>
+                <div className="flex items-center space-x-4">
+                  <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center overflow-hidden">
+                    {profileData.avatar_url ? (
+                      <img
+                        src={profileData.avatar_url}
+                        alt="Profile avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <svg className="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
+                    )}
+                  </div>
+                  <AvatarUpload onUpload={handleAvatarUpload} />
+                </div>
+              </div>
+
               {/* Display Name */}
               <div>
                 <label className="block text-sm font-medium text-slate-300 mb-2">

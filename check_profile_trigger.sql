@@ -25,3 +25,17 @@ WHERE table_name = 'profiles'
 ORDER BY ordinal_position;
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+

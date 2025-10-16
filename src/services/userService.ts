@@ -1,4 +1,6 @@
 import { supabase } from '../utils/supabase'
+import { userProfileCache, cacheKeys } from './queryCache'
+import { withPerformanceMonitoring } from './performanceMonitor'
 import { User } from '@supabase/supabase-js'
 
 export interface UserProfile {
@@ -51,11 +53,26 @@ export class UserService {
         return null
       }
 
-      const { data, error } = await this.supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single()
+      const cacheKey = cacheKeys.userProfile(user.id)
+
+      // Check cache first
+      const cached = userProfileCache.get<UserProfile>(cacheKey)
+      if (cached) {
+        return cached
+      }
+
+      // Use optimized view for better performance
+      const { data, error } = await withPerformanceMonitoring(
+        `user_profile:${user.id}`,
+        async () => {
+          const result = await this.supabase
+            .from('user_profiles_with_follows')
+            .select('*')
+            .eq('id', user.id)
+            .single()
+          return result
+        }
+      )
 
       if (error) {
         if (error.code === 'PGRST116') {
@@ -68,6 +85,9 @@ export class UserService {
         })
         return null
       }
+
+      // Cache the successful result
+      userProfileCache.set(cacheKey, data)
 
       return data
     } catch (error) {

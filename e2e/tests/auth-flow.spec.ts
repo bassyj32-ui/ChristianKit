@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 describe('Authentication Flow Integration', () => {
   beforeEach(() => {
     // Mock Supabase client
-    vi.mock('../../utils/supabase', () => ({
+    vi.mock('../../src/utils/supabase', () => ({
       supabase: {
         auth: {
           signInWithOAuth: vi.fn().mockResolvedValue({
@@ -35,7 +35,7 @@ describe('Authentication Flow Integration', () => {
 
   it('should handle complete authentication flow', async () => {
     // Test the authentication flow
-    const { supabase } = await import('../../utils/supabase');
+    const { supabase } = await import('../../src/utils/supabase');
 
     // Mock successful OAuth
     vi.mocked(supabase.auth.signInWithOAuth).mockResolvedValue({
@@ -49,7 +49,7 @@ describe('Authentication Flow Integration', () => {
 
   it('should create user profile on successful authentication', async () => {
     // Test that user profile is created
-    const { supabase } = await import('../../utils/supabase');
+    const { supabase } = await import('../../src/utils/supabase');
 
     // Mock profile creation
     vi.mocked(supabase.from).mockReturnValue({
@@ -62,7 +62,7 @@ describe('Authentication Flow Integration', () => {
 
   it('should handle authentication errors gracefully', async () => {
     // Test error handling
-    const { supabase } = await import('../../utils/supabase');
+    const { supabase } = await import('../../src/utils/supabase');
 
     // Mock auth error
     vi.mocked(supabase.auth.signInWithOAuth).mockResolvedValue({
@@ -74,5 +74,17 @@ describe('Authentication Flow Integration', () => {
     expect(true).toBe(true); // Placeholder - would test actual error handling
   });
 });
+
+
+
+
+
+
+
+
+
+
+
+
 
 

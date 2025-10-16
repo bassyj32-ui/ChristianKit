@@ -7,7 +7,7 @@ describe('Notification Delivery Pipeline', () => {
     await setupTestDatabase();
 
     // Mock Supabase client
-    vi.mock('../../utils/supabase', () => ({
+    vi.mock('../../src/utils/supabase', () => ({
       supabase: {
         from: vi.fn(),
         auth: {
@@ -26,7 +26,7 @@ describe('Notification Delivery Pipeline', () => {
 
   it('tests notification creation and database persistence', async () => {
     // Test the core notification creation flow
-    const { supabase } = await import('../../utils/supabase');
+    const { supabase } = await import('../../src/utils/supabase');
 
     // Mock successful notification creation
     vi.mocked(supabase.from).mockReturnValue({
@@ -49,7 +49,7 @@ describe('Notification Delivery Pipeline', () => {
     } as any);
 
     // Import and test the notification service
-    const { createNotification } = await import('../../services/notificationService');
+    const { createNotification } = await import('../../src/services/notificationService');
 
     const result = await createNotification(
       'test-user-id',
@@ -73,7 +73,7 @@ describe('Notification Delivery Pipeline', () => {
     };
 
     // Test that the subscription creation logic works
-    const { supabase } = await import('../../utils/supabase');
+    const { supabase } = await import('../../src/utils/supabase');
 
     vi.mocked(supabase.from).mockReturnValue({
       upsert: vi.fn().mockResolvedValue({ error: null })

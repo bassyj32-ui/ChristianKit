@@ -15,9 +15,6 @@ const fallbackKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 if (!supabaseUrl || !supabaseAnonKey) {
   console.warn('⚠️ Supabase: Environment variables not loaded, using fallbacks')
   console.warn('⚠️ This is normal in some dev environments - using hardcoded values for testing')
-  // Use fallbacks for development
-  const supabaseUrl = fallbackUrl
-  const supabaseAnonKey = fallbackKey
 } else {
   console.log('✅ Supabase: Environment variables loaded successfully')
 }

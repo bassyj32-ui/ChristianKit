@@ -1,6 +1,7 @@
-// DEPRECATED: AuthService is now integrated into SupabaseAuthProvider
-// This file is kept for backward compatibility only
-// Use SupabaseAuthProvider for all authentication operations
+// AuthService - Now properly integrated with Supabase
+// Provides backward compatibility for existing code
+
+import { supabase } from '../utils/supabase'
 
 export interface AuthUser {
   id: string
@@ -10,26 +11,94 @@ export interface AuthUser {
   isAuthenticated: boolean
 }
 
-// Legacy export for any code still importing this
 export const authService = {
-  // All methods now throw deprecation warnings
   async initialize() {
-    console.warn('⚠️ authService is deprecated. Use SupabaseAuthProvider instead.')
-    return null
+    try {
+      const { data: { session } } = await supabase.auth.getSession()
+      if (session?.user) {
+        return {
+          id: session.user.id,
+          email: session.user.email || '',
+          displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+          avatarUrl: session.user.user_metadata?.avatar_url,
+          isAuthenticated: true
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Auth service initialization failed:', error)
+      return null
+    }
   },
+
   async signInWithGoogle() {
-    console.warn('⚠️ authService is deprecated. Use SupabaseAuthProvider instead.')
-    return null
+    try {
+      const { data, error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      return { data, error }
+    } catch (error) {
+      console.error('Google sign in failed:', error)
+      return { data: null, error }
+    }
   },
+
   async signOut() {
-    console.warn('⚠️ authService is deprecated. Use SupabaseAuthProvider instead.')
+    try {
+      const { error } = await supabase.auth.signOut()
+      return { error }
+    } catch (error) {
+      console.error('Sign out failed:', error)
+      return { error }
+    }
   },
+
   getCurrentUser() {
-    console.warn('⚠️ authService is deprecated. Use SupabaseAuthProvider instead.')
-    return null
+    try {
+      const { data: { session } } = supabase.auth.getSession()
+      if (session?.user) {
+        return {
+          id: session.user.id,
+          email: session.user.email || '',
+          displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+          avatarUrl: session.user.user_metadata?.avatar_url,
+          isAuthenticated: true
+        }
+      }
+      return null
+    } catch (error) {
+      console.error('Get current user failed:', error)
+      return null
+    }
   },
+
   isAuthenticated() {
-    console.warn('⚠️ authService is deprecated. Use SupabaseAuthProvider instead.')
-    return false
+    try {
+      const { data: { session } } = supabase.auth.getSession()
+      return !!session?.user
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      return false
+    }
+  },
+
+  onAuthStateChange(callback: (user: AuthUser | null) => void) {
+    return supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        const user = {
+          id: session.user.id,
+          email: session.user.email || '',
+          displayName: session.user.user_metadata?.full_name || session.user.user_metadata?.name,
+          avatarUrl: session.user.user_metadata?.avatar_url,
+          isAuthenticated: true
+        }
+        callback(user)
+      } else {
+        callback(null)
+      }
+    })
   }
 }

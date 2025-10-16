@@ -117,43 +117,70 @@ export const PersistentNavigation: React.FC<PersistentNavigationProps> = ({
         </div>
       </div>
 
-      {/* Modern Mobile Drawer */}
+      {/* Option 2: Side Slide-in Panel - Much Less Aggressive */}
       {isExpanded && (
-        <div className="lg:hidden fixed inset-0 z-[102] bg-black/50 backdrop-blur-sm" onClick={() => setIsExpanded(false)}>
-          <div 
-            className="absolute bottom-0 left-0 right-0 bg-black/95 backdrop-blur-xl border-t border-amber-400/20 rounded-t-3xl p-6 transform transition-transform duration-300 ease-out translate-y-0"
+        <div className="lg:hidden fixed inset-0 z-[102] bg-transparent" onClick={() => setIsExpanded(false)}>
+          <div
+            className="absolute inset-y-0 right-0 w-72 bg-black/90 backdrop-blur-xl border-l border-amber-400/20 transform transition-transform duration-300 ease-out translate-x-0"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Handle bar */}
-            <div className="w-12 h-1 bg-slate-600 rounded-full mx-auto mb-8"></div>
-            
-            {/* Simple Menu Items */}
-            <div className="space-y-2">
+            {/* Header with close option */}
+            <div className="flex items-center justify-between p-4 border-b border-amber-400/20">
+              <h3 className="text-lg font-semibold text-white">Menu</h3>
+              <button
+                onClick={() => setIsExpanded(false)}
+                className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Clean Menu Items - Vertical Layout */}
+            <div className="p-4 space-y-2">
               {moreMenuItems.map((item) => (
                 <button
                   key={item.id}
                   onClick={() => handleNavigation(item.path)}
-                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-300 ${
+                  className={`w-full flex items-center justify-between p-4 rounded-xl transition-all duration-200 ${
                     activeTab === item.path
                       ? 'bg-amber-400/20 text-amber-400 border border-amber-400/30'
                       : 'text-slate-300 hover:text-amber-400 hover:bg-amber-400/10 border border-transparent hover:border-amber-400/20'
                   }`}
                 >
-                  <span className="text-base font-medium">{item.label}</span>
+                  <div className="flex items-center space-x-3">
+                    {/* Icon for each item */}
+                    {item.id === 'profile' && (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                      </svg>
+                    )}
+                    {item.id === 'subscription' && (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7 4V2C7 1.45 7.45 1 8 1H16C16.55 1 17 1.45 17 2V4H20C20.55 4 21 4.45 21 5S20.55 6 20 6H19V19C19 20.1 18.1 21 17 21H7C5.9 21 5 20.1 5 19V6H4C3.45 6 3 5.55 3 5S3.45 4 4 4H7ZM9 3V4H15V3H9ZM7 6V19H17V6H7Z"/>
+                      </svg>
+                    )}
+                    {item.id === 'settings' && (
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.86,9.48l2.03,1.58C4.84,11.36,4.8,11.69,4.8,12s0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.6c-1.98,0-3.6-1.62-3.6-3.6 s1.62-3.6,3.6-3.6s3.6,1.62,3.6,3.6S13.98,15.6,12,15.6z"/>
+                      </svg>
+                    )}
+                    <span className="text-base font-medium">{item.label}</span>
+                  </div>
                   <svg className="w-5 h-5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                   </svg>
                 </button>
               ))}
             </div>
-            
-            {/* Close button */}
-            <button
-              onClick={() => setIsExpanded(false)}
-              className="w-full mt-8 py-4 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl transition-colors duration-300 font-medium"
-            >
-              Close Menu
-            </button>
+
+            {/* Bottom section - optional app info */}
+            <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-slate-700">
+              <p className="text-xs text-slate-500 text-center">
+                ChristianKit v1.0.0
+              </p>
+            </div>
           </div>
         </div>
       )}

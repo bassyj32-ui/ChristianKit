@@ -2,29 +2,47 @@ import React, { useState } from 'react'
 import { useCommunityStore } from '../../store/communityStore'
 import { useSupabaseAuth } from '../SupabaseAuthProvider'
 import { AuthButton } from '../AuthButton'
+import { PostMediaUpload } from '../MediaUpload'
+import { mediaService } from '../../services/mediaService'
 
 export const PostCreation: React.FC = () => {
   const { user } = useSupabaseAuth()
   const { createPost, isCreatingPost, error, isOnline } = useCommunityStore()
   const [content, setContent] = useState('')
+  const [postMedia, setPostMedia] = useState('')
+  const [isUploadingMedia, setIsUploadingMedia] = useState(false)
 
   const handleSubmit = async () => {
-    if (!content.trim() || isCreatingPost) return
+    if ((!content.trim() && !postMedia) || isCreatingPost) return
 
-    const success = await createPost(content)
+    const success = await createPost(content, postMedia ? {
+      media_url: postMedia,
+      media_type: 'image' // You can detect this based on file type
+    } : undefined)
 
     if (success) {
       setContent('')
+      setPostMedia('')
     }
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
-      if (content.trim() && !isCreatingPost) {
+      if ((content.trim() || postMedia) && !isCreatingPost) {
         handleSubmit()
       }
     }
+  }
+
+  const handleMediaUpload = (result: any) => {
+    if (result.success && result.data) {
+      setPostMedia(result.data.publicUrl)
+    }
+  }
+
+  const handleRemoveMedia = () => {
+    setPostMedia('')
   }
 
   return (
@@ -55,6 +73,29 @@ export const PostCreation: React.FC = () => {
             maxLength={500}
           />
 
+          {/* Media Upload */}
+          <div className="mt-3">
+            <PostMediaUpload onUpload={handleMediaUpload} />
+          </div>
+
+          {/* Uploaded Media Preview */}
+          {postMedia && (
+            <div className="mt-3 relative">
+              <img
+                src={postMedia}
+                alt="Post media"
+                className="w-full max-h-64 object-cover rounded-lg border border-gray-700"
+              />
+              <button
+                onClick={handleRemoveMedia}
+                className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white p-1 rounded-full text-xs"
+                title="Remove media"
+              >
+                ✕
+              </button>
+            </div>
+          )}
+
           {/* Error Message */}
           {error && (
             <div className="text-red-400 text-sm mb-2 p-2 bg-red-500/10 rounded-lg border border-red-500/20">
@@ -80,7 +121,7 @@ export const PostCreation: React.FC = () => {
 
               <button
                 onClick={handleSubmit}
-                disabled={!content.trim() || isCreatingPost || !user}
+                disabled={(!content.trim() && !postMedia) || isCreatingPost || !user}
                 className="bg-yellow-500 hover:bg-yellow-400 disabled:bg-gray-600 text-black px-4 sm:px-6 py-2 rounded-full font-bold text-sm transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation active:scale-95 shadow-lg"
               >
                 {isCreatingPost ? 'Posting...' : 'Post'}
